@@ -1,11 +1,19 @@
 package ca.cumulonimbus.pressurenetsdk;
 
-import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+/**
+ * 
+ * Implement location strategy for GPS, Network location
+ * Find the most accurate location within a time limit
+ * Minimize battery use
+ * 
+ * @author jacob
+ *
+ */
 
 public class CbLocationManager {
 	
