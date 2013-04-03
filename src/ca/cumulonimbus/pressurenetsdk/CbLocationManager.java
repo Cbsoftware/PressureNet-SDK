@@ -35,7 +35,6 @@ public class CbLocationManager {
 		try {
 			networkLocationManager.removeUpdates(locationListener);
 	        gpsLocationManager.removeUpdates(locationListener);
-	        
 	        return true;
 		} catch(Exception e) {
 			log(e.getMessage());
@@ -149,6 +148,4 @@ public class CbLocationManager {
 	public void setMinTime(int minTime) {
 		this.minTime = minTime;
 	}
-    
-    
 }
