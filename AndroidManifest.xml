@@ -15,7 +15,8 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         
-        <service android:name=".CbService" />
+        <service android:name=".CbService"
+            android:enabled="true" />
     </application>
 
 </manifest>
