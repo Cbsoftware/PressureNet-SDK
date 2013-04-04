@@ -28,7 +28,9 @@ public class CbLocationManager {
     private Location currentBestLocation;
 	
 	private static final int TWO_MINUTES = 1000 * 60 * 2;
+	private static final int TEN_SECONDS = 1000 * 10;
 
+	
 	public CbLocationManager(Context ctx) {
 		context = ctx;
 	}
@@ -99,8 +101,8 @@ public class CbLocationManager {
 
 	    // Check whether the new location fix is newer or older
 	    long timeDelta = location.getTime() - currentBestLocation.getTime();
-	    boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
-	    boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
+	    boolean isSignificantlyNewer = timeDelta > TEN_SECONDS;
+	    boolean isSignificantlyOlder = timeDelta < -TEN_SECONDS;
 	    boolean isNewer = timeDelta > 0;
 
 	    // If it's been more than two minutes since the current location, use the new location

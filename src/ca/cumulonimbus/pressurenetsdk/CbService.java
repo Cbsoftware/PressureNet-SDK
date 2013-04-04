@@ -109,7 +109,8 @@ public class CbService extends Service implements SensorEventListener  {
 	
 	@Override
 	public void onDestroy() {
-		log("on destory");
+		log("on destroy");
+		shutDownService();
 		super.onDestroy();
 	}
 

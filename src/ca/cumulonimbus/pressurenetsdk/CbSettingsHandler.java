@@ -11,7 +11,7 @@ package ca.cumulonimbus.pressurenetsdk;
 public class CbSettingsHandler {
 
 	// General Data Collection Settings
-	private long dataCollectionFrequency = 1000 * 60 * 10; // in ms. default: 10 minutes
+	private long dataCollectionFrequency = 1000 * 60 * 1; // in ms. default: 10 minutes; TODO: 10 minutes
 	private boolean sendImmediately = true; // send right away. if false, check preference
 	private boolean sendWiFiOnly = false; // if true, wait until wifi before sending
 	private int sendBufferSize = 1; // gather this many before sending. 
