@@ -55,6 +55,10 @@ public class CbService extends Service implements SensorEventListener  {
 		return newGroup;
 	}
 
+	/**
+	 * Collect and send data in a different thread.
+	 * This runs itself every "settingsHandler.getDataCollectionFrequency()" milliseconds
+	 */
 	private Runnable mSubmitReading = new Runnable() {
 		public void run() {
 			log("collecting and submitting");
@@ -96,14 +100,12 @@ public class CbService extends Service implements SensorEventListener  {
 		return false;
 	}
 	
+	/**
+	 * Start the periodic data collection.
+	 */
 	public void start() {
 		log("CbService: Starting to collect data.");
-		
-		// use AlarmManager or postDelayed tasks
-		// to periodically collect and send data
-		// according to values in CbSettings.
-		settingsHandler = new CbSettingsHandler();
-	
+		settingsHandler = new CbSettingsHandler();	
 		mHandler.postDelayed(mSubmitReading, 0);
 	}
 	
@@ -165,5 +167,4 @@ public class CbService extends Service implements SensorEventListener  {
 	public void setLocationManager(CbLocationManager locationManager) {
 		this.locationManager = locationManager;
 	}
-
 }

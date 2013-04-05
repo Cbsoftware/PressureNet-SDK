@@ -11,11 +11,12 @@ package ca.cumulonimbus.pressurenetsdk;
 public class CbSettingsHandler {
 
 	// General Data Collection Settings
-	private long dataCollectionFrequency = 1000 * 60 * 1; // in ms. default: 10 minutes; TODO: 10 minutes
+	private long dataCollectionFrequency = 1000 * 60 * 10; // in ms. default: 10 minutes; TODO: 10 minutes
 	private boolean sendImmediately = true; // send right away. if false, check preference
 	private boolean sendWiFiOnly = false; // if true, wait until wifi before sending
 	private int sendBufferSize = 1; // gather this many before sending. 
-
+	private String serverURL = "http://192.168.1.101:8090/"; // may expand to array for multiple servers
+	
 	// Science Settings
 	private boolean collectingData = true;
 	private boolean sharingData = true;
@@ -28,7 +29,13 @@ public class CbSettingsHandler {
 	public CbSettingsHandler() {
 		// TODO: Implement		
 	}
-	
+
+	public String getServerURL() {
+		return serverURL;
+	}
+	public void setServerURL(String serverURL) {
+		this.serverURL = serverURL;
+	}
 	public boolean isCollectingData() {
 		return collectingData;
 	}
