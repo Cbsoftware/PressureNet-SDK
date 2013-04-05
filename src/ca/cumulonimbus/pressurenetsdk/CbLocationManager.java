@@ -27,8 +27,8 @@ public class CbLocationManager {
     
     private Location currentBestLocation;
 	
-	private static final int TWO_MINUTES = 1000 * 60 * 2;
-	private static final int TEN_SECONDS = 1000 * 10;
+	//private static final int TWO_MINUTES = 1000 * 60 * 2;
+	private static final int TWENTY_SECONDS = 1000 * 20;
 
 	
 	public CbLocationManager(Context ctx) {
@@ -58,6 +58,13 @@ public class CbLocationManager {
     	networkLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
     	gpsLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
 
+    	Location lastKnown = networkLocationManager.getLastKnownLocation("network");
+    	if (lastKnown != null ) {
+    		log("setting best = last known");
+    		currentBestLocation = lastKnown;
+    	} else {
+    		log("last known is null");
+    	}
     	
     	// Define a listener that responds to location updates
     	locationListener = new LocationListener() {
@@ -101,8 +108,8 @@ public class CbLocationManager {
 
 	    // Check whether the new location fix is newer or older
 	    long timeDelta = location.getTime() - currentBestLocation.getTime();
-	    boolean isSignificantlyNewer = timeDelta > TEN_SECONDS;
-	    boolean isSignificantlyOlder = timeDelta < -TEN_SECONDS;
+	    boolean isSignificantlyNewer = timeDelta > TWENTY_SECONDS;
+	    boolean isSignificantlyOlder = timeDelta < -TWENTY_SECONDS;
 	    boolean isNewer = timeDelta > 0;
 
 	    // If it's been more than two minutes since the current location, use the new location

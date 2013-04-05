@@ -1,5 +1,6 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+
 /**
  * Collect data from onboard sensors and store locally
  * 
@@ -8,14 +9,18 @@ package ca.cumulonimbus.pressurenetsdk;
  */
 public class CbDataCollector {
 
+	private String userID = "";
+	
 	// TODO: Implement
 	public CbObservation getPressureObservation() {
 		CbObservation pressureObservation = new CbObservation();
+		pressureObservation.setTime(System.currentTimeMillis());
+		pressureObservation.setUser_id(userID);
 		
 		return pressureObservation;
 	}
 	
-	public CbDataCollector() {
-		
+	public CbDataCollector(String userID) {
+		this.userID = userID;
 	}
 }

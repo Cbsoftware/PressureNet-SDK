@@ -2,6 +2,8 @@ package ca.cumulonimbus.pressurenetsdk;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -11,6 +13,7 @@ import org.apache.http.message.BasicNameValuePair;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.widget.Toast;
 
 
 /**
@@ -22,34 +25,25 @@ import android.os.AsyncTask;
 
 public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
-	Context appContext = null;
 	private String responseText = "";
 	private static final String PREFS_NAME = "pressureNETPrefs";
 	
-	private CbSettingsHandler settings = new CbSettingsHandler();
+	private CbSettingsHandler settings;
 	
-	public CbDataSender(Context context) {
-		appContext = context;
+	public CbSettingsHandler getSettings() {
+		return settings;
 	}
-	
+	public void setSettings(CbSettingsHandler settings) {
+		this.settings = settings;
+	}
+
 	@Override
 	protected String doInBackground(String... params) {
 		// TODO: SecureHttpClient
 		DefaultHttpClient client = new DefaultHttpClient();
+		System.out.println("sending to " + settings.getServerURL() + " params " + params.length);
 		HttpPost httppost = new HttpPost(settings.getServerURL());
 		try {
-
-			/*
-			 * Check Sharing preferences before sending.
-			SharedPreferences settings = appContext.getSharedPreferences(PREFS_NAME, 0);
-			String share = settings.getString("sharing_preference", "Us, Researchers and Forecasters");
-			
-			// No sharing? get out!
-			if(share.equals("Nobody")) {
-				return null;
-			}
-			*/
-			
 			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
 			for(String singleParam : params) {
 				String key = singleParam.split(",")[0];
@@ -58,7 +52,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			} 
 			httppost.setEntity(new UrlEncodedFormEntity(nvps));
 			client.execute(httppost);
-
+			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();
 		} catch(IOException ioe) {
@@ -71,7 +65,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected void onPostExecute(String result) {
-		// TODO: Implement
+		System.out.println("post execute " + result);
 		super.onPostExecute(result);
 	}
 }

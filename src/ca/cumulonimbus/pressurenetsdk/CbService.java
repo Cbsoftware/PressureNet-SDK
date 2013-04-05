@@ -1,16 +1,21 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.provider.Settings.Secure;
 import android.widget.Toast;
 
 /**
@@ -28,6 +33,31 @@ public class CbService extends Service implements SensorEventListener  {
 	private CbLocationManager locationManager;
 	
 	private Handler mHandler = new Handler();
+
+	/**
+	 * Find all the data for an observation.
+	 * 
+	 * Location, Measurement values, etc.
+	 * 
+	 * @return
+	 */
+	public CbObservation collectNewObservation() {
+		CbObservation pressureObservation = new CbObservation();		
+		
+		// Location values
+		locationManager = new CbLocationManager(this);
+		locationManager.startGettingLocations();
+		
+		// Measurement values
+		dataCollector = new CbDataCollector(getID());
+		pressureObservation = dataCollector.getPressureObservation();
+		pressureObservation.setLocation(locationManager.getCurrentBestLocation());
+		
+		// stop listening for locations
+		locationManager.startGettingLocations();
+		
+		return pressureObservation;
+	}
 	
 	/**
 	 * Find all the data for an observation group.
@@ -45,7 +75,7 @@ public class CbService extends Service implements SensorEventListener  {
 		locationManager.startGettingLocations();
 		
 		// Measurement values
-		dataCollector = new CbDataCollector();
+		dataCollector = new CbDataCollector(getID());
 		pressureObservation = dataCollector.getPressureObservation();
 		
 		// Put everything together
@@ -64,14 +94,15 @@ public class CbService extends Service implements SensorEventListener  {
 			log("collecting and submitting");
 			long base = SystemClock.uptimeMillis();
 			
-			CbObservationGroup fullGroup = new CbObservationGroup();
+			CbObservation singleObservation = new CbObservation();
 			
 			// Collect observations
 			if(settingsHandler.isCollectingData()) {
-				fullGroup = collectNewObservationGroup();
+				singleObservation = collectNewObservation();
 				// Send
 				if(settingsHandler.isSharingData()) {
-					sendCbObservationGroup(fullGroup);
+					log("preferences okay. send cbobvsgr ");
+					sendCbObservation(singleObservation);
 				}
 			}
 			
@@ -89,7 +120,7 @@ public class CbService extends Service implements SensorEventListener  {
 	}
 	
 	/**
-	 * Use HTTPS to send the observation group to the server
+	 * Send the observation group to the server
 	 * 
 	 * @param group
 	 * @return
@@ -101,11 +132,23 @@ public class CbService extends Service implements SensorEventListener  {
 	}
 	
 	/**
+	 * Send the observation to the server
+	 * 
+	 * @param group
+	 * @return
+	 */
+	public boolean sendCbObservation(CbObservation observation) {
+		CbDataSender sender = new CbDataSender();
+		sender.setSettings(settingsHandler);
+		sender.execute(observation.getObservationAsParams());
+		return true;
+	}
+	
+	/**
 	 * Start the periodic data collection.
 	 */
 	public void start() {
 		log("CbService: Starting to collect data.");
-		settingsHandler = new CbSettingsHandler();	
 		mHandler.postDelayed(mSubmitReading, 0);
 	}
 	
@@ -124,14 +167,43 @@ public class CbService extends Service implements SensorEventListener  {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		super.onStartCommand(intent, flags, startId);
+		// Use the intent to initialize Settings
+		settingsHandler = new CbSettingsHandler();
+		settingsHandler.setServerURL(intent.getStringExtra("serverURL"));
+		
 		log("on start command");
 		start();
-		super.onStartCommand(intent, flags, startId);
+		
 		return START_STICKY;
+	}
+
+	/**
+	 * Get a hash'd device ID
+	 * 
+	 * @return
+	 */
+	public String getID() {
+		try {
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			String actual_id = Secure.getString(getApplicationContext()
+					.getContentResolver(), Secure.ANDROID_ID);
+			byte[] bytes = actual_id.getBytes();
+			byte[] digest = md.digest(bytes);
+			StringBuffer hexString = new StringBuffer();
+			for (int i = 0; i < digest.length; i++) {
+				hexString.append(Integer.toHexString(0xFF & digest[i]));
+			}
+			return hexString.toString();
+		} catch (Exception e) {
+			return "--";
+		}
 	}
 
 	@Override
 	public IBinder onBind(Intent intent) {
+		System.out.println("on bind");
 		return null;
 	}
 

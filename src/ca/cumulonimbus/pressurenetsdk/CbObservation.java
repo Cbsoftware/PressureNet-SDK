@@ -12,14 +12,31 @@ import android.location.Location;
  */
 public class CbObservation {
 
-	private String observationType;
+	private String observationType = "-";
 	private Location location;
-	private double observationValue;
-	private String observationUnit;
-	private String sharing;
-	private String user_id;
-	private double time;
-	private double timeZoneOffset;
+	private double observationValue = 0.0;
+	private String observationUnit = "-";
+	private String sharing = "-";
+	private String user_id = "-";
+	private double time = 0;
+	private double timeZoneOffset = 0;
+	
+	public String[] getObservationAsParams() {
+		String[] params = {"latitude," + location.getLatitude(), 
+						   "longitude," + location.getLongitude(),
+						   "altitude," + location.getAltitude(),
+						   "accuracy," + location.getAccuracy(),
+						   "provider," + location.getProvider(),
+						   "observation_type," + observationType,
+						   "observation_unit," + observationUnit,
+						   "observation_value," + observationValue,
+						   "sharing," + sharing,
+						   "time," + time,
+						   "timezone," + timeZoneOffset,
+						   "user_id," + user_id,
+		};
+		return params;
+	}
 	
 	public String getObservationType() {
 		return observationType;
