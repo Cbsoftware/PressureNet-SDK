@@ -76,6 +76,15 @@ public class CbDb {
         return mCursor;
     }
 	
+    /**
+     * Fetch every application setting.
+     * 
+     * @return
+     */
+    public Cursor fetchAllSettings() {
+        return mDB.query(SETTINGS_TABLE, new String[] {KEY_ROW_ID, KEY_APP_ID, KEY_DATA_COLLECTION_FREQUENCY}, null, null, null, null, null);
+    }
+    
 
 	/**
 	 * Get a single application's settings by app id

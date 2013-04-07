@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import android.app.Service;
 import android.content.Intent;
+import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -24,10 +25,11 @@ import android.provider.Settings.Secure;
 public class CbService extends Service implements SensorEventListener  {
 	
 	private CbDataCollector dataCollector;
-	private CbSettingsHandler settingsHandler;
 	private CbLocationManager locationManager;
+
+	private CbDb db;
 	
-	private Handler mHandler = new Handler();
+	private final Handler mHandler = new Handler();
 
 	/**
 	 * Find all the data for an observation.
@@ -84,24 +86,28 @@ public class CbService extends Service implements SensorEventListener  {
 	 * Collect and send data in a different thread.
 	 * This runs itself every "settingsHandler.getDataCollectionFrequency()" milliseconds
 	 */
-	private Runnable mSubmitReading = new Runnable() {
+	private class ReadingSender implements Runnable {
+		private CbSettingsHandler singleAppSettings;
+		
+		public ReadingSender(CbSettingsHandler settings) {
+			this.singleAppSettings = settings;
+		}
+		
 		public void run() {
 			log("collecting and submitting");
 			long base = SystemClock.uptimeMillis();
 			
 			CbObservation singleObservation = new CbObservation();
 			
-			// Collect observations
-			if(settingsHandler.isCollectingData()) {
+			if(singleAppSettings.isCollectingData()) {
+				// Collect
 				singleObservation = collectNewObservation();
-				// Send
-				if(settingsHandler.isSharingData()) {
-					log("preferences okay. send cbobvsgr ");
-					sendCbObservation(singleObservation);
+				if(singleAppSettings.isSharingData()) {
+					// Send
+					sendCbObservation(singleObservation, singleAppSettings);
 				}
 			}
-			
-			mHandler.postAtTime(this, base + (settingsHandler.getDataCollectionFrequency()));
+			mHandler.postAtTime(this, base + (singleAppSettings.getDataCollectionFrequency()));
 		}
 	};
 	
@@ -132,9 +138,9 @@ public class CbService extends Service implements SensorEventListener  {
 	 * @param group
 	 * @return
 	 */
-	public boolean sendCbObservation(CbObservation observation) {
+	public boolean sendCbObservation(CbObservation observation, CbSettingsHandler settings) {
 		CbDataSender sender = new CbDataSender();
-		sender.setSettings(settingsHandler,locationManager);
+		sender.setSettings(settings,locationManager);
 		sender.execute(observation.getObservationAsParams());
 		return true;
 	}
@@ -142,9 +148,12 @@ public class CbService extends Service implements SensorEventListener  {
 	/**
 	 * Start the periodic data collection.
 	 */
-	public void start() {
+	public void start(CbSettingsHandler settings) {
 		log("CbService: Starting to collect data.");
-		mHandler.postDelayed(mSubmitReading, 0);
+		//mHandler.postDelayed(mSubmitReading, 0);
+		//Thread cbThread = new Thread(mSubmitReading);
+		ReadingSender sender = new ReadingSender(settings);
+		mHandler.post(sender);
 	}
 	
 	@Override
@@ -160,17 +169,38 @@ public class CbService extends Service implements SensorEventListener  {
 		super.onCreate();
 	}
 
+	/**
+	 * Start running background data collection methods.
+	 * 
+	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		
 		super.onStartCommand(intent, flags, startId);
-		// Use the intent to initialize Settings
-		settingsHandler = new CbSettingsHandler(getApplicationContext());
-		settingsHandler.setServerURL(intent.getStringExtra("serverURL"));
+		log("cb onstartcommand");
+		CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
 		
+		// Check the intent for Settings initialization
+		if (intent.getStringExtra("serverURL") != null) {
+			settings.setServerURL(intent.getStringExtra("serverURL"));
+
+			// Seems like new settings. Try adding to the db.
+			settings.saveSettings();
+			
+			// Start a new thread and return
+			start(settings);
+			return START_STICKY;
+		}
 		
-		log("on start command");
-		start();
-		
+		// Check the database for Settings initialization
+		db.open();
+		Cursor allSettings = db.fetchAllSettings();
+		while(allSettings.moveToNext()) {
+			settings.setAppID(allSettings.getString(1));
+			settings.setDataCollectionFrequency(allSettings.getLong(2));
+			start(settings);	
+		}
+		db.close();
 		return START_STICKY;
 	}
 
@@ -196,7 +226,7 @@ public class CbService extends Service implements SensorEventListener  {
 			return "--";
 		}
 	}
-
+	
 	@Override
 	public IBinder onBind(Intent intent) {
 		System.out.println("on bind");
@@ -222,12 +252,6 @@ public class CbService extends Service implements SensorEventListener  {
 	}
 	public void setDataCollector(CbDataCollector dataCollector) {
 		this.dataCollector = dataCollector;
-	}
-	public CbSettingsHandler getSettingsHandler() {
-		return settingsHandler;
-	}
-	public void setSettingsHandler(CbSettingsHandler settingsHandler) {
-		this.settingsHandler = settingsHandler;
 	}
 	public CbLocationManager getLocationManager() {
 		return locationManager;
