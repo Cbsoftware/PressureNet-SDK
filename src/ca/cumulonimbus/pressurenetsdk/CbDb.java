@@ -75,6 +75,14 @@ public class CbDb {
         }
         return mCursor;
     }
+    
+    /**
+     * Empty the database
+     * @return
+     */
+    public void clearDb() {
+    	mDB.execSQL("delete from " + SETTINGS_TABLE);
+    }
 	
     /**
      * Fetch every application setting.

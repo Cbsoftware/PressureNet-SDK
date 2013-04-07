@@ -51,7 +51,7 @@ public class CbService extends Service implements SensorEventListener  {
 		pressureObservation.setLocation(locationManager.getCurrentBestLocation());
 		
 		// stop listening for locations
-		locationManager.startGettingLocations();
+		locationManager.stopGettingLocations();
 		
 		return pressureObservation;
 	}
@@ -166,6 +166,7 @@ public class CbService extends Service implements SensorEventListener  {
 	@Override
 	public void onCreate() {
 		log("on create");
+		db = new CbDb(getApplicationContext());
 		super.onCreate();
 	}
 
@@ -175,13 +176,11 @@ public class CbService extends Service implements SensorEventListener  {
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		
-		super.onStartCommand(intent, flags, startId);
 		log("cb onstartcommand");
 		CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
-		
 		// Check the intent for Settings initialization
-		if (intent.getStringExtra("serverURL") != null) {
+		if (intent != null) {
+			log( "intent url " + intent.getExtras().getString("serverURL"));
 			settings.setServerURL(intent.getStringExtra("serverURL"));
 
 			// Seems like new settings. Try adding to the db.
@@ -194,6 +193,7 @@ public class CbService extends Service implements SensorEventListener  {
 		
 		// Check the database for Settings initialization
 		db.open();
+		db.clearDb();
 		Cursor allSettings = db.fetchAllSettings();
 		while(allSettings.moveToNext()) {
 			settings.setAppID(allSettings.getString(1));
@@ -201,6 +201,7 @@ public class CbService extends Service implements SensorEventListener  {
 			start(settings);	
 		}
 		db.close();
+		super.onStartCommand(intent, flags, startId);
 		return START_STICKY;
 	}
 

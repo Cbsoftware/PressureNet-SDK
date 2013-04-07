@@ -16,9 +16,10 @@ import android.os.Bundle;
  */
 
 public class CbLocationManager {
+	private static final int TEN_MINUTES = 1000 * 60 * 10;
 	
 	private int minDistance = 0;
-	private int minTime = 1000 * 60 * 5; // minimum five minute update interval
+	private int minTime = TEN_MINUTES;
 	private Context context;
 
     private LocationManager networkLocationManager;
@@ -28,9 +29,6 @@ public class CbLocationManager {
     private CbSettingsHandler settings;
     
     private Location currentBestLocation;
-	
-	private static final int TEN_MINUTES = 1000 * 60 * 10;
-
 	
 	public CbLocationManager(Context ctx) {
 		context = ctx;
@@ -155,7 +153,7 @@ public class CbLocationManager {
 	}
 	
     public void log(String text) {
-    	System.out.println(text);
+    	//System.out.println(text);
     }
 	public int getMinDistance() {
 		return minDistance;
