@@ -27,14 +27,16 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
 	private String responseText = "";
 	private static final String PREFS_NAME = "pressureNETPrefs";
+	private CbLocationManager locationManager;
 	
 	private CbSettingsHandler settings;
 	
 	public CbSettingsHandler getSettings() {
 		return settings;
 	}
-	public void setSettings(CbSettingsHandler settings) {
+	public void setSettings(CbSettingsHandler settings, CbLocationManager locationManager) {
 		this.settings = settings;
+		this.locationManager = locationManager;
 	}
 
 	@Override
@@ -65,7 +67,8 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected void onPostExecute(String result) {
-		System.out.println("post execute " + result);
+		//System.out.println("post execute " + result);
+		locationManager.stopGettingLocations();
 		super.onPostExecute(result);
 	}
 }

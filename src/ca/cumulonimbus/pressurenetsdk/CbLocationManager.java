@@ -18,7 +18,7 @@ import android.os.Bundle;
 public class CbLocationManager {
 	
 	private int minDistance = 0;
-	private int minTime = 0;
+	private int minTime = 1000 * 60 * 5; // minimum five minute update interval
 	private Context context;
 
     private LocationManager networkLocationManager;
@@ -27,8 +27,7 @@ public class CbLocationManager {
     
     private Location currentBestLocation;
 	
-	//private static final int TWO_MINUTES = 1000 * 60 * 2;
-	private static final int TWENTY_SECONDS = 1000 * 20;
+	private static final int TEN_MINUTES = 1000 * 60 * 10;
 
 	
 	public CbLocationManager(Context ctx) {
@@ -45,6 +44,8 @@ public class CbLocationManager {
 		try {
 			networkLocationManager.removeUpdates(locationListener);
 	        gpsLocationManager.removeUpdates(locationListener);
+	        networkLocationManager = null;
+	        gpsLocationManager = null;
 	        return true;
 		} catch(Exception e) {
 			log(e.getMessage());
@@ -83,13 +84,14 @@ public class CbLocationManager {
     	    public void onProviderEnabled(String provider) {}
 
     	    public void onProviderDisabled(String provider) {}
-    	  };
+    	};
 
        	// Register the listener with the Location Manager to receive location updates
     	try {
     		networkLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, minTime, minDistance, locationListener);
     		gpsLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
     	} catch(Exception e) {
+    		startGettingLocations();
     		log(e.getMessage());
     		return false;
     	}
@@ -108,8 +110,8 @@ public class CbLocationManager {
 
 	    // Check whether the new location fix is newer or older
 	    long timeDelta = location.getTime() - currentBestLocation.getTime();
-	    boolean isSignificantlyNewer = timeDelta > TWENTY_SECONDS;
-	    boolean isSignificantlyOlder = timeDelta < -TWENTY_SECONDS;
+	    boolean isSignificantlyNewer = timeDelta > TEN_MINUTES;
+	    boolean isSignificantlyOlder = timeDelta < -TEN_MINUTES;
 	    boolean isNewer = timeDelta > 0;
 
 	    // If it's been more than two minutes since the current location, use the new location

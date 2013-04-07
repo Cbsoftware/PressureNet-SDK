@@ -3,20 +3,15 @@ package ca.cumulonimbus.pressurenetsdk;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.provider.Settings.Secure;
-import android.widget.Toast;
 
 /**
  * Represent developer-facing pressureNET API
@@ -139,7 +134,7 @@ public class CbService extends Service implements SensorEventListener  {
 	 */
 	public boolean sendCbObservation(CbObservation observation) {
 		CbDataSender sender = new CbDataSender();
-		sender.setSettings(settingsHandler);
+		sender.setSettings(settingsHandler,locationManager);
 		sender.execute(observation.getObservationAsParams());
 		return true;
 	}
