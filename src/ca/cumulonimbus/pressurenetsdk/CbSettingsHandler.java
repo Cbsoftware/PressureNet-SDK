@@ -1,5 +1,7 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import android.content.Context;
+
 /**
  * Use Preferences to hold core pressureNET settings
  * Wrap and be compatible with Android Preferences
@@ -10,7 +12,11 @@ package ca.cumulonimbus.pressurenetsdk;
  */
 public class CbSettingsHandler {
 
+	// In use:
+	// dataCollectionFrequency, serverURL, collectingData, sharingData
+	
 	// General Data Collection Settings
+	private String appID = "";
 	private long dataCollectionFrequency = 1000 * 60 * 10; // in ms. launch default: 10 minutes
 	private boolean sendImmediately = true; // send right away. if false, check preference
 	private boolean sendWiFiOnly = false; // if true, wait until wifi before sending
@@ -26,10 +32,48 @@ public class CbSettingsHandler {
 	private String shareHumidityLevel = "";
 	private String shareTemperatureLevel = "";
 	
-	public CbSettingsHandler() {
-		// TODO: Implement		
+	// Database
+	private CbDb db;
+	private Context context;
+	
+	public void saveSettings() {
+		try {
+			db = new CbDb(context);
+			db.open();
+			
+			db.addSetting(appID, dataCollectionFrequency);
+			
+			db.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public CbSettingsHandler getSettings(String appID) {
+		try {
+			db = new CbDb(context);
+			db.open();
+
+			db.fetchSettingByApp(appID);
+			
+			db.close();			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return this;
+	}
+	
+	public CbSettingsHandler(Context ctx) {
+		this.context = ctx;
 	}
 
+	
+	public String getAppID() {
+		return appID;
+	}
+	public void setAppID(String appID) {
+		this.appID = appID;
+	}
 	public String getServerURL() {
 		return serverURL;
 	}

@@ -164,8 +164,9 @@ public class CbService extends Service implements SensorEventListener  {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStartCommand(intent, flags, startId);
 		// Use the intent to initialize Settings
-		settingsHandler = new CbSettingsHandler();
+		settingsHandler = new CbSettingsHandler(getApplicationContext());
 		settingsHandler.setServerURL(intent.getStringExtra("serverURL"));
+		
 		
 		log("on start command");
 		start();

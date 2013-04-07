@@ -25,6 +25,8 @@ public class CbLocationManager {
     private LocationManager gpsLocationManager;
     private LocationListener locationListener;
     
+    private CbSettingsHandler settings;
+    
     private Location currentBestLocation;
 	
 	private static final int TEN_MINUTES = 1000 * 60 * 10;
