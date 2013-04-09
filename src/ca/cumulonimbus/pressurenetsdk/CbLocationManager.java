@@ -1,5 +1,12 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Date;
+
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
@@ -28,10 +35,14 @@ public class CbLocationManager {
     
     private CbSettingsHandler settings;
     
+    private String mAppDir;
+    
     private Location currentBestLocation;
 	
 	public CbLocationManager(Context ctx) {
 		context = ctx;
+		setUpFiles();
+    	
 	}
 	
 	public Location getCurrentBestLocation() {
@@ -55,7 +66,9 @@ public class CbLocationManager {
 	
 	// Get the user's location from the location service
     public boolean startGettingLocations() {
-    	log("start getting locations");
+    	
+    	log("cb start getting locations");
+    	
     	networkLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
     	gpsLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
 
@@ -152,8 +165,36 @@ public class CbLocationManager {
 	    return provider1.equals(provider2);
 	}
 	
-    public void log(String text) {
-    	//System.out.println(text);
+
+    // Used to write a log to SD card. Not used unless logging enabled.
+    public void setUpFiles() {
+    	try {
+	    	File homeDirectory = context.getExternalFilesDir(null);
+	    	if(homeDirectory!=null) {
+	    		mAppDir = homeDirectory.getAbsolutePath();
+	    	}
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    }
+   
+	// Log data to SD card for debug purposes.
+	// To enable logging, ensure the Manifest allows writing to SD card.
+	public void logToFile(String text) {
+		try {
+			OutputStream output = new FileOutputStream(mAppDir + "/log.txt", true);
+			String logString = (new Date()).toString() + ": " + text + "\n";
+			output.write(logString.getBytes());
+			output.close();
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		} catch(IOException ioe) {
+			ioe.printStackTrace();
+		}
+	}
+	
+    public void log(String message) {
+    	logToFile(message);
     }
 	public int getMinDistance() {
 		return minDistance;

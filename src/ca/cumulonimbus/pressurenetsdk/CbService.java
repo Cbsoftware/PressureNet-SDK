@@ -1,7 +1,13 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Date;
 
 import android.app.Service;
 import android.content.Intent;
@@ -29,6 +35,8 @@ public class CbService extends Service implements SensorEventListener  {
 
 	private CbDb db;
 	
+	private String mAppDir;
+	
 	private final Handler mHandler = new Handler();
 
 	/**
@@ -40,9 +48,10 @@ public class CbService extends Service implements SensorEventListener  {
 	 */
 	public CbObservation collectNewObservation() {
 		CbObservation pressureObservation = new CbObservation();		
+		log("cb collecting new observation");
 		
 		// Location values
-		locationManager = new CbLocationManager(this);
+		locationManager = new CbLocationManager(getApplicationContext());
 		locationManager.startGettingLocations();
 		
 		// Measurement values
@@ -94,7 +103,7 @@ public class CbService extends Service implements SensorEventListener  {
 		}
 		
 		public void run() {
-			log("collecting and submitting");
+			log("collecting and submitting " + singleAppSettings.getServerURL());
 			long base = SystemClock.uptimeMillis();
 			
 			CbObservation singleObservation = new CbObservation();
@@ -102,6 +111,7 @@ public class CbService extends Service implements SensorEventListener  {
 			if(singleAppSettings.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
+				log("lat" + singleObservation.getLocation().getLatitude());
 				if(singleAppSettings.isSharingData()) {
 					// Send
 					sendCbObservation(singleObservation, singleAppSettings);
@@ -165,7 +175,9 @@ public class CbService extends Service implements SensorEventListener  {
 
 	@Override
 	public void onCreate() {
-		log("on create");
+		setUpFiles();
+		log("cb on create");
+		
 		db = new CbDb(getApplicationContext());
 		super.onCreate();
 	}
@@ -189,18 +201,19 @@ public class CbService extends Service implements SensorEventListener  {
 			// Start a new thread and return
 			start(settings);
 			return START_STICKY;
+		} else {
+			// Check the database for Settings initialization
+			db.open();
+			//db.clearDb();
+			Cursor allSettings = db.fetchAllSettings();
+			log("cb intent null; checking db, size " + allSettings.getCount());
+			while(allSettings.moveToNext()) {
+				settings.setAppID(allSettings.getString(1));
+				settings.setDataCollectionFrequency(allSettings.getLong(2));
+				start(settings);	
+			}
+			db.close();
 		}
-		
-		// Check the database for Settings initialization
-		db.open();
-		db.clearDb();
-		Cursor allSettings = db.fetchAllSettings();
-		while(allSettings.moveToNext()) {
-			settings.setAppID(allSettings.getString(1));
-			settings.setDataCollectionFrequency(allSettings.getLong(2));
-			start(settings);	
-		}
-		db.close();
 		super.onStartCommand(intent, flags, startId);
 		return START_STICKY;
 	}
@@ -227,6 +240,33 @@ public class CbService extends Service implements SensorEventListener  {
 			return "--";
 		}
 	}
+
+    // Used to write a log to SD card. Not used unless logging enabled.
+    public void setUpFiles() {
+    	try {
+	    	File homeDirectory = getExternalFilesDir(null);
+	    	if(homeDirectory!=null) {
+	    		mAppDir = homeDirectory.getAbsolutePath();
+	    	}
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    }
+   
+	// Log data to SD card for debug purposes.
+	// To enable logging, ensure the Manifest allows writing to SD card.
+	public void logToFile(String text) {
+		try {
+			OutputStream output = new FileOutputStream(mAppDir + "/log.txt", true);
+			String logString = (new Date()).toString() + ": " + text + "\n";
+			output.write(logString.getBytes());
+			output.close();
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		} catch(IOException ioe) {
+			ioe.printStackTrace();
+		}
+	}
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -235,7 +275,7 @@ public class CbService extends Service implements SensorEventListener  {
 	}
 
 	public void log(String message) {
-		System.out.println(message);
+		logToFile(message);
 	}
 
 	@Override
