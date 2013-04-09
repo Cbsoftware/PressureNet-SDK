@@ -1,7 +1,12 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -31,6 +36,14 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	
 	private CbSettingsHandler settings;
 	
+	private Context context;
+	private String mAppDir;
+	
+	public CbDataSender(Context ctx) {
+		this.context = ctx;
+		setUpFiles();
+	}
+	
 	public CbSettingsHandler getSettings() {
 		return settings;
 	}
@@ -43,7 +56,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	protected String doInBackground(String... params) {
 		// TODO: SecureHttpClient
 		DefaultHttpClient client = new DefaultHttpClient();
-		System.out.println("sending to " + settings.getServerURL() + " params " + params.length);
+		log("cbdatasender to " + settings.getServerURL() + " params " + params.length);
 		HttpPost httppost = new HttpPost(settings.getServerURL());
 		try {
 			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
@@ -64,6 +77,22 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		}
 		return responseText;
 	}
+	
+	public void log(String message) {
+		logToFile(message);
+	}
+
+    // Used to write a log to SD card. Not used unless logging enabled.
+    public void setUpFiles() {
+    	try {
+	    	File homeDirectory = context.getExternalFilesDir(null);
+	    	if(homeDirectory!=null) {
+	    		mAppDir = homeDirectory.getAbsolutePath();
+	    	}
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    }
 
 	@Override
 	protected void onPostExecute(String result) {
@@ -71,4 +100,19 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		locationManager.stopGettingLocations();
 		super.onPostExecute(result);
 	}
+	// Log data to SD card for debug purposes.
+	// To enable logging, ensure the Manifest allows writing to SD card.
+	public void logToFile(String text) {
+		try {
+			OutputStream output = new FileOutputStream(mAppDir + "/log.txt", true);
+			String logString = (new Date()).toString() + ": " + text + "\n";
+			output.write(logString.getBytes());
+			output.close();
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		} catch(IOException ioe) {
+			ioe.printStackTrace();
+		}
+	}
+	
 }

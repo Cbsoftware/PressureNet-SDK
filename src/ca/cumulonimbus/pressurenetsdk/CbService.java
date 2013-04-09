@@ -149,7 +149,7 @@ public class CbService extends Service implements SensorEventListener  {
 	 * @return
 	 */
 	public boolean sendCbObservation(CbObservation observation, CbSettingsHandler settings) {
-		CbDataSender sender = new CbDataSender();
+		CbDataSender sender = new CbDataSender(getApplicationContext());
 		sender.setSettings(settings,locationManager);
 		sender.execute(observation.getObservationAsParams());
 		return true;
@@ -191,7 +191,7 @@ public class CbService extends Service implements SensorEventListener  {
 		log("cb onstartcommand");
 		CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
 		// Check the intent for Settings initialization
-		if (intent != null) {
+		if (intent.getExtras().getString("serverURL") != null) {
 			log( "intent url " + intent.getExtras().getString("serverURL"));
 			settings.setServerURL(intent.getStringExtra("serverURL"));
 

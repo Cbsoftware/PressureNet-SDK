@@ -122,7 +122,7 @@ public class CbDb {
     public long addSetting(String appID, long dataCollectionFrequency) {
     	
         ContentValues initialValues = new ContentValues();
-        System.out.println("adding " + appID + " freq " + dataCollectionFrequency);
+        //System.out.println("adding " + appID + " freq " + dataCollectionFrequency);
         initialValues.put(KEY_APP_ID, appID);
         initialValues.put(KEY_DATA_COLLECTION_FREQUENCY, dataCollectionFrequency);
 
