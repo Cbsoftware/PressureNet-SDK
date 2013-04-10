@@ -203,6 +203,7 @@ public class CbService extends Service implements SensorEventListener  {
 			
 			log( "intent url " + intent.getExtras().getString("serverURL"));
 			settings.setServerURL(intent.getStringExtra("serverURL"));
+			settings.setAppID(getID());
 
 			// Seems like new settings. Try adding to the db.
 			settings.saveSettings();
@@ -220,6 +221,7 @@ public class CbService extends Service implements SensorEventListener  {
 			while(allSettings.moveToNext()) {
 				settings.setAppID(allSettings.getString(1));
 				settings.setDataCollectionFrequency(allSettings.getLong(2));
+				settings.setServerURL(allSettings.getString(3));
 				start(settings);
 				// but just once
 				break;

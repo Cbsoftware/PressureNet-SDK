@@ -41,14 +41,15 @@ public class CbSettingsHandler {
 	 * Add or update application settings
 	 */
 	public void saveSettings() {
+		System.out.println("Save settings");
 		try {
 			db = new CbDb(context);
 			db.open();
 			Cursor existing = db.fetchSettingByApp(appID);
 			if (existing.getCount() < 1) {
-				db.addSetting(appID, dataCollectionFrequency);
+				db.addSetting(appID, dataCollectionFrequency, serverURL);
 			} else {
-				db.updateSetting(appID, dataCollectionFrequency);
+				db.updateSetting(appID, dataCollectionFrequency, serverURL);
 			}
 			db.close();
 		} catch(Exception e) {

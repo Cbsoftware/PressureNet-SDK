@@ -26,6 +26,7 @@ public class CbDb {
 	public static final String KEY_ROW_ID = "_id";
 	public static final String KEY_APP_ID = "app_id";
 	public static final String KEY_DATA_COLLECTION_FREQUENCY = "data_frequency";
+	public static final String KEY_SERVER_URL = "server_url";
 
 	private Context mContext;
 	
@@ -35,9 +36,10 @@ public class CbDb {
 	private static final String DATABASE_CREATE = "create table " 
 			+ SETTINGS_TABLE + " (_id integer primary key autoincrement, "
 			+ KEY_APP_ID + " text not null, "
-			+ KEY_DATA_COLLECTION_FREQUENCY + " real not null);"; 
+			+ KEY_DATA_COLLECTION_FREQUENCY + " real not null, "
+			+ KEY_SERVER_URL + " text not null)"; 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 2;
+	private static final int DATABASE_VERSION = 3;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 	
@@ -68,7 +70,7 @@ public class CbDb {
         Cursor mCursor =
 
             mDB.query(true, SETTINGS_TABLE, new String[] {KEY_ROW_ID,
-                    KEY_APP_ID, KEY_DATA_COLLECTION_FREQUENCY}, KEY_ROW_ID + "=" + rowId, null,
+                    KEY_APP_ID, KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL}, KEY_ROW_ID + "=" + rowId, null,
                     null, null, null, null);
         if (mCursor != null) {
             mCursor.moveToFirst();
@@ -90,7 +92,7 @@ public class CbDb {
      * @return
      */
     public Cursor fetchAllSettings() {
-        return mDB.query(SETTINGS_TABLE, new String[] {KEY_ROW_ID, KEY_APP_ID, KEY_DATA_COLLECTION_FREQUENCY}, null, null, null, null, null);
+        return mDB.query(SETTINGS_TABLE, new String[] {KEY_ROW_ID, KEY_APP_ID, KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL}, null, null, null, null, null);
     }
     
 
@@ -104,7 +106,7 @@ public class CbDb {
         Cursor mCursor =
 
             mDB.query(true, SETTINGS_TABLE, new String[] {KEY_ROW_ID,
-                    KEY_APP_ID, KEY_DATA_COLLECTION_FREQUENCY}, KEY_APP_ID + "=" + appID, null,
+                    KEY_APP_ID, KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL}, KEY_APP_ID + "='" + appID + "'", null,
                     null, null, null, null);
         if (mCursor != null) {
             mCursor.moveToFirst();
@@ -119,12 +121,12 @@ public class CbDb {
      * @param dataCollectionFrequency
      * @return
      */
-    public long updateSetting(String appID, long dataCollectionFrequency) {
+    public long updateSetting(String appID, long dataCollectionFrequency, String serverURL) {
     	
         ContentValues newValues = new ContentValues();
         newValues.put(KEY_APP_ID, appID);
         newValues.put(KEY_DATA_COLLECTION_FREQUENCY, dataCollectionFrequency);
-        //table, values, whereClause, whereArgs)
+        newValues.put(KEY_SERVER_URL, serverURL);
         return mDB.update(SETTINGS_TABLE, newValues, KEY_APP_ID + "=" + appID, null);
     }
     
@@ -134,13 +136,13 @@ public class CbDb {
      * @param dataCollectionFrequency
      * @return
      */
-    public long addSetting(String appID, long dataCollectionFrequency) {
+    public long addSetting(String appID, long dataCollectionFrequency, String serverURL) {
     	
         ContentValues initialValues = new ContentValues();
         //System.out.println("adding " + appID + " freq " + dataCollectionFrequency);
         initialValues.put(KEY_APP_ID, appID);
         initialValues.put(KEY_DATA_COLLECTION_FREQUENCY, dataCollectionFrequency);
-
+        initialValues.put(KEY_SERVER_URL, serverURL);
         return mDB.insert(SETTINGS_TABLE, null, initialValues);
     }
 
