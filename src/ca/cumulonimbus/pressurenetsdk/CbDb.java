@@ -37,7 +37,7 @@ public class CbDb {
 			+ KEY_APP_ID + " text not null, "
 			+ KEY_DATA_COLLECTION_FREQUENCY + " real not null);"; 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 1;
+	private static final int DATABASE_VERSION = 2;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 	
@@ -111,7 +111,22 @@ public class CbDb {
         }
         return mCursor;
     }
-	
+
+    
+    /**
+     * Update existing settings for an application
+     * @param appID
+     * @param dataCollectionFrequency
+     * @return
+     */
+    public long updateSetting(String appID, long dataCollectionFrequency) {
+    	
+        ContentValues newValues = new ContentValues();
+        newValues.put(KEY_APP_ID, appID);
+        newValues.put(KEY_DATA_COLLECTION_FREQUENCY, dataCollectionFrequency);
+        //table, values, whereClause, whereArgs)
+        return mDB.update(SETTINGS_TABLE, newValues, KEY_APP_ID + "=" + appID, null);
+    }
     
     /**
      * Add new settings for an application

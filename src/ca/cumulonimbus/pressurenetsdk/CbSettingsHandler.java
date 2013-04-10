@@ -1,6 +1,7 @@
 package ca.cumulonimbus.pressurenetsdk;
 
 import android.content.Context;
+import android.database.Cursor;
 
 /**
  * Use Preferences to hold core pressureNET settings
@@ -36,13 +37,19 @@ public class CbSettingsHandler {
 	private CbDb db;
 	private Context context;
 	
+	/**
+	 * Add or update application settings
+	 */
 	public void saveSettings() {
 		try {
 			db = new CbDb(context);
 			db.open();
-			
-			db.addSetting(appID, dataCollectionFrequency);
-			
+			Cursor existing = db.fetchSettingByApp(appID);
+			if (existing.getCount() < 1) {
+				db.addSetting(appID, dataCollectionFrequency);
+			} else {
+				db.updateSetting(appID, dataCollectionFrequency);
+			}
 			db.close();
 		} catch(Exception e) {
 			e.printStackTrace();

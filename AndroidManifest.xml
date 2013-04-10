@@ -21,7 +21,7 @@
         <service android:name=".CbService"
             android:enabled="true" />
         
-        <receiver android:name="ca.treasuremapp.app.CbBroadcastReceiver">  
+        <receiver android:name="ca.cumulonimbus.pressurenetsdk.CbBroadcastReceiver">  
 		    <intent-filter>  
 	    	    <action android:name="android.intent.action.BOOT_COMPLETED" />  
 	   		 </intent-filter>  

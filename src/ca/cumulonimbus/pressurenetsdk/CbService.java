@@ -189,10 +189,18 @@ public class CbService extends Service implements SensorEventListener  {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cb onstartcommand");
+		
+		// settings debug
+		CbDb db2 = new CbDb(getApplicationContext());
+		db2.open();
+		log("settings count " + db2.fetchAllSettings().getCount());
+		db2.close();
+		
 		CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
 		// Check the intent for Settings initialization
 		
-		if (intent.hasExtra("serverURL")) {
+		if (intent != null) {
+			
 			log( "intent url " + intent.getExtras().getString("serverURL"));
 			settings.setServerURL(intent.getStringExtra("serverURL"));
 
@@ -203,6 +211,7 @@ public class CbService extends Service implements SensorEventListener  {
 			start(settings);
 			return START_STICKY;
 		} else {
+			log("INTENT NULL; checking db");
 			// Check the database for Settings initialization
 			db.open();
 			//db.clearDb();
