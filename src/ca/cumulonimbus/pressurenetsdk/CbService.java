@@ -191,7 +191,8 @@ public class CbService extends Service implements SensorEventListener  {
 		log("cb onstartcommand");
 		CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
 		// Check the intent for Settings initialization
-		if (intent.getExtras().getString("serverURL") != null) {
+		
+		if (intent.hasExtra("serverURL")) {
 			log( "intent url " + intent.getExtras().getString("serverURL"));
 			settings.setServerURL(intent.getStringExtra("serverURL"));
 
@@ -210,7 +211,9 @@ public class CbService extends Service implements SensorEventListener  {
 			while(allSettings.moveToNext()) {
 				settings.setAppID(allSettings.getString(1));
 				settings.setDataCollectionFrequency(allSettings.getLong(2));
-				start(settings);	
+				start(settings);
+				// but just once
+				break;
 			}
 			db.close();
 		}
@@ -276,6 +279,7 @@ public class CbService extends Service implements SensorEventListener  {
 
 	public void log(String message) {
 		logToFile(message);
+		//System.out.println(message);
 	}
 
 	@Override

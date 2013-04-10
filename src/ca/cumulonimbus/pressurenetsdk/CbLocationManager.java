@@ -195,6 +195,7 @@ public class CbLocationManager {
 	
     public void log(String message) {
     	logToFile(message);
+    	///System.out.println(message);
     }
 	public int getMinDistance() {
 		return minDistance;

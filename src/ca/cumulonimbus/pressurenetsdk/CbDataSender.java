@@ -80,6 +80,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	
 	public void log(String message) {
 		logToFile(message);
+		//System.out.println(message);
 	}
 
     // Used to write a log to SD card. Not used unless logging enabled.
@@ -100,6 +101,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		locationManager.stopGettingLocations();
 		super.onPostExecute(result);
 	}
+	
 	// Log data to SD card for debug purposes.
 	// To enable logging, ensure the Manifest allows writing to SD card.
 	public void logToFile(String text) {
