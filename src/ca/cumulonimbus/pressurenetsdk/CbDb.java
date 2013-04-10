@@ -39,7 +39,7 @@ public class CbDb {
 			+ KEY_DATA_COLLECTION_FREQUENCY + " real not null, "
 			+ KEY_SERVER_URL + " text not null)"; 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 3;
+	private static final int DATABASE_VERSION = 5;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 	

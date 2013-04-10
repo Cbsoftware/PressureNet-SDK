@@ -156,6 +156,19 @@ public class CbService extends Service implements SensorEventListener  {
 	}
 	
 	/**
+	 * Send a new account to the server
+	 * 
+	 * @param group
+	 * @return
+	 */
+	public boolean sendCbAccount(CbAccount account, CbSettingsHandler settings) {
+		CbDataSender sender = new CbDataSender(getApplicationContext());
+		sender.setSettings(settings,locationManager);
+		sender.execute(account.getAccountAsParams());
+		return true;
+	}
+	
+	/**
 	 * Start the periodic data collection.
 	 */
 	public void start(CbSettingsHandler settings) {
@@ -218,6 +231,15 @@ public class CbService extends Service implements SensorEventListener  {
 			// Seems like new settings. Try adding to the db.
 			settings.saveSettings();
 			
+			// are we creating a new user?
+			if (intent.hasExtra("add_account")) {
+				log("adding new user");
+				CbAccount account = new CbAccount();
+				account.setEmail(intent.getStringExtra("email"));
+				account.setTimeRegistered(intent.getLongExtra("time", 0));
+				account.setUserID(intent.getStringExtra("userID"));
+				sendCbAccount(account, settings);
+			}
 			
 			// Start a new thread and return
 			start(settings);
