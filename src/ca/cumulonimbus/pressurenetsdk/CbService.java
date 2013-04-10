@@ -190,31 +190,49 @@ public class CbService extends Service implements SensorEventListener  {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cb onstartcommand");
 		
-		// settings debug
-		CbDb db2 = new CbDb(getApplicationContext());
-		db2.open();
-		log("settings count " + db2.fetchAllSettings().getCount());
-		db2.close();
-		
-		CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
 		// Check the intent for Settings initialization
-		
+	
 		if (intent != null) {
-			
+			if(intent.hasExtra("serverURL")) {
+				startWithIntent(intent);
+			} else {
+				startWithDatabase();
+			}
+			return START_STICKY;
+		} else {
+			log("INTENT NULL; checking db");
+			startWithDatabase();
+		}
+		super.onStartCommand(intent, flags, startId);
+		return START_STICKY;
+	}
+	
+	public void startWithIntent(Intent intent) {
+		try {
 			log( "intent url " + intent.getExtras().getString("serverURL"));
+			CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
+			
 			settings.setServerURL(intent.getStringExtra("serverURL"));
 			settings.setAppID(getID());
 
 			// Seems like new settings. Try adding to the db.
 			settings.saveSettings();
 			
+			
 			// Start a new thread and return
 			start(settings);
-			return START_STICKY;
-		} else {
-			log("INTENT NULL; checking db");
-			// Check the database for Settings initialization
+		} catch(Exception e) {
+			for (StackTraceElement ste : e.getStackTrace()) {
+				log(ste.getMethodName() + ste.getLineNumber());
+			}
+		}
+	}
+	
+	public void startWithDatabase() {
+		try {
 			db.open();
+			// Check the database for Settings initialization
+			CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
 			//db.clearDb();
 			Cursor allSettings = db.fetchAllSettings();
 			log("cb intent null; checking db, size " + allSettings.getCount());
@@ -227,9 +245,18 @@ public class CbService extends Service implements SensorEventListener  {
 				break;
 			}
 			db.close();
+		} catch(Exception e)  {
+			for (StackTraceElement ste : e.getStackTrace()) {
+				log(ste.getMethodName() + ste.getLineNumber());
+			}
 		}
-		super.onStartCommand(intent, flags, startId);
-		return START_STICKY;
+	}
+	
+
+	@Override
+	public void onStart(Intent intent, int startId) {
+		
+		super.onStart(intent, startId);
 	}
 
 	/**
