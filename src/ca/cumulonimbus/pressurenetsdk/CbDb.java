@@ -127,7 +127,7 @@ public class CbDb {
         newValues.put(KEY_APP_ID, appID);
         newValues.put(KEY_DATA_COLLECTION_FREQUENCY, dataCollectionFrequency);
         newValues.put(KEY_SERVER_URL, serverURL);
-        return mDB.update(SETTINGS_TABLE, newValues, KEY_APP_ID + "=" + appID, null);
+        return mDB.update(SETTINGS_TABLE, newValues, KEY_APP_ID + "='" + appID + "'", null);
     }
     
     /**
