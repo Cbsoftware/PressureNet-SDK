@@ -47,22 +47,27 @@ public class CbService extends Service implements SensorEventListener  {
 	 * @return
 	 */
 	public CbObservation collectNewObservation() {
-		CbObservation pressureObservation = new CbObservation();		
-		log("cb collecting new observation");
+		try {
+			CbObservation pressureObservation = new CbObservation();		
+			log("cb collecting new observation");
+			
+			// Location values
+			locationManager = new CbLocationManager(getApplicationContext());
+			locationManager.startGettingLocations();
+			
+			// Measurement values
+			dataCollector = new CbDataCollector(getID());
+			pressureObservation = dataCollector.getPressureObservation();
+			pressureObservation.setLocation(locationManager.getCurrentBestLocation());
+			
+			// stop listening for locations
+			locationManager.stopGettingLocations();
+			return pressureObservation;
+		} catch(Exception e) {
+			e.printStackTrace();
+			return new CbObservation();
+		}
 		
-		// Location values
-		locationManager = new CbLocationManager(getApplicationContext());
-		locationManager.startGettingLocations();
-		
-		// Measurement values
-		dataCollector = new CbDataCollector(getID());
-		pressureObservation = dataCollector.getPressureObservation();
-		pressureObservation.setLocation(locationManager.getCurrentBestLocation());
-		
-		// stop listening for locations
-		locationManager.stopGettingLocations();
-		
-		return pressureObservation;
 	}
 	
 	/**
@@ -149,10 +154,14 @@ public class CbService extends Service implements SensorEventListener  {
 	 * @return
 	 */
 	public boolean sendCbObservation(CbObservation observation, CbSettingsHandler settings) {
-		CbDataSender sender = new CbDataSender(getApplicationContext());
-		sender.setSettings(settings,locationManager);
-		sender.execute(observation.getObservationAsParams());
-		return true;
+		try {
+			CbDataSender sender = new CbDataSender(getApplicationContext());
+			sender.setSettings(settings,locationManager);
+			sender.execute(observation.getObservationAsParams());
+			return true;
+		}catch (Exception e) {
+			return false;
+		}
 	}
 	
 	/**
@@ -162,10 +171,14 @@ public class CbService extends Service implements SensorEventListener  {
 	 * @return
 	 */
 	public boolean sendCbAccount(CbAccount account, CbSettingsHandler settings) {
-		CbDataSender sender = new CbDataSender(getApplicationContext());
-		sender.setSettings(settings,locationManager);
-		sender.execute(account.getAccountAsParams());
-		return true;
+		try {
+			CbDataSender sender = new CbDataSender(getApplicationContext());
+			sender.setSettings(settings,locationManager);
+			sender.execute(account.getAccountAsParams());
+			return true;
+		}catch(Exception e) {
+			return false;
+		}
 	}
 	
 	/**
@@ -338,7 +351,7 @@ public class CbService extends Service implements SensorEventListener  {
 	}
 
 	public void log(String message) {
-		logToFile(message);
+		//logToFile(message);
 		//System.out.println(message);
 	}
 

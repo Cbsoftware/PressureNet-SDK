@@ -46,12 +46,10 @@ public class CbLocationManager {
 	}
 	
 	public Location getCurrentBestLocation() {
-		log("returning best location, " + currentBestLocation.getProvider());
 		return currentBestLocation;
 	}
 	
 	public boolean stopGettingLocations() {
-		log("stop getting locations");
 		try {
 			networkLocationManager.removeUpdates(locationListener);
 	        gpsLocationManager.removeUpdates(locationListener);
@@ -67,17 +65,19 @@ public class CbLocationManager {
 	// Get the user's location from the location service
     public boolean startGettingLocations() {
     	
-    	log("cb start getting locations");
-    	
-    	networkLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
-    	gpsLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
-
-    	Location lastKnown = networkLocationManager.getLastKnownLocation("network");
-    	if (lastKnown != null ) {
-    		log("setting best = last known");
-    		currentBestLocation = lastKnown;
-    	} else {
-    		log("last known is null");
+    	try {
+	    	networkLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
+	    	gpsLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
+	
+	    	Location lastKnown = networkLocationManager.getLastKnownLocation("network");
+	    	if (lastKnown != null ) {
+	    		log("setting best = last known");
+	    		currentBestLocation = lastKnown;
+	    	} else {
+	    		log("last known is null");
+	    	}
+    	} catch(Exception e) {
+    		e.printStackTrace();
     	}
     	
     	// Define a listener that responds to location updates
@@ -194,7 +194,7 @@ public class CbLocationManager {
 	}
 	
     public void log(String message) {
-    	logToFile(message);
+    	//logToFile(message);
     	///System.out.println(message);
     }
 	public int getMinDistance() {

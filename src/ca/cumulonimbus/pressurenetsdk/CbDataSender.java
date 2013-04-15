@@ -56,7 +56,6 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	protected String doInBackground(String... params) {
 		// TODO: SecureHttpClient
 		DefaultHttpClient client = new DefaultHttpClient();
-		log("cbdatasender to " + settings.getServerURL() + " params " + params.length);
 		HttpPost httppost = new HttpPost(settings.getServerURL());
 		try {
 			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
@@ -79,7 +78,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	}
 	
 	public void log(String message) {
-		logToFile(message);
+		//logToFile(message);
 		//System.out.println(message);
 	}
 
