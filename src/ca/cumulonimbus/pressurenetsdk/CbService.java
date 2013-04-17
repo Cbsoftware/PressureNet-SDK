@@ -131,7 +131,9 @@ public class CbService extends Service implements SensorEventListener  {
 	 * 
 	 */
 	public void shutDownService() {
-		locationManager.stopGettingLocations();
+		if(locationManager!=null) {
+			locationManager.stopGettingLocations();
+		}
 		stopSelf();
 	}
 	
@@ -195,7 +197,7 @@ public class CbService extends Service implements SensorEventListener  {
 	@Override
 	public void onDestroy() {
 		log("on destroy");
-		shutDownService();
+		//shutDownService();
 		super.onDestroy();
 	}
 
@@ -352,7 +354,7 @@ public class CbService extends Service implements SensorEventListener  {
 
 	public void log(String message) {
 		//logToFile(message);
-		//System.out.println(message);
+		System.out.println(message);
 	}
 
 	@Override
