@@ -12,13 +12,13 @@ import java.util.Date;
 import android.app.Service;
 import android.content.Intent;
 import android.database.Cursor;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.os.SystemClock;
 import android.provider.Settings.Secure;
+import android.widget.Toast;
 
 /**
  * Represent developer-facing pressureNET API
@@ -38,9 +38,11 @@ public class CbService extends Service  {
 	private String mAppDir;
 	
 	IBinder mBinder;
+	public static final int MSG_STOP = 1;
 	
 	private final Handler mHandler = new Handler();
-
+	final Messenger mMessenger = new Messenger(new IncomingHandler());
+	
 	/**
 	 * Find all the data for an observation.
 	 * 
@@ -295,12 +297,22 @@ public class CbService extends Service  {
 		}
 	}
 	
-
-	@Override
-	public void onStart(Intent intent, int startId) {
-		
-		super.onStart(intent, startId);
-	}
+	 /**
+     * Handler of incoming messages from clients.
+     */
+    class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_STOP:
+                	log("bound service: stop");
+                	shutDownService();
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
 
 	/**
 	 * Get a hash'd device ID
@@ -355,10 +367,8 @@ public class CbService extends Service  {
 	@Override
 	public IBinder onBind(Intent intent) {
 		log("on bind");
-		// bind
+       return mMessenger.getBinder();
 		
-		
-		return mBinder;
 	}	
 	@Override
 	public void onRebind(Intent intent) {
