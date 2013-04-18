@@ -56,7 +56,7 @@ public class CbService extends Service implements SensorEventListener  {
 			locationManager.startGettingLocations();
 			
 			// Measurement values
-			dataCollector = new CbDataCollector(getID());
+			dataCollector = new CbDataCollector(getID(), getApplicationContext());
 			pressureObservation = dataCollector.getPressureObservation();
 			pressureObservation.setLocation(locationManager.getCurrentBestLocation());
 			
@@ -86,7 +86,7 @@ public class CbService extends Service implements SensorEventListener  {
 		locationManager.startGettingLocations();
 		
 		// Measurement values
-		dataCollector = new CbDataCollector(getID());
+		dataCollector = new CbDataCollector(getID(), getApplicationContext());
 		pressureObservation = dataCollector.getPressureObservation();
 		
 		// Put everything together
@@ -134,7 +134,10 @@ public class CbService extends Service implements SensorEventListener  {
 		if(locationManager!=null) {
 			locationManager.stopGettingLocations();
 		}
-		stopSelf();
+		if(dataCollector  != null) {
+			dataCollector.stopCollectingPressure();
+		}
+		//stopSelf();
 	}
 	
 	/**
@@ -197,7 +200,7 @@ public class CbService extends Service implements SensorEventListener  {
 	@Override
 	public void onDestroy() {
 		log("on destroy");
-		//shutDownService();
+		shutDownService();
 		super.onDestroy();
 	}
 
