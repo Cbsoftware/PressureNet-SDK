@@ -19,16 +19,26 @@ public class CbDataCollector implements SensorEventListener{
 	private SensorManager sm;
 	private Context context;
 	
-	private boolean barometerReadingsActive = false;
+	private boolean pressureReadingsActive = false;
+	private boolean humidityReadingsActive = false;
+	private boolean temperatureReadingsActive = false;
 	
     // Start getting barometer readings.
     public void setUpBarometerAndStartCollecting() {
     	try {
 	    	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-	    	Sensor bar = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
+	    	Sensor pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
+	    	Sensor temperatureSensor = sm.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+	    	Sensor humiditySensor = sm.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
 	    	
-	    	if(bar!=null) {
-	    		barometerReadingsActive = sm.registerListener(this, bar, SensorManager.SENSOR_DELAY_NORMAL);
+	    	if(pressureSensor!=null) {
+	    		pressureReadingsActive = sm.registerListener(this, pressureSensor, SensorManager.SENSOR_DELAY_NORMAL);
+	    	}
+	    	if(temperatureSensor!=null) {
+	    		temperatureReadingsActive = sm.registerListener(this, temperatureSensor, SensorManager.SENSOR_DELAY_NORMAL);
+	    	}
+	    	if(humiditySensor!=null) {
+	    		humidityReadingsActive = sm.registerListener(this, humiditySensor, SensorManager.SENSOR_DELAY_NORMAL);
 	    	}
     	} catch(Exception e) {
     		e.printStackTrace();
@@ -59,12 +69,13 @@ public class CbDataCollector implements SensorEventListener{
 	@Override
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
 		
-		
 	}
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-		System.out.println("sensor changed " + event.values.length + " returned values");
-		
+		System.out.println("sensor changed: " + event.sensor.getName());
+		for(int x = 0; x < event.values.length; x++) {
+			System.out.println(event.values[x]);
+		}
 	}
 }
