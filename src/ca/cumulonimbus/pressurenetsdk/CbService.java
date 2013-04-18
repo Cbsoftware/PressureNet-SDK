@@ -28,7 +28,7 @@ import android.provider.Settings.Secure;
  * @author jacob
  * 
  */
-public class CbService extends Service implements SensorEventListener  {
+public class CbService extends Service  {
 	
 	private CbDataCollector dataCollector;
 	private CbLocationManager locationManager;
@@ -36,6 +36,8 @@ public class CbService extends Service implements SensorEventListener  {
 	private CbDb db;
 	
 	private String mAppDir;
+	
+	IBinder mBinder;
 	
 	private final Handler mHandler = new Handler();
 
@@ -67,8 +69,9 @@ public class CbService extends Service implements SensorEventListener  {
 			e.printStackTrace();
 			return new CbObservation();
 		}
-		
 	}
+	
+	
 	
 	/**
 	 * Find all the data for an observation group.
@@ -351,25 +354,22 @@ public class CbService extends Service implements SensorEventListener  {
 	
 	@Override
 	public IBinder onBind(Intent intent) {
-		System.out.println("on bind");
-		return null;
+		log("on bind");
+		// bind
+		
+		
+		return mBinder;
+	}	
+	@Override
+	public void onRebind(Intent intent) {
+		log("on rebind");
+		super.onRebind(intent);
 	}
 
 	public void log(String message) {
 		//logToFile(message);
 		System.out.println(message);
 	}
-
-	@Override
-	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		// TODO: Implement
-	}
-
-	@Override
-	public void onSensorChanged(SensorEvent event) {
-		// TODO: Implement
-	}
-	
 	public CbDataCollector getDataCollector() {
 		return dataCollector;
 	}
