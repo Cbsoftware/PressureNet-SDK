@@ -19,12 +19,17 @@ public class CbDataCollector implements SensorEventListener{
 	private SensorManager sm;
 	private Context context;
 	
+	// TODO: Keep a list of recent readings rather than single values
+	private double recentPressureReading = 0.0;
+	private double recentHumidityReading = 0.0;
+	private double recentTemperatureReading = 0.0;
+	
 	private boolean pressureReadingsActive = false;
 	private boolean humidityReadingsActive = false;
 	private boolean temperatureReadingsActive = false;
 	
-    // Start getting barometer readings.
-    public void setUpBarometerAndStartCollecting() {
+    // Get a set of measurements
+    public void getSomeMeasurements() {
     	try {
 	    	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 	    	Sensor pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
@@ -50,14 +55,26 @@ public class CbDataCollector implements SensorEventListener{
 		sm.unregisterListener(this);
     }
     
-	// TODO: Implement
+    
+	/**
+	 * Collect a full group of observations. The principle way data
+	 * should be gathered.
+	 * @return
+	 */
+    public CbObservationGroup getObservationGroup() {
+        // TODO: Implement
+    	return null;
+    }
+    
 	public CbObservation getPressureObservation() {
+		getSomeMeasurements();
+		
 		CbObservation pressureObservation = new CbObservation();
 		pressureObservation.setTime(System.currentTimeMillis());
 		pressureObservation.setUser_id(userID);
-		
-		setUpBarometerAndStartCollecting();
-		
+		pressureObservation.setObservationType(Sensor.TYPE_PRESSURE + ""); // TODO: Fix hack
+		pressureObservation.setObservationValue(recentPressureReading);
+		pressureObservation.setObservationUnit("mbar");
 		return pressureObservation;
 	}
 	
@@ -74,8 +91,10 @@ public class CbDataCollector implements SensorEventListener{
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		System.out.println("sensor changed: " + event.sensor.getName());
-		for(int x = 0; x < event.values.length; x++) {
-			System.out.println(event.values[x]);
+		if(event.sensor.getType() == Sensor.TYPE_PRESSURE) {
+			recentPressureReading = event.values[0];
+					
 		}
+		
 	}
 }

@@ -121,7 +121,7 @@ public class CbService extends Service  {
 			if(singleAppSettings.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
-				log("lat" + singleObservation.getLocation().getLatitude());
+				log("lat" + singleObservation.getLocation().getLatitude() + ", pressure " + singleObservation.getObservationValue() + singleObservation.getObservationUnit());
 				if(singleAppSettings.isSharingData()) {
 					// Send
 					sendCbObservation(singleObservation, singleAppSettings);
