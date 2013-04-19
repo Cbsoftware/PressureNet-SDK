@@ -42,6 +42,9 @@ public class CbService extends Service  {
 	public static final int MSG_STOP = 1;
 	public static final int MSG_GET_BEST_LOCATION = 2;
 	public static final int MSG_BEST_LOCATION= 3;	
+	public static final int MSG_GET_BEST_PRESSURE = 4;
+	public static final int MSG_BEST_PRESSURE = 5;
+	
 	
 	
 	private final Handler mHandler = new Handler();
@@ -199,11 +202,13 @@ public class CbService extends Service  {
 	 * Start the periodic data collection.
 	 */
 	public void start(CbSettingsHandler settings) {
-		log("CbService: Starting to collect data.");
-		//mHandler.postDelayed(mSubmitReading, 0);
-		//Thread cbThread = new Thread(mSubmitReading);
+		log("CbService: Starting to auto-collect and submit data.");
+
+		log("CbService -- DEBUG MODE AUTO OFF");
+		
 		ReadingSender sender = new ReadingSender(settings);
 		mHandler.post(sender);
+		
 	}
 	
 	@Override
@@ -325,6 +330,20 @@ public class CbService extends Service  {
                 		}
                 	} else {
                 		log("error: location null, not returning");
+                	}
+                	break;
+                case MSG_GET_BEST_PRESSURE:
+                	log("message. bound service requesting pressure");
+                	if(dataCollector!=null) {
+                		CbObservation pressure = dataCollector.getPressureObservation();
+                		try {
+                			log("service sending best pressure");
+                			msg.replyTo.send(Message.obtain(null, MSG_BEST_PRESSURE, pressure));
+                		} catch(RemoteException re) {
+                			re.printStackTrace();
+                		}
+                	} else {
+                		log("error: data collector null, not returning");
                 	}
                 	break;
                 default:

@@ -93,7 +93,7 @@ public class CbDataCollector implements SensorEventListener{
 		System.out.println("sensor changed: " + event.sensor.getName());
 		if(event.sensor.getType() == Sensor.TYPE_PRESSURE) {
 			recentPressureReading = event.values[0];
-					
+			stopCollectingPressure();
 		}
 		
 	}
