@@ -12,13 +12,14 @@ import java.util.Date;
 import android.app.Service;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Location;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.provider.Settings.Secure;
-import android.widget.Toast;
 
 /**
  * Represent developer-facing pressureNET API
@@ -39,9 +40,12 @@ public class CbService extends Service  {
 	
 	IBinder mBinder;
 	public static final int MSG_STOP = 1;
+	public static final int MSG_GET_BEST_LOCATION = 2;
+	public static final int MSG_BEST_LOCATION= 3;	
+	
 	
 	private final Handler mHandler = new Handler();
-	final Messenger mMessenger = new Messenger(new IncomingHandler());
+	Messenger mMessenger = new Messenger(new IncomingHandler());
 	
 	/**
 	 * Find all the data for an observation.
@@ -305,9 +309,22 @@ public class CbService extends Service  {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_STOP:
-                	log("bound service: stop");
+                	log("message. bound service says stop");
                 	shutDownService();
+                	
                     break;
+                case MSG_GET_BEST_LOCATION:
+                	log("message. bound service requesting location");
+                	//if(locationManager!=null) {
+                		//Location best = locationManager.getCurrentBestLocation();
+                		try {
+                			log("service sending best location");
+                			msg.replyTo.send(Message.obtain(null, MSG_BEST_LOCATION));
+                		} catch(RemoteException re) {
+                			re.printStackTrace();
+                		}
+                //	}
+                	break;
                 default:
                     super.handleMessage(msg);
             }
