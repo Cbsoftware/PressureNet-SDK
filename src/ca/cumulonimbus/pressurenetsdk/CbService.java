@@ -315,15 +315,17 @@ public class CbService extends Service  {
                     break;
                 case MSG_GET_BEST_LOCATION:
                 	log("message. bound service requesting location");
-                	//if(locationManager!=null) {
-                		//Location best = locationManager.getCurrentBestLocation();
+                	if(locationManager!=null) {
+                		Location best = locationManager.getCurrentBestLocation();
                 		try {
                 			log("service sending best location");
-                			msg.replyTo.send(Message.obtain(null, MSG_BEST_LOCATION));
+                			msg.replyTo.send(Message.obtain(null, MSG_BEST_LOCATION, best));
                 		} catch(RemoteException re) {
                 			re.printStackTrace();
                 		}
-                //	}
+                	} else {
+                		log("error: location null, not returning");
+                	}
                 	break;
                 default:
                     super.handleMessage(msg);
