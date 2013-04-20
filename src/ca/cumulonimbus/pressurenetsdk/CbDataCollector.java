@@ -21,8 +21,16 @@ public class CbDataCollector implements SensorEventListener{
 	
 	// TODO: Keep a list of recent readings rather than single values
 	private double recentPressureReading = 0.0;
+	private int recentPressureAccuracy = 0;
+	private long lastPressureTime = 0;
+	
 	private double recentHumidityReading = 0.0;
+	private int recentHumidityAccuracy = 0;
+	private long lastHumidityTime = 0;
+	
 	private double recentTemperatureReading = 0.0;
+	private int recentTemperatureAccuracy = 0;
+	private long lastTemperatureTime = 0;
 	
 	private boolean pressureReadingsActive = false;
 	private boolean humidityReadingsActive = false;
@@ -50,7 +58,7 @@ public class CbDataCollector implements SensorEventListener{
     	}
     }
     
-    public void stopCollectingPressure() {
+    public void stopCollectingData() {
     	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 		sm.unregisterListener(this);
     }
@@ -67,8 +75,6 @@ public class CbDataCollector implements SensorEventListener{
     }
     
 	public CbObservation getPressureObservation() {
-		getSomeMeasurements();
-		
 		CbObservation pressureObservation = new CbObservation();
 		pressureObservation.setTime(System.currentTimeMillis());
 		pressureObservation.setUser_id(userID);
@@ -85,7 +91,9 @@ public class CbDataCollector implements SensorEventListener{
 
 	@Override
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		
+		if(sensor.getType() == Sensor.TYPE_PRESSURE) {
+			recentPressureAccuracy = accuracy;
+		}
 	}
 
 	@Override
@@ -93,8 +101,14 @@ public class CbDataCollector implements SensorEventListener{
 		System.out.println("sensor changed: " + event.sensor.getName());
 		if(event.sensor.getType() == Sensor.TYPE_PRESSURE) {
 			recentPressureReading = event.values[0];
-			stopCollectingPressure();
+			lastPressureTime = System.currentTimeMillis();
+		} else if(event.sensor.getType() == Sensor.TYPE_RELATIVE_HUMIDITY) {
+			recentHumidityReading = event.values[0];
+			lastHumidityTime = System.currentTimeMillis();
+		} else if(event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
+			recentTemperatureReading = event.values[0];
+			lastTemperatureTime = System.currentTimeMillis();
 		}
-		
+		stopCollectingData();
 	}
 }

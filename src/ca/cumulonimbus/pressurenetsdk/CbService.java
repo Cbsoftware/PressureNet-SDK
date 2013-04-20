@@ -34,8 +34,9 @@ public class CbService extends Service  {
 	private CbDataCollector dataCollector;
 	private CbLocationManager locationManager;
 	private CbSettingsHandler settingsHandler;
-	
 	private CbDb db;
+	
+	ArrayList<CbObservation> recentObservations = new ArrayList<CbObservation>();
 	
 	private String mAppDir;
 	
@@ -51,11 +52,9 @@ public class CbService extends Service  {
 	public static final int MSG_BEST_PRESSURE = 5;
 	public static final int MSG_START_AUTOSUBMIT = 6;
 	public static final int MSG_STOP_AUTOSUBMIT = 7;
-	// TODO: Implement the following messages
 	public static final int MSG_SET_SETTINGS = 8;
 	public static final int MSG_GET_SETTINGS = 9;
 	public static final int MSG_SETTINGS = 10;
-	
 	
 	
 	private final Handler mHandler = new Handler();
@@ -78,7 +77,6 @@ public class CbService extends Service  {
 			locationManager.startGettingLocations();
 			
 			// Measurement values
-			dataCollector = new CbDataCollector(getID(), getApplicationContext());
 			pressureObservation = dataCollector.getPressureObservation();
 			pressureObservation.setLocation(locationManager.getCurrentBestLocation());
 			
@@ -100,6 +98,7 @@ public class CbService extends Service  {
 	 * 
 	 * @return
 	 */
+	/*
 	public CbObservationGroup collectNewObservationGroup() {
 		ArrayList<CbObservation> observations = new ArrayList<CbObservation>();
 		CbObservation pressureObservation = new CbObservation();		
@@ -118,6 +117,7 @@ public class CbService extends Service  {
 		newGroup.setGroup(observations);
 		return newGroup;
 	}
+	*/
 
 	/**
 	 * Collect and send data in a different thread.
@@ -128,6 +128,8 @@ public class CbService extends Service  {
 		public void run() {
 			log("collecting and submitting " + settingsHandler.getServerURL());
 			long base = SystemClock.uptimeMillis();
+
+			dataCollector.getSomeMeasurements();
 			
 			CbObservation singleObservation = new CbObservation();
 			
@@ -153,7 +155,7 @@ public class CbService extends Service  {
 			locationManager.stopGettingLocations();
 		}
 		if(dataCollector  != null) {
-			dataCollector.stopCollectingPressure();
+			dataCollector.stopCollectingData();
 		}
 		mHandler.removeCallbacks(sender);
 	}
@@ -240,6 +242,7 @@ public class CbService extends Service  {
 		log("cb onstartcommand");
 		
 		// Check the intent for Settings initialization
+		dataCollector = new CbDataCollector(getID(), getApplicationContext());
 	
 		if (intent != null) {
 			if(intent.hasExtra("serverURL")) {
@@ -410,7 +413,7 @@ public class CbService extends Service  {
     		e.printStackTrace();
     	}
     }
-   
+    
 	// Log data to SD card for debug purposes.
 	// To enable logging, ensure the Manifest allows writing to SD card.
 	public void logToFile(String text) {
