@@ -1,5 +1,6 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import android.hardware.Sensor;
 import android.location.Location;
 
 
@@ -14,6 +15,7 @@ public class CbObservation {
 
 	private String observationType = "-";
 	private Location location;
+	private Sensor sensor;
 	private double observationValue = 0.0;
 	private String observationUnit = "-";
 	private String sharing = "-";
@@ -34,7 +36,12 @@ public class CbObservation {
 						   "sharing," + sharing + "\n" +
 						   "time," + time + "\n" +
 						   "timezone," + timeZoneOffset + "\n" +
-						   "user_id," + user_id;
+						   "user_id," + user_id  + "\n" +
+						   "sensor_name," + sensor.getName() + "\n" +
+						   "sensor_type," + sensor.getType() + "\n" +
+						   "sensor_vendor," + sensor.getVendor()  + "\n" +
+						   "sensor_resolution," + sensor.getResolution() + "\n" +
+						   "sensor_version," + sensor.getVersion();
 	}
 	
 	public String[] getObservationAsParams() {
@@ -50,10 +57,21 @@ public class CbObservation {
 						   "time," + time,
 						   "timezone," + timeZoneOffset,
 						   "user_id," + user_id,
+						   "sensor_name," + sensor.getName(),
+						   "sensor_type," + sensor.getType() + "",
+						   "sensor_vendor," + sensor.getVendor(),
+						   "sensor_resolution." + sensor.getResolution() + "",
+						   "sensor_version," + sensor.getVersion()  + ""
 		};
 		return params;
 	}
 	
+	public Sensor getSensor() {
+		return sensor;
+	}
+	public void setSensor(Sensor sensor) {
+		this.sensor = sensor;
+	}
 	public String getObservationType() {
 		return observationType;
 	}

@@ -21,6 +21,7 @@ public class CbDb {
 
 	// Tables
 	public static final String SETTINGS_TABLE = "cb_settings";
+	public static final String MEASUREMENTS_TABLE = "cb_measurements";
 	
 	// Fields
 	public static final String KEY_ROW_ID = "_id";

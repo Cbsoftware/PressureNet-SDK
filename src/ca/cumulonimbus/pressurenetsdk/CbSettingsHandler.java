@@ -18,7 +18,7 @@ public class CbSettingsHandler {
 	
 	// General Data Collection Settings
 	private String appID = "";
-	private long dataCollectionFrequency = 1000 * 60 * 5; // in ms. launch default: 5-10 minutes
+	private long dataCollectionFrequency = 1000 * 60 * 1; // in ms. launch default: 5-10 minutes
 	private boolean sendImmediately = true; // send right away. if false, check preference
 	private boolean sendWiFiOnly = false; // if true, wait until wifi before sending
 	private int sendBufferSize = 1; // gather this many before sending. 
