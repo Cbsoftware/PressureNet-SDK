@@ -56,6 +56,8 @@ public class CbService extends Service  {
 	public static final int MSG_GET_SETTINGS = 9;
 	public static final int MSG_SETTINGS = 10;
 	
+	public static final int MSG_GET_RECENTS = 11;
+	public static final int MSG_RECENTS = 12;
 	
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
@@ -136,6 +138,7 @@ public class CbService extends Service  {
 			if(settingsHandler.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
+				recentObservations.add(singleObservation);
 				log("lat" + singleObservation.getLocation().getLatitude() + ", pressure " + singleObservation.getObservationValue() + singleObservation.getObservationUnit());
 				if(settingsHandler.isSharingData()) {
 					// Send
@@ -373,6 +376,13 @@ public class CbService extends Service  {
                 	CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
                 	newSettings.saveSettings();
                 	break;
+                case MSG_GET_RECENTS:
+                	log("get recents");
+                	try {
+                		msg.replyTo.send(Message.obtain(null, MSG_RECENTS, recentObservations));
+                	} catch (RemoteException re) {
+                		re.printStackTrace();
+                	}
                 default:
                     super.handleMessage(msg);
             }
