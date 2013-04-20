@@ -21,26 +21,66 @@ public class CbDb {
 
 	// Tables
 	public static final String SETTINGS_TABLE = "cb_settings";
-	public static final String MEASUREMENTS_TABLE = "cb_measurements";
+	public static final String OBSERVATIONS_TABLE = "cb_observations";
 	
-	// Fields
+	// Settings Fields
 	public static final String KEY_ROW_ID = "_id";
 	public static final String KEY_APP_ID = "app_id";
 	public static final String KEY_DATA_COLLECTION_FREQUENCY = "data_frequency";
 	public static final String KEY_SERVER_URL = "server_url";
 
+	// Observation Fields
+	public static final String KEY_LATITUDE = "latitude";
+	public static final String KEY_LONGITUDE = "longitude";
+	public static final String KEY_ALTITUDE = "altitude";
+	public static final String KEY_ACCURACY = "accuracy";
+	public static final String KEY_PROVIDER = "provider";
+	public static final String KEY_OBSERVATION_TYPE = "observation_type";
+	public static final String KEY_OBSERVATION_UNIT = "observation_unit";
+	public static final String KEY_OBSERVATION_VALUE = "observation_value";
+	public static final String KEY_SHARING = "sharing";
+	public static final String KEY_TIME = "time";
+	public static final String KEY_TIMEZONE = "timezone";
+	public static final String KEY_USERID = "user_id";
+	public static final String KEY_SENSOR_NAME = "sensor_name";
+	public static final String KEY_SENSOR_TYPE = "sensor_type";
+	public static final String KEY_SENSOR_VENDOR ="sensor_vendor";
+	public static final String KEY_SENSOR_RESOLUTION = "sensor_resolution";
+	public static final String KEY_SENSOR_VERSION = "sensor_version";
+	
 	private Context mContext;
 	
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDB;
 	
-	private static final String DATABASE_CREATE = "create table " 
+	private static final String SETTINGS_TABLE_CREATE = "create table " 
 			+ SETTINGS_TABLE + " (_id integer primary key autoincrement, "
 			+ KEY_APP_ID + " text not null, "
 			+ KEY_DATA_COLLECTION_FREQUENCY + " real not null, "
 			+ KEY_SERVER_URL + " text not null)"; 
+	
+	private static final String OBSERVATIONS_TABLE_CREATE = "create table " 
+			+ OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, "
+			+ KEY_LATITUDE + " real not null, "
+			+ KEY_LONGITUDE + " real not null, "
+			+ KEY_ALTITUDE + " real not null, "
+			+ KEY_ACCURACY + " real not null, "
+			+ KEY_PROVIDER + " text not null, "
+			+ KEY_OBSERVATION_TYPE + " text not null, "
+			+ KEY_OBSERVATION_UNIT + " text not null, "
+			+ KEY_OBSERVATION_VALUE + " real not null, "
+			+ KEY_SHARING + " text not null, "
+			+ KEY_TIME + " real not null, "
+			+ KEY_TIMEZONE + " real not null, "
+			+ KEY_USERID + " text not null, "
+			+ KEY_SENSOR_NAME + " text not null, "
+			+ KEY_SENSOR_TYPE + " real not null, "			
+			+ KEY_SENSOR_VENDOR + " text not null, "
+			+ KEY_SENSOR_RESOLUTION + " real not null, "
+			+ KEY_SENSOR_VERSION + " real not null)";
+	
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 6;
+	private static final int DATABASE_VERSION = 7;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 	
@@ -50,17 +90,41 @@ public class CbDb {
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			db.execSQL(DATABASE_CREATE);
+			db.execSQL(SETTINGS_TABLE_CREATE);
+			db.execSQL(OBSERVATIONS_TABLE_CREATE);
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			// Build upgrade mechanism
 			db.execSQL("DROP TABLE IF EXISTS " + SETTINGS_TABLE);
+			db.execSQL("DROP TABLE IF EXISTS " + OBSERVATIONS_TABLE);
 			onCreate(db);
 		}
 	}
 
+	/**
+	 * Get a single observation
+	 * @param rowId
+	 * @return
+	 * @throws SQLException
+	 * 
+	 */
+    public Cursor fetchObservation(long rowId) throws SQLException {
+        Cursor mCursor =
+
+            mDB.query(true, OBSERVATIONS_TABLE, new String[] {KEY_ROW_ID,
+                    KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY, KEY_PROVIDER,
+                    KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT, KEY_OBSERVATION_VALUE, 
+                    KEY_SHARING, KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_SENSOR_NAME,
+                    KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION}, KEY_ROW_ID + "=" + rowId, null,
+                    null, null, null, null);
+        if (mCursor != null) {
+            mCursor.moveToFirst();
+        }
+        return mCursor;
+    }
+	
 	/**
 	 * Get a single application's settings by row id
 	 * @param rowId
@@ -96,6 +160,18 @@ public class CbDb {
         return mDB.query(SETTINGS_TABLE, new String[] {KEY_ROW_ID, KEY_APP_ID, KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL}, null, null, null, null, null);
     }
     
+    /**
+     * Fetch every stored local observation
+     * 
+     * @return
+     */
+    public Cursor fetchAllObservations() {
+        return mDB.query(OBSERVATIONS_TABLE, new String[] {KEY_ROW_ID,
+                KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY, KEY_PROVIDER,
+                KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT, KEY_OBSERVATION_VALUE, 
+                KEY_SHARING, KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_SENSOR_NAME,
+                KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION}, null, null, null, null, null);
+    }
 
 	/**
 	 * Get a single application's settings by app id
@@ -129,6 +205,51 @@ public class CbDb {
         newValues.put(KEY_DATA_COLLECTION_FREQUENCY, dataCollectionFrequency);
         newValues.put(KEY_SERVER_URL, serverURL);
         return mDB.update(SETTINGS_TABLE, newValues, KEY_APP_ID + "='" + appID + "'", null);
+    }
+    
+
+    /**
+     * Add a new observation
+     * 			+ OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, "
+			+ KEY_LATITUDE + " real not null, "
+			+ KEY_LONGITUDE + " real not null, "
+			+ KEY_ALTITUDE + " real not null, "
+			+ KEY_ACCURACY + " real not null, "
+			+ KEY_PROVIDER + " text not null, "
+			+ KEY_OBSERVATION_TYPE + " text not null, "
+			+ KEY_OBSERVATION_UNIT + " text not null, "
+			+ KEY_OBSERVATION_VALUE + " real not null, "
+			+ KEY_SHARING + " text not null, "
+			+ KEY_TIME + " real not null, "
+			+ KEY_TIMEZONE + " real not null, "
+			+ KEY_USERID + " text not null, "
+			+ KEY_SENSOR_NAME + " text not null, "
+			+ KEY_SENSOR_TYPE + " real not null, "			
+			+ KEY_SENSOR_VENDOR + " text not null, "
+			+ KEY_SENSOR_RESOLUTION + " real not null, "
+			+ KEY_SENSOR_VERSION + " real not null)";
+     * @return
+     */
+    public long addObservation(CbObservation observation) {
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(KEY_LATITUDE, observation.getLocation().getLatitude());
+        initialValues.put(KEY_LONGITUDE, observation.getLocation().getLongitude());
+        initialValues.put(KEY_ALTITUDE, observation.getLocation().getAltitude());
+        initialValues.put(KEY_ACCURACY, observation.getLocation().getAccuracy());
+        initialValues.put(KEY_PROVIDER, observation.getLocation().getProvider());
+        initialValues.put(KEY_OBSERVATION_TYPE, observation.getObservationType());
+        initialValues.put(KEY_OBSERVATION_UNIT, observation.getObservationUnit());
+        initialValues.put(KEY_OBSERVATION_VALUE, observation.getObservationValue());
+        initialValues.put(KEY_SHARING, observation.getSharing());
+        initialValues.put(KEY_TIME, observation.getTime());
+        initialValues.put(KEY_TIMEZONE, observation.getTimeZoneOffset());
+        initialValues.put(KEY_USERID, observation.getUser_id());
+        initialValues.put(KEY_SENSOR_NAME, observation.getSensor().getName());
+        initialValues.put(KEY_SENSOR_TYPE, observation.getSensor().getType());
+        initialValues.put(KEY_SENSOR_VENDOR, observation.getSensor().getVendor());
+        initialValues.put(KEY_SENSOR_RESOLUTION, observation.getSensor().getResolution());
+        initialValues.put(KEY_SENSOR_VERSION, observation.getSensor().getVersion());
+        return mDB.insert(OBSERVATIONS_TABLE, null, initialValues);
     }
     
     /**

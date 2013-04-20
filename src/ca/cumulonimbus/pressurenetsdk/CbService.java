@@ -138,7 +138,12 @@ public class CbService extends Service  {
 			if(settingsHandler.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
+				// Store in memory buffer
 				recentObservations.add(singleObservation);
+				// Store in database
+				db.open();
+				db.addObservation(singleObservation);
+				db.close();
 				log("lat" + singleObservation.getLocation().getLatitude() + ", pressure " + singleObservation.getObservationValue() + singleObservation.getObservationUnit());
 				if(settingsHandler.isSharingData()) {
 					// Send
