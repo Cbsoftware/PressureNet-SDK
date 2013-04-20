@@ -21,6 +21,22 @@ public class CbObservation {
 	private double time = 0;
 	private double timeZoneOffset = 0;
 	
+	@Override
+	public String toString() {
+		return "latitude," + location.getLatitude() + "\n" +
+						   "longitude," + location.getLongitude() + "\n" +
+						   "altitude," + location.getAltitude() + "\n" +
+						   "accuracy," + location.getAccuracy() + "\n" +
+						   "provider," + location.getProvider() + "\n" +
+						   "observation_type," + observationType + "\n" +
+						   "observation_unit," + observationUnit + "\n" +
+						   "observation_value," + observationValue + "\n" +
+						   "sharing," + sharing + "\n" +
+						   "time," + time + "\n" +
+						   "timezone," + timeZoneOffset + "\n" +
+						   "user_id," + user_id;
+	}
+	
 	public String[] getObservationAsParams() {
 		String[] params = {"latitude," + location.getLatitude(), 
 						   "longitude," + location.getLongitude(),
