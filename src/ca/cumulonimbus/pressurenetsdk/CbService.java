@@ -39,12 +39,21 @@ public class CbService extends Service  {
 	private String mAppDir;
 	
 	IBinder mBinder;
+	
+	ReadingSender sender;
+	
+	// Service Interaction API Messages
 	public static final int MSG_STOP = 1;
 	public static final int MSG_GET_BEST_LOCATION = 2;
 	public static final int MSG_BEST_LOCATION= 3;	
 	public static final int MSG_GET_BEST_PRESSURE = 4;
 	public static final int MSG_BEST_PRESSURE = 5;
-	
+	// In progress: 
+	public static final int MSG_START_AUTOSUBMIT = 6;
+	public static final int MSG_STOP_AUTOSUBMIT = 7;
+	// TODO: Implement the following messages
+	public static final int MSG_SET_SETTINGS = 8;
+	public static final int MSG_GET_SETTINGS = 9;
 	
 	
 	private final Handler mHandler = new Handler();
@@ -142,14 +151,14 @@ public class CbService extends Service  {
 	 * Stop all listeners, active sensors, etc, and shut down.
 	 * 
 	 */
-	public void shutDownService() {
+	public void stopAutoSubmit() {
 		if(locationManager!=null) {
 			locationManager.stopGettingLocations();
 		}
 		if(dataCollector  != null) {
 			dataCollector.stopCollectingPressure();
 		}
-		//stopSelf();
+		mHandler.removeCallbacks(sender);
 	}
 	
 	/**
@@ -201,12 +210,10 @@ public class CbService extends Service  {
 	/**
 	 * Start the periodic data collection.
 	 */
-	public void start(CbSettingsHandler settings) {
+	public void startAutoSubmit(CbSettingsHandler settings) {
 		log("CbService: Starting to auto-collect and submit data.");
-
-		log("CbService -- DEBUG MODE AUTO OFF");
 		
-		ReadingSender sender = new ReadingSender(settings);
+		sender = new ReadingSender(settings);
 		mHandler.post(sender);
 		
 	}
@@ -214,7 +221,7 @@ public class CbService extends Service  {
 	@Override
 	public void onDestroy() {
 		log("on destroy");
-		shutDownService();
+		stopAutoSubmit();
 		super.onDestroy();
 	}
 
@@ -274,7 +281,7 @@ public class CbService extends Service  {
 			}
 			
 			// Start a new thread and return
-			start(settings);
+			startAutoSubmit(settings);
 		} catch(Exception e) {
 			for (StackTraceElement ste : e.getStackTrace()) {
 				log(ste.getMethodName() + ste.getLineNumber());
@@ -294,7 +301,7 @@ public class CbService extends Service  {
 				settings.setAppID(allSettings.getString(1));
 				settings.setDataCollectionFrequency(allSettings.getLong(2));
 				settings.setServerURL(allSettings.getString(3));
-				start(settings);
+				startAutoSubmit(settings);
 				// but just once
 				break;
 			}
@@ -315,8 +322,7 @@ public class CbService extends Service  {
             switch (msg.what) {
                 case MSG_STOP:
                 	log("message. bound service says stop");
-                	shutDownService();
-                	
+                	stopAutoSubmit();
                     break;
                 case MSG_GET_BEST_LOCATION:
                 	log("message. bound service requesting location");
@@ -345,6 +351,14 @@ public class CbService extends Service  {
                 	} else {
                 		log("error: data collector null, not returning");
                 	}
+                	break;
+                case MSG_START_AUTOSUBMIT:
+                	log("start autosubmit");
+                	startWithDatabase();
+                	break;
+                case MSG_STOP_AUTOSUBMIT:
+                	log("stop autosubmit");
+                	stopAutoSubmit();
                 	break;
                 default:
                     super.handleMessage(msg);
