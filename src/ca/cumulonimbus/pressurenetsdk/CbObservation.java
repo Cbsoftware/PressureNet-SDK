@@ -60,7 +60,7 @@ public class CbObservation {
 						   "sensor_name," + sensor.getName(),
 						   "sensor_type," + sensor.getType() + "",
 						   "sensor_vendor," + sensor.getVendor(),
-						   "sensor_resolution." + sensor.getResolution() + "",
+						   "sensor_resolution," + sensor.getResolution() + "",
 						   "sensor_version," + sensor.getVersion()  + ""
 		};
 		return params;
