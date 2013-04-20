@@ -33,7 +33,8 @@ public class CbService extends Service  {
 	
 	private CbDataCollector dataCollector;
 	private CbLocationManager locationManager;
-
+	private CbSettingsHandler settingsHandler;
+	
 	private CbDb db;
 	
 	private String mAppDir;
@@ -48,12 +49,13 @@ public class CbService extends Service  {
 	public static final int MSG_BEST_LOCATION= 3;	
 	public static final int MSG_GET_BEST_PRESSURE = 4;
 	public static final int MSG_BEST_PRESSURE = 5;
-	// In progress: 
 	public static final int MSG_START_AUTOSUBMIT = 6;
 	public static final int MSG_STOP_AUTOSUBMIT = 7;
 	// TODO: Implement the following messages
 	public static final int MSG_SET_SETTINGS = 8;
 	public static final int MSG_GET_SETTINGS = 9;
+	public static final int MSG_SETTINGS = 10;
+	
 	
 	
 	private final Handler mHandler = new Handler();
@@ -122,28 +124,23 @@ public class CbService extends Service  {
 	 * This runs itself every "settingsHandler.getDataCollectionFrequency()" milliseconds
 	 */
 	private class ReadingSender implements Runnable {
-		private CbSettingsHandler singleAppSettings;
-		
-		public ReadingSender(CbSettingsHandler settings) {
-			this.singleAppSettings = settings;
-		}
 		
 		public void run() {
-			log("collecting and submitting " + singleAppSettings.getServerURL());
+			log("collecting and submitting " + settingsHandler.getServerURL());
 			long base = SystemClock.uptimeMillis();
 			
 			CbObservation singleObservation = new CbObservation();
 			
-			if(singleAppSettings.isCollectingData()) {
+			if(settingsHandler.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
 				log("lat" + singleObservation.getLocation().getLatitude() + ", pressure " + singleObservation.getObservationValue() + singleObservation.getObservationUnit());
-				if(singleAppSettings.isSharingData()) {
+				if(settingsHandler.isSharingData()) {
 					// Send
-					sendCbObservation(singleObservation, singleAppSettings);
+					sendCbObservation(singleObservation);
 				}
 			}
-			mHandler.postAtTime(this, base + (singleAppSettings.getDataCollectionFrequency()));
+			mHandler.postAtTime(this, base + (settingsHandler.getDataCollectionFrequency()));
 		}
 	};
 	
@@ -179,10 +176,10 @@ public class CbService extends Service  {
 	 * @param group
 	 * @return
 	 */
-	public boolean sendCbObservation(CbObservation observation, CbSettingsHandler settings) {
+	public boolean sendCbObservation(CbObservation observation) {
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settings,locationManager);
+			sender.setSettings(settingsHandler,locationManager);
 			sender.execute(observation.getObservationAsParams());
 			return true;
 		}catch (Exception e) {
@@ -196,10 +193,10 @@ public class CbService extends Service  {
 	 * @param group
 	 * @return
 	 */
-	public boolean sendCbAccount(CbAccount account, CbSettingsHandler settings) {
+	public boolean sendCbAccount(CbAccount account) {
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settings,locationManager);
+			sender.setSettings(settingsHandler,locationManager);
 			sender.execute(account.getAccountAsParams());
 			return true;
 		}catch(Exception e) {
@@ -210,10 +207,10 @@ public class CbService extends Service  {
 	/**
 	 * Start the periodic data collection.
 	 */
-	public void startAutoSubmit(CbSettingsHandler settings) {
+	public void startAutoSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
 		
-		sender = new ReadingSender(settings);
+		sender = new ReadingSender();
 		mHandler.post(sender);
 		
 	}
@@ -262,13 +259,13 @@ public class CbService extends Service  {
 	public void startWithIntent(Intent intent) {
 		try {
 			log( "intent url " + intent.getExtras().getString("serverURL"));
-			CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
+			settingsHandler = new CbSettingsHandler(getApplicationContext());
 			
-			settings.setServerURL(intent.getStringExtra("serverURL"));
-			settings.setAppID(getID());
+			settingsHandler.setServerURL(intent.getStringExtra("serverURL"));
+			settingsHandler.setAppID(getID());
 
 			// Seems like new settings. Try adding to the db.
-			settings.saveSettings();
+			settingsHandler.saveSettings();
 			
 			// are we creating a new user?
 			if (intent.hasExtra("add_account")) {
@@ -277,11 +274,11 @@ public class CbService extends Service  {
 				account.setEmail(intent.getStringExtra("email"));
 				account.setTimeRegistered(intent.getLongExtra("time", 0));
 				account.setUserID(intent.getStringExtra("userID"));
-				sendCbAccount(account, settings);
+				sendCbAccount(account);
 			}
 			
 			// Start a new thread and return
-			startAutoSubmit(settings);
+			startAutoSubmit();
 		} catch(Exception e) {
 			for (StackTraceElement ste : e.getStackTrace()) {
 				log(ste.getMethodName() + ste.getLineNumber());
@@ -293,15 +290,15 @@ public class CbService extends Service  {
 		try {
 			db.open();
 			// Check the database for Settings initialization
-			CbSettingsHandler settings = new CbSettingsHandler(getApplicationContext());
+			settingsHandler = new CbSettingsHandler(getApplicationContext());
 			//db.clearDb();
 			Cursor allSettings = db.fetchAllSettings();
 			log("cb intent null; checking db, size " + allSettings.getCount());
 			while(allSettings.moveToNext()) {
-				settings.setAppID(allSettings.getString(1));
-				settings.setDataCollectionFrequency(allSettings.getLong(2));
-				settings.setServerURL(allSettings.getString(3));
-				startAutoSubmit(settings);
+				settingsHandler.setAppID(allSettings.getString(1));
+				settingsHandler.setDataCollectionFrequency(allSettings.getLong(2));
+				settingsHandler.setServerURL(allSettings.getString(3));
+				startAutoSubmit();
 				// but just once
 				break;
 			}
@@ -359,6 +356,19 @@ public class CbService extends Service  {
                 case MSG_STOP_AUTOSUBMIT:
                 	log("stop autosubmit");
                 	stopAutoSubmit();
+                	break;
+                case MSG_GET_SETTINGS:
+                	log("get settings");
+                	try {
+                		msg.replyTo.send(Message.obtain(null, MSG_SETTINGS, settingsHandler));
+                	} catch (RemoteException re) {
+                		re.printStackTrace();
+                	}
+                	break;
+                case MSG_SET_SETTINGS:
+                	log("set settings");
+                	CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
+                	newSettings.saveSettings();
                 	break;
                 default:
                     super.handleMessage(msg);
