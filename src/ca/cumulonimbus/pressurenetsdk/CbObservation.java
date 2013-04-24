@@ -53,11 +53,24 @@ public class CbObservation {
 				newList.add(current);
 				userMap.put(current.getUser_id(), newList);
 			}
-		
-			//fixedList.add(current);
 		}
-		
 		System.out.println("there are " + userMap.size() + " users nearby who reported " + rawList.size() + " measurements");
+	
+		// Calculate the recent trend of this user's device readings
+		// Simple, short, naive is okay for now; this estimate will be
+		// looked at in aggregate with all nearby devices. 
+		// for each user
+		for (String id : userMap.keySet()) {
+			ArrayList<CbObservation> obsList = userMap.get(id);
+			String tendency = CbScience.findApproximateTendency(obsList);
+			
+			// TODO: improve this. dropping the large trend individually
+			// into the values isn't a lasting solution
+			for(CbObservation current : obsList) {
+				current.setTrend(tendency);
+				System.out.println("for id " + id + " setting trend " + tendency);
+			}
+		}
 		
 		
 		
