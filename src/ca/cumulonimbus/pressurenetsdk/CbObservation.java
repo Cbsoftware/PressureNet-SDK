@@ -1,5 +1,9 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+
 import android.hardware.Sensor;
 import android.location.Location;
 
@@ -22,6 +26,44 @@ public class CbObservation {
 	private String user_id = "-";
 	private double time = 0;
 	private double timeZoneOffset = 0;
+	
+	private Date jDate;
+	private String trend = "";
+	
+	
+	
+	/**
+	 * Raw data on the server does not include trends and the
+	 * only date information is messy. Given an ArrayList, fix 
+	 * those issues and return the new ArrayList.
+	 * @return
+	 */
+	public static ArrayList<CbObservation> addDatesAndTrends(ArrayList<CbObservation> rawList) {
+		ArrayList<CbObservation> fixedList = new ArrayList<CbObservation>();
+		
+		HashMap<String, ArrayList<CbObservation>> userMap = new HashMap<String, ArrayList<CbObservation>>();
+		
+		for(CbObservation current : rawList) {
+			Date jD = new Date((long)current.getTime() + (long)current.getTimeZoneOffset());
+			current.setjDate(jD);
+			if(userMap.containsKey(current.getUser_id())) {
+				userMap.get(current.getUser_id()).add(current);
+			} else {
+				ArrayList<CbObservation> newList = new ArrayList<CbObservation>();
+				newList.add(current);
+				userMap.put(current.getUser_id(), newList);
+			}
+		
+			//fixedList.add(current);
+		}
+		
+		System.out.println("there are " + userMap.size() + " users nearby who reported " + rawList.size() + " measurements");
+		
+		
+		
+		return fixedList;
+	}
+	
 	
 	@Override
 	public String toString() {
@@ -66,6 +108,20 @@ public class CbObservation {
 		return params;
 	}
 	
+	
+	
+	public Date getjDate() {
+		return jDate;
+	}
+	public void setjDate(Date jDate) {
+		this.jDate = jDate;
+	}
+	public String getTrend() {
+		return trend;
+	}
+	public void setTrend(String trend) {
+		this.trend = trend;
+	}
 	public Sensor getSensor() {
 		return sensor;
 	}
