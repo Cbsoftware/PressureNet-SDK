@@ -23,7 +23,7 @@ public class CbScience {
 		if (recents == null) {
 			return "Unknown";
 		}
-		if (recents.size() < 5) {
+		if (recents.size() < 3) {
 			return "Unknown";
 		}
 
@@ -66,11 +66,11 @@ public class CbScience {
 			tpBar += (time[y] - timeBar) * (pressure[y] - pressureBar);
 		}
 		double beta1 = tpBar / ttBar;
-		if (beta1 < -0.1) {
+		if (beta1 < -0.05) {
 			return -1;
-		} else if (beta1 > 0.1) {
+		} else if (beta1 > 0.05) {
 			return 1;
-		} else if (beta1 >= -0.1 && beta1 <= 0.1) {
+		} else if (beta1 >= -0.05 && beta1 <= 0.05) {
 			return 0;
 		} else {
 			return 0;

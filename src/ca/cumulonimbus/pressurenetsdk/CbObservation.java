@@ -69,6 +69,7 @@ public class CbObservation {
 			for(CbObservation current : obsList) {
 				current.setTrend(tendency);
 				System.out.println("for id " + id + " setting trend " + tendency);
+				fixedList.add(current);
 			}
 		}
 		
