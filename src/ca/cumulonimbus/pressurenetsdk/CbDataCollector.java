@@ -36,13 +36,16 @@ public class CbDataCollector implements SensorEventListener{
 	private boolean humidityReadingsActive = false;
 	private boolean temperatureReadingsActive = false;
 	
+	private final int TYPE_AMBIENT_TEMPERATURE = 13;
+	private final int TYPE_RELATIVE_HUMIDITY = 12;
+	
     // Get a set of measurements
     public void getSomeMeasurements() {
     	try {
 	    	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 	    	Sensor pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
-	    	Sensor temperatureSensor = sm.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
-	    	Sensor humiditySensor = sm.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+	    	Sensor temperatureSensor = sm.getDefaultSensor(TYPE_AMBIENT_TEMPERATURE);
+	    	Sensor humiditySensor = sm.getDefaultSensor(TYPE_RELATIVE_HUMIDITY); 
 	    	
 	    	if(pressureSensor!=null) {
 	    		pressureReadingsActive = sm.registerListener(this, pressureSensor, SensorManager.SENSOR_DELAY_NORMAL);
@@ -103,10 +106,10 @@ public class CbDataCollector implements SensorEventListener{
 		if(event.sensor.getType() == Sensor.TYPE_PRESSURE) {
 			recentPressureReading = event.values[0];
 			lastPressureTime = System.currentTimeMillis();
-		} else if(event.sensor.getType() == Sensor.TYPE_RELATIVE_HUMIDITY) {
+		} else if(event.sensor.getType() == TYPE_RELATIVE_HUMIDITY) {
 			recentHumidityReading = event.values[0];
 			lastHumidityTime = System.currentTimeMillis();
-		} else if(event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
+		} else if(event.sensor.getType() == TYPE_AMBIENT_TEMPERATURE) {
 			recentTemperatureReading = event.values[0];
 			lastTemperatureTime = System.currentTimeMillis();
 		}
