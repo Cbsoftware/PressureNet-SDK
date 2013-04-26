@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.ConnectivityManager;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -22,6 +23,7 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.provider.Settings.Secure;
+import android.widget.TextView;
 
 /**
  * Represent developer-facing pressureNET API Background task; manage and run
@@ -46,6 +48,7 @@ public class CbService extends Service {
 	ReadingSender sender;
 
 	// Service Interaction API Messages
+	public static final int MSG_OKAY = 0;
 	public static final int MSG_STOP = 1;
 	public static final int MSG_GET_BEST_LOCATION = 2;
 	public static final int MSG_BEST_LOCATION = 3;
@@ -57,11 +60,17 @@ public class CbService extends Service {
 	public static final int MSG_GET_SETTINGS = 9;
 	public static final int MSG_SETTINGS = 10;
 
-	public static final int MSG_GET_RECENTS = 11;
-	public static final int MSG_RECENTS = 12;
+	public static final int MSG_START_DATA_STREAM = 11;
+	public static final int MSG_DATA_STREAM = 12;	
+	public static final int MSG_STOP_DATA_STREAM = 13;
+
+	public static final int MSG_GET_RECENTS = 14;
+	public static final int MSG_RECENTS = 15;
 
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
+
+	private CbService thisService = this;
 
 	/**
 	 * Find all the data for an observation.
@@ -127,7 +136,7 @@ public class CbService extends Service {
 			log("collecting and submitting " + settingsHandler.getServerURL());
 			long base = SystemClock.uptimeMillis();
 
-			dataCollector.getSomeMeasurements();
+			dataCollector.startCollectingData(thisService);
 
 			CbObservation singleObservation = new CbObservation();
 
@@ -135,7 +144,9 @@ public class CbService extends Service {
 				// Collect
 				singleObservation = collectNewObservation();
 				// Store in memory buffer
-				recentObservations.add(singleObservation);
+				// TODO: Careful of double adding with data collector
+				// recentObservations.add(singleObservation);
+				
 				// Store in database
 				db.open();
 				db.addObservation(singleObservation);
@@ -146,7 +157,7 @@ public class CbService extends Service {
 						+ singleObservation.getObservationUnit());
 				if (settingsHandler.isSharingData()) {
 					// Send if we're online
-					if( isNetworkAvailable()) {
+					if (isNetworkAvailable()) {
 						sendCbObservation(singleObservation);
 					} else {
 						// TODO: and store for later if not
@@ -399,6 +410,12 @@ public class CbService extends Service {
 					re.printStackTrace();
 				}
 				break;
+			case MSG_START_DATA_STREAM:
+				startDataStream(msg.replyTo);
+				break;
+			case MSG_STOP_DATA_STREAM:
+				stopDataStream();
+				break;
 			case MSG_SET_SETTINGS:
 				log("set settings");
 				CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
@@ -416,6 +433,49 @@ public class CbService extends Service {
 				super.handleMessage(msg);
 			}
 		}
+	}
+
+	private class StreamObservation extends AsyncTask<Messenger, Void, String> {
+
+		@Override
+		protected String doInBackground(Messenger... m) {
+				try {
+					for(Messenger msgr : m) {
+						if(msgr!=null) {
+							msgr.send(Message.obtain(null, MSG_DATA_STREAM,recentObservations.get(recentObservations.size()-1)
+								));
+						}
+					}
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+			
+			return "--";
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			
+		}
+
+		@Override
+		protected void onPreExecute() {
+		}
+
+		@Override
+		protected void onProgressUpdate(Void... values) {
+		}
+	}
+
+	public void startDataStream(Messenger m) {
+		log("cbService starting stream");
+		dataCollector.startCollectingData(this);
+		new StreamObservation().execute(m);
+	}
+
+	public void stopDataStream() {
+		log("cbservice stopping stream");
+		dataCollector.stopCollectingData();
 	}
 
 	/**

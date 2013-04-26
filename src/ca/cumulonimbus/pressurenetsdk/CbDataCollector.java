@@ -39,8 +39,13 @@ public class CbDataCollector implements SensorEventListener{
 	private final int TYPE_AMBIENT_TEMPERATURE = 13;
 	private final int TYPE_RELATIVE_HUMIDITY = 12;
 	
-    // Get a set of measurements
-    public void getSomeMeasurements() {
+	private boolean streaming = false;
+	
+	CbService service;
+	
+    public void startCollectingData(CbService serv) {
+    	streaming = true;
+    	this.service = serv;
     	try {
 	    	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 	    	Sensor pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
@@ -48,13 +53,13 @@ public class CbDataCollector implements SensorEventListener{
 	    	Sensor humiditySensor = sm.getDefaultSensor(TYPE_RELATIVE_HUMIDITY); 
 	    	
 	    	if(pressureSensor!=null) {
-	    		pressureReadingsActive = sm.registerListener(this, pressureSensor, SensorManager.SENSOR_DELAY_NORMAL);
+	    		pressureReadingsActive = sm.registerListener(this, pressureSensor, SensorManager.SENSOR_DELAY_UI);
 	    	}
 	    	if(temperatureSensor!=null) {
-	    		temperatureReadingsActive = sm.registerListener(this, temperatureSensor, SensorManager.SENSOR_DELAY_NORMAL);
+	    		temperatureReadingsActive = sm.registerListener(this, temperatureSensor, SensorManager.SENSOR_DELAY_UI);
 	    	}
 	    	if(humiditySensor!=null) {
-	    		humidityReadingsActive = sm.registerListener(this, humiditySensor, SensorManager.SENSOR_DELAY_NORMAL);
+	    		humidityReadingsActive = sm.registerListener(this, humiditySensor, SensorManager.SENSOR_DELAY_UI);
 	    	}
     	} catch(Exception e) {
     		e.printStackTrace();
@@ -64,6 +69,7 @@ public class CbDataCollector implements SensorEventListener{
     public void stopCollectingData() {
     	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 		sm.unregisterListener(this);
+		streaming = false;
     }
     
     
@@ -113,6 +119,11 @@ public class CbDataCollector implements SensorEventListener{
 			recentTemperatureReading = event.values[0];
 			lastTemperatureTime = System.currentTimeMillis();
 		}
-		stopCollectingData();
+		
+		if(streaming) {
+			service.recentObservations.add(getPressureObservation());
+		} else {
+			stopCollectingData();
+		}
 	}
 }
