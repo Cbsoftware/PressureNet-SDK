@@ -42,6 +42,23 @@ public class CbLocationManager {
 	public CbLocationManager(Context ctx) {
 		context = ctx;
 		setUpFiles();
+		try {
+	    	networkLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
+	    	gpsLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
+	
+	    	Location lastKnown = networkLocationManager.getLastKnownLocation("network");
+	    	if (lastKnown != null ) {
+	    		log("setting best = last known");
+	    		currentBestLocation = lastKnown;
+	    	} else {
+	    		log("last known is null");
+	    	}
+    	} catch(Exception e) {
+    		e.printStackTrace();
+    	}
+    	
+		
+		currentBestLocation = networkLocationManager.getLastKnownLocation("network");
     	
 	}
 	
@@ -64,21 +81,6 @@ public class CbLocationManager {
 	
 	// Get the user's location from the location service
     public boolean startGettingLocations() {
-    	
-    	try {
-	    	networkLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
-	    	gpsLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
-	
-	    	Location lastKnown = networkLocationManager.getLastKnownLocation("network");
-	    	if (lastKnown != null ) {
-	    		log("setting best = last known");
-	    		currentBestLocation = lastKnown;
-	    	} else {
-	    		log("last known is null");
-	    	}
-    	} catch(Exception e) {
-    		e.printStackTrace();
-    	}
     	
     	// Define a listener that responds to location updates
     	locationListener = new LocationListener() {

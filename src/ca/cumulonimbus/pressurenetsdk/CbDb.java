@@ -124,6 +124,23 @@ public class CbDb {
         }
         return mCursor;
     }
+    
+
+	/**
+	 * How many observations are there?
+	 * @param rowId
+	 * @return
+	 * @throws SQLException
+	 * 
+	 */
+    public long fetchObservationMaxID() throws SQLException {
+    	open();
+    	Cursor mCount=mDB.rawQuery("SELECT COUNT(*) FROM " + OBSERVATIONS_TABLE, null);
+    	mCount.moveToFirst();
+    	long rowId = mCount.getInt(0);
+    	mCount.close();
+    	return rowId;
+    }
 	
 	/**
 	 * Get a single application's settings by row id

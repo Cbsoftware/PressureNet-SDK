@@ -1,10 +1,15 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.util.ArrayList;
+
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 
 
 /**
@@ -39,13 +44,23 @@ public class CbDataCollector implements SensorEventListener{
 	private final int TYPE_AMBIENT_TEMPERATURE = 13;
 	private final int TYPE_RELATIVE_HUMIDITY = 12;
 	
+	private ArrayList<CbObservation> recentObservations = new ArrayList<CbObservation>();
+	
 	private boolean streaming = false;
 	
-	CbService service;
+	private Messenger msgr;
 	
-    public void startCollectingData(CbService serv) {
+    public ArrayList<CbObservation> getRecentObservations() {
+		return recentObservations;
+	}
+
+	public void setRecentObservations(ArrayList<CbObservation> recentObservations) {
+		this.recentObservations = recentObservations;
+	}
+
+	public void startCollectingData(Messenger m) {
+		this.msgr = m;
     	streaming = true;
-    	this.service = serv;
     	try {
 	    	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 	    	Sensor pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
@@ -108,7 +123,6 @@ public class CbDataCollector implements SensorEventListener{
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-		System.out.println("sensor changed: " + event.sensor.getName());
 		if(event.sensor.getType() == Sensor.TYPE_PRESSURE) {
 			recentPressureReading = event.values[0];
 			lastPressureTime = System.currentTimeMillis();
@@ -121,7 +135,27 @@ public class CbDataCollector implements SensorEventListener{
 		}
 		
 		if(streaming) {
-			service.recentObservations.add(getPressureObservation());
+			CbObservation observation = getPressureObservation();
+			CbLocationManager locationManager = new CbLocationManager(context);
+			observation.setLocation(locationManager
+					.getCurrentBestLocation());
+			recentObservations.add(observation);
+			CbDb db = new CbDb(context);
+			db.open();
+			long result = db.addObservation(observation );
+			
+			db.close();
+			
+			if(msgr!=null) {
+				try {
+					msgr.send(Message.obtain(null,
+							CbService.MSG_DATA_STREAM, observation));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+			}
+			
+			
 		} else {
 			stopCollectingData();
 		}
