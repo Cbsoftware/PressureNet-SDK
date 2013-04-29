@@ -177,7 +177,7 @@ public class CbDataCollector implements SensorEventListener{
 			CbDb db = new CbDb(context);
 			db.open();
 			long result = db.addObservation(observation );
-			System.out.println("streaming db add, result count " + result);
+			//System.out.println("streaming db add, result count " + result);
 			db.close();
 			
 			if(msgr!=null) {
