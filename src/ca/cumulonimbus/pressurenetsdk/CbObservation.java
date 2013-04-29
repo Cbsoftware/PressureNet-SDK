@@ -92,12 +92,14 @@ public class CbObservation {
 						   "sharing," + sharing + "\n" +
 						   "time," + time + "\n" +
 						   "timezone," + timeZoneOffset + "\n" +
-						   "user_id," + user_id  + "\n" +
+						   "user_id," + user_id  + "\n" ;
+							// TODO: add sensor data
+						   /*+
 						   "sensor_name," + sensor.getName() + "\n" +
 						   "sensor_type," + sensor.getType() + "\n" +
 						   "sensor_vendor," + sensor.getVendor()  + "\n" +
 						   "sensor_resolution," + sensor.getResolution() + "\n" +
-						   "sensor_version," + sensor.getVersion();
+						   "sensor_version," + sensor.getVersion();*/
 	}
 	
 	public String[] getObservationAsParams() {

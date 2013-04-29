@@ -143,27 +143,25 @@ public class CbService extends Service {
 			if (settingsHandler.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
-				// Store in memory buffer
-				// TODO: Careful of double adding with data collector
-				// recentObservations.add(singleObservation);
-				
-				// Store in database
-				//db.open();
-				//db.addObservation(singleObservation);
-				// db.close();
-				
-				try {
-					if (settingsHandler.isSharingData()) {
-						// Send if we're online
-						if (isNetworkAvailable()) {
-							sendCbObservation(singleObservation);
-						} else {
-							// TODO: and store for later if not
-						}
-					}
-				} catch(Exception e) {
-					e.printStackTrace();
+				if(singleObservation.getObservationValue() != 0.0) {
+					// Store in database
+					db.open();
+					long count = db.addObservation(singleObservation);
+					db.close();
 					
+					try {
+						if (settingsHandler.isSharingData()) {
+							// Send if we're online
+							if (isNetworkAvailable()) {
+								sendCbObservation(singleObservation);
+							} else {
+								// TODO: and store for later if not
+							}
+						}
+					} catch(Exception e) {
+						e.printStackTrace();
+						
+					}
 				}
 			}
 			mHandler.postAtTime(this,
@@ -427,7 +425,7 @@ public class CbService extends Service {
 				log("get recents");
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_RECENTS,
-							dataCollector.getRecentObservations()));
+							dataCollector.getRecentDatabaseObservations()));
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
@@ -440,11 +438,18 @@ public class CbService extends Service {
 	public CbObservation recentPressureFromDatabase() {
 		CbObservation obs = new CbObservation();
 		long rowId = db.fetchObservationMaxID();
+		double pressure = 0.0;
 		
 		Cursor c = db.fetchObservation(rowId);
-		int pressureCol = c.getColumnIndex(CbDb.KEY_OBSERVATION_VALUE);
-		double pressure = c.getDouble(pressureCol);
+		
+		while(c.moveToNext()) {
+			pressure = c.getDouble(8);
+		}
 		log(pressure + " pressure from db");
+		if(pressure == 0.0 ){ 
+			log("returning null");
+			return null;
+		}
 		obs.setObservationValue(pressure);
 		return obs;
 	}

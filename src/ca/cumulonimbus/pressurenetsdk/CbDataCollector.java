@@ -3,10 +3,12 @@ package ca.cumulonimbus.pressurenetsdk;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
@@ -54,6 +56,38 @@ public class CbDataCollector implements SensorEventListener{
 		return recentObservations;
 	}
 
+	
+    public ArrayList<CbObservation> getRecentDatabaseObservations() {
+    	ArrayList<CbObservation> recentDbList = new ArrayList<CbObservation>();
+    	CbDb db = new CbDb(context);
+		db.open();
+    	Cursor c = db.fetchAllObservations();
+		while(c.moveToNext()) {
+			CbObservation obs = new CbObservation();
+			Location location = new Location("network");
+			location.setLatitude(c.getDouble(1));
+			location.setLongitude(c.getDouble(2));
+			location.setAltitude(c.getDouble(3));
+			location.setAccuracy(c.getInt(4));
+			location.setProvider(c.getString(5));
+			obs.setLocation(location);
+			obs.setObservationType(c.getString(6));
+			obs.setObservationUnit(c.getString(7));
+			obs.setObservationValue(c.getDouble(8));
+			obs.setSharing(c.getString(9));
+			obs.setTime(c.getLong(10));
+			obs.setTimeZoneOffset(c.getLong(11));
+			obs.setUser_id(c.getString(12));
+
+			// TODO: Add sensor information
+			
+			recentDbList.add(obs);
+		}
+    	
+		db.close();
+		return recentDbList;
+	}
+    
 	public void setRecentObservations(ArrayList<CbObservation> recentObservations) {
 		this.recentObservations = recentObservations;
 	}
@@ -143,7 +177,7 @@ public class CbDataCollector implements SensorEventListener{
 			CbDb db = new CbDb(context);
 			db.open();
 			long result = db.addObservation(observation );
-			
+			System.out.println("streaming db add, result count " + result);
 			db.close();
 			
 			if(msgr!=null) {

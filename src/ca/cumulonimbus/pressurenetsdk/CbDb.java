@@ -80,7 +80,7 @@ public class CbDb {
 			+ KEY_SENSOR_VERSION + " real not null)";
 	
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 7;
+	private static final int DATABASE_VERSION = 8;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 	
