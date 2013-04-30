@@ -87,7 +87,7 @@ public class CbApi {
 						+ ""));
 				nvps.add(new BasicNameValuePair("start_time", apiCall.getStartTime() + ""));
 				nvps.add(new BasicNameValuePair("end_time", apiCall.getEndTime() + ""));
-				nvps.add(new BasicNameValuePair("api_key", ""));
+				nvps.add(new BasicNameValuePair("api_key", apiCall.getApiKey()));
 				nvps.add(new BasicNameValuePair("format", "json"));
 				nvps.add(new BasicNameValuePair("limit", "5000")); // TODO: User preference
 

@@ -343,11 +343,21 @@ public class CbDb {
         initialValues.put(KEY_TIME, observation.getTime());
         initialValues.put(KEY_TIMEZONE, observation.getTimeZoneOffset());
         initialValues.put(KEY_USERID, observation.getUser_id());
-        initialValues.put(KEY_SENSOR_NAME, observation.getSensor().getName());
-        initialValues.put(KEY_SENSOR_TYPE, observation.getSensor().getType());
-        initialValues.put(KEY_SENSOR_VENDOR, observation.getSensor().getVendor());
-        initialValues.put(KEY_SENSOR_RESOLUTION, observation.getSensor().getResolution());
-        initialValues.put(KEY_SENSOR_VERSION, observation.getSensor().getVersion());
+        // TODO: implement the sensor data
+        if(observation.getSensor() == null) {
+	        initialValues.put(KEY_SENSOR_NAME, "");
+	        initialValues.put(KEY_SENSOR_TYPE, 0);
+	        initialValues.put(KEY_SENSOR_VENDOR, "");
+	        initialValues.put(KEY_SENSOR_RESOLUTION, 0);
+	        initialValues.put(KEY_SENSOR_VERSION, 0);
+	        
+        } else {
+	        initialValues.put(KEY_SENSOR_NAME, observation.getSensor().getName());
+	        initialValues.put(KEY_SENSOR_TYPE, observation.getSensor().getType());
+	        initialValues.put(KEY_SENSOR_VENDOR, observation.getSensor().getVendor());
+	        initialValues.put(KEY_SENSOR_RESOLUTION, observation.getSensor().getResolution());
+	        initialValues.put(KEY_SENSOR_VERSION, observation.getSensor().getVersion());
+        }
         return mDB.insert(API_CACHE_TABLE, null, initialValues);
     }
     

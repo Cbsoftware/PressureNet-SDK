@@ -10,10 +10,18 @@ public class CbApiCall {
 	private double maxLat = 0.0;
 	private double minLon = 0.0;
 	private double maxLon = 0.0;
+	private String apiKey = "";
 	private long startTime = 0;
 	private long endTime = 0;
 	ArrayList<CbObservation> observationResults;
 	
+	
+	public String getApiKey() {
+		return apiKey;
+	}
+	public void setApiKey(String apiKey) {
+		this.apiKey = apiKey;
+	}
 	public boolean isGlobal() {
 		return global;
 	}

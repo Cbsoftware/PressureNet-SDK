@@ -474,7 +474,7 @@ public class CbService extends Service {
 				
 				// run API call
 				db.open();
-				Cursor cacheCursor = db.runLocalAPICall(apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(), 
+				Cursor cacheCursor = db.runAPICacheCall(apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(), 
 						apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(), apiCacheCall.getStartTime(), 
 						apiCacheCall.getEndTime(), 2000);
 				ArrayList<CbObservation> cacheResults = new ArrayList<CbObservation>();
