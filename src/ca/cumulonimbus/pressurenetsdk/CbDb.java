@@ -22,6 +22,8 @@ public class CbDb {
 	// Tables
 	public static final String SETTINGS_TABLE = "cb_settings";
 	public static final String OBSERVATIONS_TABLE = "cb_observations";
+	public static final String API_CACHE_TABLE = "cb_api_cache";
+	
 	
 	// Settings Fields
 	public static final String KEY_ROW_ID = "_id";
@@ -79,8 +81,29 @@ public class CbDb {
 			+ KEY_SENSOR_RESOLUTION + " real not null, "
 			+ KEY_SENSOR_VERSION + " real not null)";
 	
+	private static final String API_CACHE_TABLE_CREATE = "create table " 
+			+ API_CACHE_TABLE + " (_id integer primary key autoincrement, "
+			+ KEY_LATITUDE + " real not null, "
+			+ KEY_LONGITUDE + " real not null, "
+			+ KEY_ALTITUDE + " real not null, "
+			+ KEY_ACCURACY + " real not null, "
+			+ KEY_PROVIDER + " text not null, "
+			+ KEY_OBSERVATION_TYPE + " text not null, "
+			+ KEY_OBSERVATION_UNIT + " text not null, "
+			+ KEY_OBSERVATION_VALUE + " real not null, "
+			+ KEY_SHARING + " text not null, "
+			+ KEY_TIME + " real not null, "
+			+ KEY_TIMEZONE + " real not null, "
+			+ KEY_USERID + " text not null, "
+			+ KEY_SENSOR_NAME + " text not null, "
+			+ KEY_SENSOR_TYPE + " real not null, "			
+			+ KEY_SENSOR_VENDOR + " text not null, "
+			+ KEY_SENSOR_RESOLUTION + " real not null, "
+			+ KEY_SENSOR_VERSION + " real not null)";
+	
+	
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 8;
+	private static final int DATABASE_VERSION = 9;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 	
@@ -92,6 +115,7 @@ public class CbDb {
 		public void onCreate(SQLiteDatabase db) {
 			db.execSQL(SETTINGS_TABLE_CREATE);
 			db.execSQL(OBSERVATIONS_TABLE_CREATE);
+			db.execSQL(API_CACHE_TABLE_CREATE);
 		}
 
 		@Override
@@ -99,10 +123,28 @@ public class CbDb {
 			// Build upgrade mechanism
 			db.execSQL("DROP TABLE IF EXISTS " + SETTINGS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + OBSERVATIONS_TABLE);
+			db.execSQL("DROP TABLE IF EXISTS " + API_CACHE_TABLE);
 			onCreate(db);
 		}
 	}
 
+	
+	/**
+	 * Run an API call against the API cache
+	 * @return
+	 */
+	public Cursor runAPICacheCall(double min_lat, double max_lat, double min_lon, double max_lon, long start_time, long end_time, double limit) {
+		Cursor cursor = mDB.query(false, API_CACHE_TABLE, new String[] {KEY_ROW_ID,
+                KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY, KEY_PROVIDER,
+                KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT, KEY_OBSERVATION_VALUE, 
+                KEY_SHARING, KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_SENSOR_NAME,
+                KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION},
+                KEY_LATITUDE + " > ? and " + KEY_LATITUDE + " < ? and " + 
+                KEY_LONGITUDE + " > ? and " + KEY_LONGITUDE + " < ? and " +
+                KEY_TIME + " > ? and " + KEY_TIME + " < ? ", new String[] {min_lat + "", max_lat + "", min_lon + "", max_lon + "", start_time + "", end_time + ""}, null, null, null, null);
+		return cursor;
+	}
+	
 	/**
 	 * Run an "API call" against the local database
 	 * @return
@@ -118,7 +160,6 @@ public class CbDb {
                 KEY_LONGITUDE + " > ? and " + KEY_LONGITUDE + " < ? and " +
                 KEY_TIME + " > ? and " + KEY_TIME + " < ? ", new String[] {min_lat + "", max_lat + "", min_lon + "", max_lon + "", start_time + "", end_time + ""}, null, null, null, null);
 		
-		System.out.println(cursor.getCount() + ", " + min_lat + "," + max_lat + ", " + min_lon + "," + max_lon + ", t " + start_time + ", " + end_time);
 		return cursor;
 	}
 	
@@ -144,7 +185,7 @@ public class CbDb {
         return mCursor;
     }
     
-
+    
 	/**
 	 * How many observations are there?
 	 * @param rowId
@@ -209,6 +250,20 @@ public class CbDb {
                 KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION}, null, null, null, null, null);
     }
 
+    /**
+     * Fetch every stored API observation
+     * 
+     * @return
+     */
+    public Cursor fetchAllAPICacheObservations() {
+        return mDB.query(API_CACHE_TABLE, new String[] {KEY_ROW_ID,
+                KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY, KEY_PROVIDER,
+                KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT, KEY_OBSERVATION_VALUE, 
+                KEY_SHARING, KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_SENSOR_NAME,
+                KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION}, null, null, null, null, null);
+    }
+
+    
 	/**
 	 * Get a single application's settings by app id
 	 * @param rowId
@@ -246,24 +301,6 @@ public class CbDb {
 
     /**
      * Add a new observation
-     * 			+ OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, "
-			+ KEY_LATITUDE + " real not null, "
-			+ KEY_LONGITUDE + " real not null, "
-			+ KEY_ALTITUDE + " real not null, "
-			+ KEY_ACCURACY + " real not null, "
-			+ KEY_PROVIDER + " text not null, "
-			+ KEY_OBSERVATION_TYPE + " text not null, "
-			+ KEY_OBSERVATION_UNIT + " text not null, "
-			+ KEY_OBSERVATION_VALUE + " real not null, "
-			+ KEY_SHARING + " text not null, "
-			+ KEY_TIME + " real not null, "
-			+ KEY_TIMEZONE + " real not null, "
-			+ KEY_USERID + " text not null, "
-			+ KEY_SENSOR_NAME + " text not null, "
-			+ KEY_SENSOR_TYPE + " real not null, "			
-			+ KEY_SENSOR_VENDOR + " text not null, "
-			+ KEY_SENSOR_RESOLUTION + " real not null, "
-			+ KEY_SENSOR_VERSION + " real not null)";
      * @return
      */
     public long addObservation(CbObservation observation) {
@@ -286,6 +323,32 @@ public class CbDb {
         initialValues.put(KEY_SENSOR_RESOLUTION, observation.getSensor().getResolution());
         initialValues.put(KEY_SENSOR_VERSION, observation.getSensor().getVersion());
         return mDB.insert(OBSERVATIONS_TABLE, null, initialValues);
+    }
+    
+    /**
+     * Add API Cache Observation
+     * @return
+     */
+    public long addAPICacheObservation(CbObservation observation) {
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(KEY_LATITUDE, observation.getLocation().getLatitude());
+        initialValues.put(KEY_LONGITUDE, observation.getLocation().getLongitude());
+        initialValues.put(KEY_ALTITUDE, observation.getLocation().getAltitude());
+        initialValues.put(KEY_ACCURACY, observation.getLocation().getAccuracy());
+        initialValues.put(KEY_PROVIDER, observation.getLocation().getProvider());
+        initialValues.put(KEY_OBSERVATION_TYPE, observation.getObservationType());
+        initialValues.put(KEY_OBSERVATION_UNIT, observation.getObservationUnit());
+        initialValues.put(KEY_OBSERVATION_VALUE, observation.getObservationValue());
+        initialValues.put(KEY_SHARING, observation.getSharing());
+        initialValues.put(KEY_TIME, observation.getTime());
+        initialValues.put(KEY_TIMEZONE, observation.getTimeZoneOffset());
+        initialValues.put(KEY_USERID, observation.getUser_id());
+        initialValues.put(KEY_SENSOR_NAME, observation.getSensor().getName());
+        initialValues.put(KEY_SENSOR_TYPE, observation.getSensor().getType());
+        initialValues.put(KEY_SENSOR_VENDOR, observation.getSensor().getVendor());
+        initialValues.put(KEY_SENSOR_RESOLUTION, observation.getSensor().getResolution());
+        initialValues.put(KEY_SENSOR_VERSION, observation.getSensor().getVersion());
+        return mDB.insert(API_CACHE_TABLE, null, initialValues);
     }
     
     /**

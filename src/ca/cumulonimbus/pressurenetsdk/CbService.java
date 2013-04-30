@@ -64,8 +64,11 @@ public class CbService extends Service {
 	public static final int MSG_DATA_STREAM = 12;	
 	public static final int MSG_STOP_DATA_STREAM = 13;
 
-	public static final int MSG_GET_RECENTS = 14;
-	public static final int MSG_RECENTS = 15;
+	public static final int MSG_GET_LOCAL_RECENTS = 14;
+	public static final int MSG_GET_API_RECENTS = 15;
+	public static final int MSG_LOCAL_RECENTS = 16;
+	public static final int MSG_API_RECENTS = 16;
+	
 
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
@@ -422,7 +425,7 @@ public class CbService extends Service {
 				CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
 				newSettings.saveSettings();
 				break;
-			case MSG_GET_RECENTS:
+			case MSG_GET_LOCAL_RECENTS:
 				log("get recents");
 				CbApiCall apiCall = (CbApiCall) msg.obj;
 				
@@ -457,8 +460,48 @@ public class CbService extends Service {
 				
 				log("cbservice: " + results.size() + " local api results");
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_RECENTS,
+					msg.replyTo.send(Message.obtain(null, MSG_LOCAL_RECENTS,
 							results));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+			case MSG_GET_API_RECENTS:
+				log("get api recents");
+				CbApiCall apiCacheCall = (CbApiCall) msg.obj;
+				
+				// run API call
+				db.open();
+				Cursor cacheCursor = db.runLocalAPICall(apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(), 
+						apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(), apiCacheCall.getStartTime(), 
+						apiCacheCall.getEndTime(), 2000);
+				ArrayList<CbObservation> cacheResults = new ArrayList<CbObservation>();
+				while(cacheCursor.moveToNext()) {
+					// TODO: This is duplicated in CbDataCollector. Fix that
+					CbObservation obs = new CbObservation();
+					Location location = new Location("network");
+					location.setLatitude(cacheCursor.getDouble(1));
+					location.setLongitude(cacheCursor.getDouble(2));
+					location.setAltitude(cacheCursor.getDouble(3));
+					location.setAccuracy(cacheCursor.getInt(4));
+					location.setProvider(cacheCursor.getString(5));
+					obs.setLocation(location);
+					obs.setObservationType(cacheCursor.getString(6));
+					obs.setObservationUnit(cacheCursor.getString(7));
+					obs.setObservationValue(cacheCursor.getDouble(8));
+					obs.setSharing(cacheCursor.getString(9));
+					obs.setTime(cacheCursor.getLong(10));
+					obs.setTimeZoneOffset(cacheCursor.getLong(11));
+					obs.setUser_id(cacheCursor.getString(12));
+
+					// TODO: Add sensor information
+					
+					cacheResults.add(obs);
+				}
+				
+				log("cbservice: " + cacheResults.size() + " api cache results");
+				try {
+					msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
+							cacheResults));
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
