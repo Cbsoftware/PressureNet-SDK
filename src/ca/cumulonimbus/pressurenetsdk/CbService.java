@@ -64,10 +64,12 @@ public class CbService extends Service {
 	public static final int MSG_DATA_STREAM = 12;	
 	public static final int MSG_STOP_DATA_STREAM = 13;
 
+	// pressureNET Live API
 	public static final int MSG_GET_LOCAL_RECENTS = 14;
-	public static final int MSG_GET_API_RECENTS = 15;
-	public static final int MSG_LOCAL_RECENTS = 16;
-	public static final int MSG_API_RECENTS = 16;
+	public static final int MSG_LOCAL_RECENTS = 15;
+	public static final int MSG_GET_API_RECENTS = 16;
+	public static final int MSG_API_RECENTS = 17;
+	public static final int MSG_MAKE_API_CALL = 18;
 	
 
 	private final Handler mHandler = new Handler();
@@ -465,6 +467,7 @@ public class CbService extends Service {
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
+				break;
 			case MSG_GET_API_RECENTS:
 				log("get api recents");
 				CbApiCall apiCacheCall = (CbApiCall) msg.obj;
@@ -505,6 +508,13 @@ public class CbService extends Service {
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
+				break;
+			case MSG_MAKE_API_CALL:
+				CbApi api = new CbApi(getApplicationContext());
+				CbApiCall liveApiCall = (CbApiCall) msg.obj;
+				api.makeAPICall(liveApiCall);
+				
+				break;
 			default:
 				super.handleMessage(msg);
 			}
