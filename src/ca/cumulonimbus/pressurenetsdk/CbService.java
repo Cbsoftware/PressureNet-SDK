@@ -367,6 +367,7 @@ public class CbService extends Service {
 				if (locationManager != null) {
 					Location best = locationManager.getCurrentBestLocation();
 					try {
+						
 						log("service sending best location");
 						msg.replyTo.send(Message.obtain(null,
 								MSG_BEST_LOCATION, best));
@@ -423,9 +424,41 @@ public class CbService extends Service {
 				break;
 			case MSG_GET_RECENTS:
 				log("get recents");
+				CbApiCall apiCall = (CbApiCall) msg.obj;
+				
+				// run API call
+				db.open();
+				Cursor cursor = db.runLocalAPICall(apiCall.getMinLat(), apiCall.getMaxLat(), 
+						apiCall.getMinLon(), apiCall.getMaxLon(), apiCall.getStartTime(), 
+						apiCall.getEndTime(), 2000);
+				ArrayList<CbObservation> results = new ArrayList<CbObservation>();
+				while(cursor.moveToNext()) {
+					// TODO: This is duplicated in CbDataCollector. Fix that
+					CbObservation obs = new CbObservation();
+					Location location = new Location("network");
+					location.setLatitude(cursor.getDouble(1));
+					location.setLongitude(cursor.getDouble(2));
+					location.setAltitude(cursor.getDouble(3));
+					location.setAccuracy(cursor.getInt(4));
+					location.setProvider(cursor.getString(5));
+					obs.setLocation(location);
+					obs.setObservationType(cursor.getString(6));
+					obs.setObservationUnit(cursor.getString(7));
+					obs.setObservationValue(cursor.getDouble(8));
+					obs.setSharing(cursor.getString(9));
+					obs.setTime(cursor.getLong(10));
+					obs.setTimeZoneOffset(cursor.getLong(11));
+					obs.setUser_id(cursor.getString(12));
+
+					// TODO: Add sensor information
+					
+					results.add(obs);
+				}
+				
+				log("cbservice: " + results.size() + " local api results");
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_RECENTS,
-							dataCollector.getRecentDatabaseObservations()));
+							results));
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}

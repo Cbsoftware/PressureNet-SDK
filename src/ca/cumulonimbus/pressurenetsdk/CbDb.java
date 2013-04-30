@@ -104,6 +104,25 @@ public class CbDb {
 	}
 
 	/**
+	 * Run an "API call" against the local database
+	 * @return
+	 */
+	public Cursor runLocalAPICall(double min_lat, double max_lat, double min_lon, double max_lon, long start_time, long end_time, double limit) {
+		Cursor cursor = mDB.query(false, OBSERVATIONS_TABLE, new String[] {KEY_ROW_ID,
+                KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY, KEY_PROVIDER,
+                KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT, KEY_OBSERVATION_VALUE, 
+                KEY_SHARING, KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_SENSOR_NAME,
+                KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION}, 
+             
+                KEY_LATITUDE + " > ? and " + KEY_LATITUDE + " < ? and " + 
+                KEY_LONGITUDE + " > ? and " + KEY_LONGITUDE + " < ? and " +
+                KEY_TIME + " > ? and " + KEY_TIME + " < ? ", new String[] {min_lat + "", max_lat + "", min_lon + "", max_lon + "", start_time + "", end_time + ""}, null, null, null, null);
+		
+		System.out.println(cursor.getCount() + ", " + min_lat + "," + max_lat + ", " + min_lon + "," + max_lon + ", t " + start_time + ", " + end_time);
+		return cursor;
+	}
+	
+	/**
 	 * Get a single observation
 	 * @param rowId
 	 * @return
