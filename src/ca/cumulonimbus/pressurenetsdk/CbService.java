@@ -38,8 +38,7 @@ public class CbService extends Service {
 	private CbLocationManager locationManager;
 	private CbSettingsHandler settingsHandler;
 	private CbDb db;
-
-	
+	public CbService service = this;
 
 	private String mAppDir;
 
@@ -61,7 +60,7 @@ public class CbService extends Service {
 	public static final int MSG_SETTINGS = 10;
 
 	public static final int MSG_START_DATA_STREAM = 11;
-	public static final int MSG_DATA_STREAM = 12;	
+	public static final int MSG_DATA_STREAM = 12;
 	public static final int MSG_STOP_DATA_STREAM = 13;
 
 	// pressureNET Live API
@@ -70,7 +69,7 @@ public class CbService extends Service {
 	public static final int MSG_GET_API_RECENTS = 16;
 	public static final int MSG_API_RECENTS = 17;
 	public static final int MSG_MAKE_API_CALL = 18;
-	
+	public static final int MSG_API_RESULT_COUNT = 19;
 
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
@@ -98,7 +97,7 @@ public class CbService extends Service {
 
 			// stop listening for locations
 			locationManager.stopGettingLocations();
-			
+
 			dataCollector.stopCollectingData();
 			return pressureObservation;
 		} catch (Exception e) {
@@ -148,12 +147,12 @@ public class CbService extends Service {
 			if (settingsHandler.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
-				if(singleObservation.getObservationValue() != 0.0) {
+				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
 					db.open();
 					long count = db.addObservation(singleObservation);
 					db.close();
-					
+
 					try {
 						if (settingsHandler.isSharingData()) {
 							// Send if we're online
@@ -163,9 +162,9 @@ public class CbService extends Service {
 								// TODO: and store for later if not
 							}
 						}
-					} catch(Exception e) {
+					} catch (Exception e) {
 						e.printStackTrace();
-						
+
 					}
 				}
 			}
@@ -372,7 +371,7 @@ public class CbService extends Service {
 				if (locationManager != null) {
 					Location best = locationManager.getCurrentBestLocation();
 					try {
-						
+
 						log("service sending best location");
 						msg.replyTo.send(Message.obtain(null,
 								MSG_BEST_LOCATION, best));
@@ -430,14 +429,15 @@ public class CbService extends Service {
 			case MSG_GET_LOCAL_RECENTS:
 				log("get recents");
 				CbApiCall apiCall = (CbApiCall) msg.obj;
-				
+
 				// run API call
 				db.open();
-				Cursor cursor = db.runLocalAPICall(apiCall.getMinLat(), apiCall.getMaxLat(), 
-						apiCall.getMinLon(), apiCall.getMaxLon(), apiCall.getStartTime(), 
+				Cursor cursor = db.runLocalAPICall(apiCall.getMinLat(),
+						apiCall.getMaxLat(), apiCall.getMinLon(),
+						apiCall.getMaxLon(), apiCall.getStartTime(),
 						apiCall.getEndTime(), 2000);
 				ArrayList<CbObservation> results = new ArrayList<CbObservation>();
-				while(cursor.moveToNext()) {
+				while (cursor.moveToNext()) {
 					// TODO: This is duplicated in CbDataCollector. Fix that
 					CbObservation obs = new CbObservation();
 					Location location = new Location("network");
@@ -456,10 +456,10 @@ public class CbService extends Service {
 					obs.setUser_id(cursor.getString(12));
 
 					// TODO: Add sensor information
-					
+
 					results.add(obs);
 				}
-				
+
 				log("cbservice: " + results.size() + " local api results");
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_LOCAL_RECENTS,
@@ -471,14 +471,16 @@ public class CbService extends Service {
 			case MSG_GET_API_RECENTS:
 				log("get api recents");
 				CbApiCall apiCacheCall = (CbApiCall) msg.obj;
-				
+
 				// run API call
 				db.open();
-				Cursor cacheCursor = db.runAPICacheCall(apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(), 
-						apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(), apiCacheCall.getStartTime(), 
-						apiCacheCall.getEndTime(), 2000);
+				Cursor cacheCursor = db.runAPICacheCall(
+						apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(),
+						apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(),
+						apiCacheCall.getStartTime(), apiCacheCall.getEndTime(),
+						2000);
 				ArrayList<CbObservation> cacheResults = new ArrayList<CbObservation>();
-				while(cacheCursor.moveToNext()) {
+				while (cacheCursor.moveToNext()) {
 					// TODO: This is duplicated in CbDataCollector. Fix that
 					CbObservation obs = new CbObservation();
 					Location location = new Location("network");
@@ -497,10 +499,10 @@ public class CbService extends Service {
 					obs.setUser_id(cacheCursor.getString(12));
 
 					// TODO: Add sensor information
-					
+
 					cacheResults.add(obs);
 				}
-				
+
 				log("cbservice: " + cacheResults.size() + " api cache results");
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
@@ -512,8 +514,8 @@ public class CbService extends Service {
 			case MSG_MAKE_API_CALL:
 				CbApi api = new CbApi(getApplicationContext());
 				CbApiCall liveApiCall = (CbApiCall) msg.obj;
-				api.makeAPICall(liveApiCall);
-				
+				api.makeAPICall(liveApiCall, service, msg.replyTo);
+
 				break;
 			default:
 				super.handleMessage(msg);
@@ -521,48 +523,65 @@ public class CbService extends Service {
 		}
 	}
 
+	public boolean notifyAPIResult(Messenger reply, int count) {
+		try {
+			if (reply == null) {
+				System.out.println("cannot notify, reply is null");
+			} else {
+				reply.send(Message.obtain(null, MSG_API_RESULT_COUNT,
+						count, 0));
+			}
+
+		} catch (RemoteException re) {
+			re.printStackTrace();
+		} catch (NullPointerException npe) {
+			npe.printStackTrace();
+		}
+		return false;
+	}
+
 	public CbObservation recentPressureFromDatabase() {
 		CbObservation obs = new CbObservation();
 		long rowId = db.fetchObservationMaxID();
 		double pressure = 0.0;
-		
+
 		Cursor c = db.fetchObservation(rowId);
-		
-		while(c.moveToNext()) {
+
+		while (c.moveToNext()) {
 			pressure = c.getDouble(8);
 		}
 		log(pressure + " pressure from db");
-		if(pressure == 0.0 ){ 
+		if (pressure == 0.0) {
 			log("returning null");
 			return null;
 		}
 		obs.setObservationValue(pressure);
 		return obs;
 	}
-	
+
 	private class StreamObservation extends AsyncTask<Messenger, Void, String> {
 
 		@Override
 		protected String doInBackground(Messenger... m) {
-				try {
-					for(Messenger msgr : m) {
-						if(msgr!=null) {
-							msgr.send(Message.obtain(null, MSG_DATA_STREAM,recentPressureFromDatabase()
-								));
-						} else {
-							log("messenger is null");
-						}
+			try {
+				for (Messenger msgr : m) {
+					if (msgr != null) {
+						msgr.send(Message.obtain(null, MSG_DATA_STREAM,
+								recentPressureFromDatabase()));
+					} else {
+						log("messenger is null");
 					}
-				} catch (RemoteException re) {
-					re.printStackTrace();
 				}
-			
+			} catch (RemoteException re) {
+				re.printStackTrace();
+			}
+
 			return "--";
 		}
 
 		@Override
 		protected void onPostExecute(String result) {
-			
+
 		}
 
 		@Override
@@ -575,7 +594,7 @@ public class CbService extends Service {
 	}
 
 	public void startDataStream(Messenger m) {
-		log("cbService starting stream "  + (m==null));
+		log("cbService starting stream " + (m == null));
 		dataCollector.startCollectingData(m);
 		new StreamObservation().execute(m);
 	}

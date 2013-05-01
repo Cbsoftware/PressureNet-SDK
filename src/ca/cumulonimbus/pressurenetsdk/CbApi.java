@@ -18,6 +18,8 @@ import org.json.JSONObject;
 import android.content.Context;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Message;
+import android.os.Messenger;
 
 /**
  * Make pressureNET Live API calls
@@ -34,15 +36,26 @@ public class CbApi {
 	private CbApiCall apiCall;
 	private ArrayList<CbObservation> callResults = new ArrayList<CbObservation>();
 	
+	private Messenger replyResult = null;
+	
+	private CbService caller;
+	
+	
+	
 	/**
 	 * Make an API call and store the results
 	 * @return
 	 */
-	public boolean makeAPICall(CbApiCall call) {
+	public boolean makeAPICall(CbApiCall call, CbService caller, Messenger ms) {
+		
+		this.replyResult = ms;
+		this.caller = caller;
 		apiCall = call;
 		APIDataDownload api = new APIDataDownload();
+		api.setReplyToApp(ms);
 		api.execute("");
-		return false;
+		
+		return true;
 	}
 	
 	
@@ -54,6 +67,7 @@ public class CbApi {
 	 */
 	private boolean saveAPIResults(ArrayList<CbObservation> results) {
 		db.open();
+		System.out.println("saving api results...");
 		
 		db.addObservationArrayList(results);
 		
@@ -68,13 +82,23 @@ public class CbApi {
 	
 	private class APIDataDownload extends AsyncTask<String, String, String> {
 
+		Messenger replyToApp = null;
+		
+		
+		
+		public Messenger getReplyToApp() {
+			return replyToApp;
+		}
+
+		public void setReplyToApp(Messenger replyToApp) {
+			this.replyToApp = replyToApp;
+		}
+
 		@Override
 		protected String doInBackground(String... arg0) {
 			String responseText = "";
 			try {
 				DefaultHttpClient client = new DefaultHttpClient();
-
-				System.out.println("contacting api...");
 				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 				nvps.add(new BasicNameValuePair("min_lat", apiCall.getMinLat() + ""
 						+ ""));
@@ -93,12 +117,12 @@ public class CbApi {
 				String paramString = URLEncodedUtils.format(nvps, "utf-8");
 
 				apiServerURL = apiServerURL + paramString;
-				System.out.println(apiServerURL);
+				System.out.println("cbservice api sending " + apiServerURL);
 				HttpGet get = new HttpGet(apiServerURL);
-
 				// Execute the GET call and obtain the response
 				HttpResponse getResponse = client.execute(get);
 				HttpEntity responseEntity = getResponse.getEntity();
+				System.out.println("response " + responseEntity.getContentLength());
 
 				BufferedReader r = new BufferedReader(new InputStreamReader(
 						responseEntity.getContent()));
@@ -119,7 +143,10 @@ public class CbApi {
 		}
 
 		protected void onPostExecute(String result) {
-			processJSONResult(result);
+			callResults = processJSONResult(result);
+			saveAPIResults(callResults);
+			System.out.println("saved " + callResults.size() + " api call results");
+			caller.notifyAPIResult(replyToApp, callResults.size());
 		}
 	}
 	
@@ -128,7 +155,9 @@ public class CbApi {
 	 * 
 	 * @param resultJSON
 	 */
-	void processJSONResult(String resultJSON) {
+	private ArrayList<CbObservation> processJSONResult(String resultJSON) {
+		ArrayList<CbObservation> obsFromJSON = new ArrayList<CbObservation>();
+		System.out.println("processing json result");
 		try {
 			JSONArray jsonArray = new JSONArray(resultJSON);
 			for (int i = 0; i < jsonArray.length(); i++) {
@@ -148,7 +177,7 @@ public class CbApi {
 					singleObs.setUser_id(jsonObject.getString("user_id"));
 					singleObs.setObservationValue(jsonObject
 							.getDouble("reading"));
-					callResults.add(singleObs);
+					obsFromJSON.add(singleObs);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -158,12 +187,11 @@ public class CbApi {
 			//ArrayList<CbObservation> detailedList = CbObservation.addDatesAndTrends(apiCbObservationResults);
 			//recents = CbObservation.addDatesAndTrends(apiCbObservationResults);
 			
-			saveAPIResults(callResults);
-			System.out.println("saved " + callResults.size() + " api call results");
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		return obsFromJSON;
 	}
 	
 }

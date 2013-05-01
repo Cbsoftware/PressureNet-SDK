@@ -106,7 +106,7 @@ public class CbDb {
 	
 	
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 10;
+	private static final int DATABASE_VERSION = 11;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 	
