@@ -54,9 +54,8 @@ public class CbApi {
 	 */
 	private boolean saveAPIResults(ArrayList<CbObservation> results) {
 		db.open();
-		for(CbObservation obs : results) {
-			db.addAPICacheObservation(obs);
-		}
+		
+		db.addObservationArrayList(results);
 		
 		db.close();
 		return false;
