@@ -82,7 +82,10 @@ public class CbDb {
 			+ KEY_SENSOR_TYPE + " real not null, "			
 			+ KEY_SENSOR_VENDOR + " text not null, "
 			+ KEY_SENSOR_RESOLUTION + " real not null, "
-			+ KEY_SENSOR_VERSION + " real not null)";
+			+ KEY_SENSOR_VERSION + " real not null," 
+			+ "UNIQUE (" + KEY_LATITUDE + ", " + KEY_LONGITUDE + "," + 
+						   KEY_TIME + ", " + KEY_USERID + "," + 
+						   KEY_OBSERVATION_VALUE +") ON CONFLICT REPLACE)";
 	
 	private static final String API_CACHE_TABLE_CREATE = "create table " 
 			+ API_CACHE_TABLE + " (_id integer primary key autoincrement, "
@@ -102,11 +105,14 @@ public class CbDb {
 			+ KEY_SENSOR_TYPE + " real not null, "			
 			+ KEY_SENSOR_VENDOR + " text not null, "
 			+ KEY_SENSOR_RESOLUTION + " real not null, "
-			+ KEY_SENSOR_VERSION + " real not null)";
+			+ KEY_SENSOR_VERSION + " real not null,"
+			+ "UNIQUE (" + KEY_LATITUDE + ", " + KEY_LONGITUDE + "," + 
+			   KEY_TIME + "," + KEY_USERID + "," + 
+			   KEY_OBSERVATION_VALUE +") ON CONFLICT REPLACE)";
 	
 	
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 11;
+	private static final int DATABASE_VERSION = 12;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 	
