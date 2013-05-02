@@ -54,7 +54,6 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
-		// TODO: SecureHttpClient
 		DefaultHttpClient client = new DefaultHttpClient();
 		HttpPost httppost = new HttpPost(settings.getServerURL());
 		try {
