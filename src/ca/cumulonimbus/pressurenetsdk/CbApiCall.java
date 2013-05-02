@@ -13,9 +13,38 @@ public class CbApiCall {
 	private String apiKey = "";
 	private long startTime = 0;
 	private long endTime = 0;
+	String format = "json";
 	ArrayList<CbObservation> observationResults;
 	
+	public static CbApiCall buildAPICall(boolean global, boolean sinceLastCall, int hoursAgo, double minLat, double maxLat, double minLon, double maxLon, String format, String apiKey) {
+		long startTime = System.currentTimeMillis() - (hoursAgo * 60 * 60 * 1000);
+		long endTime = System.currentTimeMillis();
+		CbApiCall api = new CbApiCall();
+		if(global) {
+			api.setGlobal(true);
+		} else {
+			api.setMinLat(minLat);
+			api.setMaxLat(maxLat);
+			api.setMinLon(minLon);
+			api.setMaxLon(maxLon);
+		}
+		if(sinceLastCall) {
+			api.setSinceLastCall(true);
+		} else {
+			api.setStartTime(startTime);
+			api.setEndTime(endTime);
+		}
+		api.setFormat(format);
+		api.setApiKey(apiKey);
+		return api;
+	}
 	
+	public String getFormat() {
+		return format;
+	}
+	public void setFormat(String format) {
+		this.format = format;
+	}
 	public String getApiKey() {
 		return apiKey;
 	}
