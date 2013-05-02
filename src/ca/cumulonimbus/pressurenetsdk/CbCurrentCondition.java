@@ -1,5 +1,7 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import android.location.Location;
+
 /**
  * A description of the current weather 
  * at a specific location.
@@ -10,10 +12,7 @@ package ca.cumulonimbus.pressurenetsdk;
 public class CbCurrentCondition {
 	private double time;
 	private int tzoffset;
-	private String location_type;
-	private double latitude;
-	private double longitude;
-	private double location_accuracy;
+	private Location location;
 	private String general_condition;
 	private String windy;
 	private String fog_thickness;
@@ -26,11 +25,51 @@ public class CbCurrentCondition {
 	private String sharing_policy;
 	private String user_comment;
 	
+
+	public String[] getCurrentConditionAsParams() {
+		String[] params = {"time," + time, 
+						   "timezoneoffset," + tzoffset,
+						   "latitude," + location.getLatitude(),
+						   "longitude," + location.getLongitude(),
+						   "altitude," + location.getAltitude(),
+						   "accuracy," + location.getAccuracy(),
+						   "provider," + location.getProvider(),
+						   "general_condition," + general_condition,
+						   "windy," + windy,
+						   "fog_thickness," + fog_thickness,
+						   "cloud_type," + cloud_type,
+						   "precipitation_type," + precipitation_type,
+						   "precipitation_amount," + precipitation_amount,
+						   "precipitation_unit," + precipitation_unit,
+						   "thunderstorm_intensity," + thunderstorm_intensity,
+						   "user_id," + user_id,
+						   "sharing_policy," + sharing_policy,
+						   "user_comment," + user_comment,
+		};
+		return params;
+	}
+	
+	
+	
 	@Override
 	public String toString() {
-		return user_id + ", " + time + ", " + tzoffset + ", " + latitude + ", " + longitude + ", " + general_condition + "," + windy + ", " + 
+		return user_id + ", " + time + ", " + tzoffset + ", " + location.getLatitude() + ", " + location.getLongitude() + ", " + general_condition + "," + windy + ", " + 
 				precipitation_type + ", " + precipitation_amount + ", " + thunderstorm_intensity;
 	}
+	
+	
+	public Location getLocation() {
+		return location;
+	}
+
+
+
+	public void setLocation(Location location) {
+		this.location = location;
+	}
+
+
+
 	public String getUser_comment() {
 		return user_comment;
 	}
@@ -60,30 +99,6 @@ public class CbCurrentCondition {
 	}
 	public void setTime(double time) {
 		this.time = time;
-	}
-	public String getLocation_type() {
-		return location_type;
-	}
-	public void setLocation_type(String location_type) {
-		this.location_type = location_type;
-	}
-	public double getLatitude() {
-		return latitude;
-	}
-	public void setLatitude(double latitude) {
-		this.latitude = latitude;
-	}
-	public double getLongitude() {
-		return longitude;
-	}
-	public void setLongitude(double longitude) {
-		this.longitude = longitude;
-	}
-	public double getLocation_accuracy() {
-		return location_accuracy;
-	}
-	public void setLocation_accuracy(double location_accuracy) {
-		this.location_accuracy = location_accuracy;
 	}
 	public String getGeneral_condition() {
 		return general_condition;
