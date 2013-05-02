@@ -113,7 +113,9 @@ public class CbApi {
 				nvps.add(new BasicNameValuePair("api_key", apiCall.getApiKey()));
 				nvps.add(new BasicNameValuePair("format", "json"));
 				nvps.add(new BasicNameValuePair("limit", "10000")); // TODO: User preference
-
+				nvps.add(new BasicNameValuePair("global", apiCall.isGlobal() + ""));
+				nvps.add(new BasicNameValuePair("since_last_call", apiCall.isSinceLastCall() + ""));
+				
 				String paramString = URLEncodedUtils.format(nvps, "utf-8");
 
 				apiServerURL = apiServerURL + paramString;
