@@ -26,6 +26,7 @@ public class CbDb {
 	public static final String SETTINGS_TABLE = "cb_settings";
 	public static final String OBSERVATIONS_TABLE = "cb_observations";
 	public static final String API_CACHE_TABLE = "cb_api_cache";
+	public static final String CURRENT_CONDITIONS_TABLE = "cb_current_conditions";
 	
 	
 	// Settings Fields
@@ -52,6 +53,19 @@ public class CbDb {
 	public static final String KEY_SENSOR_VENDOR ="sensor_vendor";
 	public static final String KEY_SENSOR_RESOLUTION = "sensor_resolution";
 	public static final String KEY_SENSOR_VERSION = "sensor_version";
+	
+	// Current Conditions Fields
+	// + KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY, KEY_PROVIDER, KEY_TIME, KEY_TIMEZONE, KEY_SHARING, KEY_USERID,
+	public static final String KEY_GENERAL_CONDITION = "general_condition";
+	public static final String KEY_WINDY = "windy";
+	public static final String KEY_FOGGY = "foggy";
+	public static final String KEY_CLOUD_TYPE = "cloud_type";
+	public static final String KEY_PRECIPITATION_TYPE = "precipitation_type";
+	public static final String KEY_PRECIPITATION_AMOUNT = "precipitation_amount";
+	public static final String KEY_PRECIPITATION_UNIT = "precipitation_unit";
+	public static final String KEY_THUNDERSTORM_INTENSITY = "thunderstorm_intensity";
+	public static final String KEY_USER_COMMENT = "user_comment";
+	 
 	
 	private Context mContext;
 	
@@ -110,9 +124,30 @@ public class CbDb {
 			   KEY_TIME + "," + KEY_USERID + "," + 
 			   KEY_OBSERVATION_VALUE +") ON CONFLICT REPLACE)";
 	
+		private static final String CURRENT_CONDITIONS_TABLS_CREATE = "create table "
+			+ CURRENT_CONDITIONS_TABLE + " (_id integer primary key autoincrement, "
+			+ KEY_LATITUDE + " real not null, "
+			+ KEY_LONGITUDE + " real not null, "
+			+ KEY_ALTITUDE + " real not null, "
+			+ KEY_ACCURACY + " real not null, "
+			+ KEY_PROVIDER + " text not null, "
+			+ KEY_SHARING + " text not null, "
+			+ KEY_TIME + " real not null, "
+			+ KEY_TIMEZONE + " real not null, "
+			+ KEY_USERID + " text not null, "
+			+ KEY_GENERAL_CONDITION + " text not null, "
+			+ KEY_WINDY + " text not null, "
+			+ KEY_FOGGY + " text not null, "
+			+ KEY_CLOUD_TYPE + " text not null, "
+			+ KEY_PRECIPITATION_TYPE + " text not null, "
+			+ KEY_PRECIPITATION_AMOUNT + " real not null, "
+			+ KEY_PRECIPITATION_UNIT + " text not null, "
+			+ KEY_THUNDERSTORM_INTENSITY + " real not null, "
+			+ KEY_USER_COMMENT + " text not null)";
+			
 	
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 12;
+	private static final int DATABASE_VERSION = 13;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 	
@@ -125,6 +160,7 @@ public class CbDb {
 			db.execSQL(SETTINGS_TABLE_CREATE);
 			db.execSQL(OBSERVATIONS_TABLE_CREATE);
 			db.execSQL(API_CACHE_TABLE_CREATE);
+			db.execSQL(CURRENT_CONDITIONS_TABLS_CREATE);
 		}
 
 		@Override
@@ -133,6 +169,7 @@ public class CbDb {
 			db.execSQL("DROP TABLE IF EXISTS " + SETTINGS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + OBSERVATIONS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + API_CACHE_TABLE);
+			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
 			onCreate(db);
 		}
 	}
