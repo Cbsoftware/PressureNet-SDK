@@ -70,7 +70,13 @@ public class CbService extends Service {
 	public static final int MSG_API_RECENTS = 17;
 	public static final int MSG_MAKE_API_CALL = 18;
 	public static final int MSG_API_RESULT_COUNT = 19;
-
+	
+	// pressureNET API Cache
+	public static final int MSG_CLEAR_LOCAL_CACHE = 20;
+	public static final int MSG_REMOVE_FROM_PRESSURENET = 21;
+	public static final int MSG_CLEAR_API_CACHE = 22;
+	
+	
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
 
@@ -516,6 +522,19 @@ public class CbService extends Service {
 				CbApiCall liveApiCall = (CbApiCall) msg.obj;
 				api.makeAPICall(liveApiCall, service, msg.replyTo);
 
+				break;
+			case MSG_CLEAR_LOCAL_CACHE:
+				db.open();
+				db.clearLocalCache();
+				db.close();
+				break;
+			case MSG_REMOVE_FROM_PRESSURENET:
+				// TODO: Implement
+				break;
+			case MSG_CLEAR_API_CACHE:
+				db.open();
+				db.clearAPICache();
+				db.close();
 				break;
 			default:
 				super.handleMessage(msg);

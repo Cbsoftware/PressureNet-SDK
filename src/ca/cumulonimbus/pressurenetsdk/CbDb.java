@@ -229,14 +229,24 @@ public class CbDb {
         return mCursor;
     }
     
+
     /**
-     * Empty the database
+     * Clear the local measurements from the device
      * @return
      */
-    public void clearDb() {
-    	mDB.execSQL("delete from " + SETTINGS_TABLE);
+    public void clearLocalCache() {
+    	mDB.execSQL("delete from " + OBSERVATIONS_TABLE);
     }
-	
+    /**
+     * Clear the API cache from the device
+     * @return
+     */
+    public void clearAPICache() {
+    	mDB.execSQL("delete from " + API_CACHE_TABLE);
+    }
+
+    
+   
     /**
      * Fetch every application setting.
      * 
