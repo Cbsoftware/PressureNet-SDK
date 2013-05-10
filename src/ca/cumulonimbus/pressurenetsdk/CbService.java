@@ -76,6 +76,11 @@ public class CbService extends Service {
 	public static final int MSG_REMOVE_FROM_PRESSURENET = 21;
 	public static final int MSG_CLEAR_API_CACHE = 22;
 	
+	// Current Conditions
+	public static final int MSG_ADD_CURRENT_CONDITION = 23;	
+	public static final int MSG_GET_CURRENT_CONDITIONS = 24;
+	public static final int MSG_CURRENT_CONDITIONS = 25;
+	
 	
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
@@ -111,30 +116,6 @@ public class CbService extends Service {
 			return new CbObservation();
 		}
 	}
-
-	/**
-	 * Find all the data for an observation group.
-	 * 
-	 * Location, Measurement values, etc.
-	 * 
-	 * @return
-	 */
-	/*
-	 * public CbObservationGroup collectNewObservationGroup() {
-	 * ArrayList<CbObservation> observations = new ArrayList<CbObservation>();
-	 * CbObservation pressureObservation = new CbObservation();
-	 * 
-	 * // Location values locationManager = new CbLocationManager(this);
-	 * locationManager.startGettingLocations();
-	 * 
-	 * // Measurement values dataCollector = new CbDataCollector(getID(),
-	 * getApplicationContext()); pressureObservation =
-	 * dataCollector.getPressureObservation();
-	 * 
-	 * // Put everything together observations.add(pressureObservation);
-	 * CbObservationGroup newGroup = new CbObservationGroup();
-	 * newGroup.setGroup(observations); return newGroup; }
-	 */
 
 	/**
 	 * Collect and send data in a different thread. This runs itself every
@@ -207,22 +188,11 @@ public class CbService extends Service {
 		mHandler.removeCallbacks(sender);
 	}
 
-	/**
-	 * Send the observation group to the server
-	 * 
-	 * @param group
-	 * @return
-	 */
-	public boolean sendCbObservationGroup(CbObservationGroup group) {
-		// TODO: Implement
-		log("send observation group");
-		return false;
-	}
 
 	/**
 	 * Send the observation to the server
 	 * 
-	 * @param group
+	 * @param observation
 	 * @return
 	 */
 	public boolean sendCbObservation(CbObservation observation) {
@@ -239,7 +209,7 @@ public class CbService extends Service {
 	/**
 	 * Send a new account to the server
 	 * 
-	 * @param group
+	 * @param account
 	 * @return
 	 */
 	public boolean sendCbAccount(CbAccount account) {

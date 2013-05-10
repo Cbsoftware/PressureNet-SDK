@@ -122,16 +122,6 @@ public class CbDataCollector implements SensorEventListener{
     }
     
     
-	/**
-	 * Collect a full group of observations. The principle way data
-	 * should be gathered.
-	 * @return
-	 */
-    public CbObservationGroup getObservationGroup() {
-        // TODO: Implement
-    	return null;
-    }
-    
 	public CbObservation getPressureObservation() {
 		CbObservation pressureObservation = new CbObservation();
 		pressureObservation.setTime(System.currentTimeMillis());
