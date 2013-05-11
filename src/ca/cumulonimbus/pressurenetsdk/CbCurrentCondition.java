@@ -10,20 +10,20 @@ import android.location.Location;
  *
  */
 public class CbCurrentCondition {
-	private double time;
-	private int tzoffset;
+	private double time = 0;
+	private int tzoffset = 0;
 	private Location location;
-	private String general_condition;
-	private String windy;
-	private String fog_thickness;
-	private String cloud_type;
-	private String precipitation_type;
-	private double precipitation_amount;
-	private String precipitation_unit;
-	private String thunderstorm_intensity;
-	private String user_id;
-	private String sharing_policy;
-	private String user_comment;
+	private String general_condition = "";
+	private String windy = "";
+	private String fog_thickness = "";
+	private String cloud_type = "";
+	private String precipitation_type = "";
+	private double precipitation_amount = 0;
+	private String precipitation_unit = "";
+	private String thunderstorm_intensity = "";
+	private String user_id = "";
+	private String sharing_policy = "";
+	private String user_comment = "";
 	
 
 	public String[] getCurrentConditionAsParams() {
