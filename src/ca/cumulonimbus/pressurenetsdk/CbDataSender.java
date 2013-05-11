@@ -36,6 +36,8 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	
 	private CbSettingsHandler settings;
 	
+	private CbDataCollector dataCollector;
+	
 	private Context context;
 	private String mAppDir;
 	
@@ -47,9 +49,10 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	public CbSettingsHandler getSettings() {
 		return settings;
 	}
-	public void setSettings(CbSettingsHandler settings, CbLocationManager locationManager) {
+	public void setSettings(CbSettingsHandler settings, CbLocationManager locationManager, CbDataCollector dataCollector) {
 		this.settings = settings;
 		this.locationManager = locationManager;
+		this.dataCollector = dataCollector;
 	}
 
 	@Override
@@ -67,7 +70,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			httppost.setEntity(new UrlEncodedFormEntity(nvps));
 			System.out.println("executing post");
 			HttpResponse resp = client.execute(httppost);
-			
+			dataCollector.stopCollectingData();
 			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();

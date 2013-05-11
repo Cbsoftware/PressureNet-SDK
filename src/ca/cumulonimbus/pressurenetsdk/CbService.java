@@ -108,7 +108,6 @@ public class CbService extends Service {
 			// stop listening for locations
 			locationManager.stopGettingLocations();
 
-			dataCollector.stopCollectingData();
 			return pressureObservation;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -206,7 +205,7 @@ public class CbService extends Service {
 	public boolean sendCbObservation(CbObservation observation) {
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settingsHandler, locationManager);
+			sender.setSettings(settingsHandler, locationManager, dataCollector );
 			sender.execute(observation.getObservationAsParams());
 			return true;
 		} catch (Exception e) {
@@ -224,7 +223,7 @@ public class CbService extends Service {
 		
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settingsHandler, locationManager);
+			sender.setSettings(settingsHandler, locationManager, dataCollector);
 			sender.execute(account.getAccountAsParams());
 			return true;
 		} catch (Exception e) {

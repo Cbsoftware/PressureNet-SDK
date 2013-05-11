@@ -148,6 +148,7 @@ public class CbDataCollector implements SensorEventListener{
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		if(event.sensor.getType() == Sensor.TYPE_PRESSURE) {
+			System.out.println("new pressure reading " + event.values[0]);
 			recentPressureReading = event.values[0];
 			lastPressureTime = System.currentTimeMillis();
 		} else if(event.sensor.getType() == TYPE_RELATIVE_HUMIDITY) {
