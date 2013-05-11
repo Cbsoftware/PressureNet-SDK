@@ -175,6 +175,29 @@ public class CbDb {
 			onCreate(db);
 		}
 	}
+	
+	/**
+	 * Get local current conditions
+	 * 
+	 * @return
+	 */
+	public Cursor getCurrentConditions(double min_lat, double max_lat,
+			double min_lon, double max_lon, long start_time, long end_time,
+			double limit) {
+		Cursor cursor = mDB.query(false, CURRENT_CONDITIONS_TABLE, new String[] {
+				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE,
+				KEY_ACCURACY, KEY_PROVIDER, KEY_SHARING,
+				KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_GENERAL_CONDITION,
+				KEY_WINDY, KEY_FOGGY, KEY_CLOUD_TYPE, KEY_PRECIPITATION_TYPE,
+				KEY_PRECIPITATION_AMOUNT, KEY_PRECIPITATION_UNIT,
+				KEY_THUNDERSTORM_INTENSITY,KEY_USER_COMMENT }, KEY_LATITUDE + " > ? and " + KEY_LATITUDE
+				+ " < ? and " + KEY_LONGITUDE + " > ? and " + KEY_LONGITUDE
+				+ " < ? and " + KEY_TIME + " > ? and " + KEY_TIME + " < ? ",
+				new String[] { min_lat + "", max_lat + "", min_lon + "",
+						max_lon + "", start_time + "", end_time + "" }, null,
+				null, null, null);
+		return cursor;
+	}
 
 	/**
 	 * Run an API call against the API cache

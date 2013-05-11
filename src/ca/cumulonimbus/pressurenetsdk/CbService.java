@@ -78,12 +78,8 @@ public class CbService extends Service {
 	
 	// Current Conditions
 	public static final int MSG_ADD_CURRENT_CONDITION = 23;	
-	public static final int MSG_GET_LOCAL_CURRENT_CONDITIONS = 24;
-	public static final int MSG_LOCAL_CURRENT_CONDITIONS = 25;
-	
-	public static final int MSG_GET_API_CURRENT_CONDITIONS = 25;
-	public static final int MSG_API_CURRENT_CONDITIONS = 26;
-	
+	public static final int MSG_GET_CURRENT_CONDITIONS = 24;
+	public static final int MSG_CURRENT_CONDITIONS = 25;
 	
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
@@ -514,12 +510,51 @@ public class CbService extends Service {
 				db.addCondition(cc);
 				db.close();
 				break;
-			case MSG_GET_LOCAL_CURRENT_CONDITIONS:
-				
-				break;
-			case MSG_GET_API_CURRENT_CONDITIONS:
+			case MSG_GET_CURRENT_CONDITIONS:
+				db.open();
+				CbApiCall currentConditionAPI = (CbApiCall) msg.obj;
 
-				break;
+				Cursor ccCursor = db.getCurrentConditions(
+						currentConditionAPI.getMinLat(), 
+						currentConditionAPI.getMaxLat(), 
+						currentConditionAPI.getMinLon(),
+						currentConditionAPI.getMaxLon(),
+						currentConditionAPI.getStartTime(),
+						currentConditionAPI.getEndTime(),
+						1000);
+				
+				ArrayList<CbCurrentCondition> conditions = new ArrayList<CbCurrentCondition>();
+				while(ccCursor.moveToNext()) {
+					CbCurrentCondition cur = new CbCurrentCondition();
+					Location location = new Location("network");
+					location.setLatitude(ccCursor.getDouble(1));
+					location.setLongitude(ccCursor.getDouble(2));
+					location.setAltitude(ccCursor.getDouble(3));
+					location.setAccuracy(ccCursor.getInt(4));
+					location.setProvider(ccCursor.getString(5));
+					cur.setLocation(location);
+					cur.setTime(ccCursor.getLong(6));
+					cur.setTime(ccCursor.getLong(7));
+					cur.setUser_id(ccCursor.getString(9));
+					cur.setGeneral_condition(ccCursor.getString(10));
+					cur.setWindy(ccCursor.getString(11));
+					cur.setFog_thickness(ccCursor.getString(12));
+					cur.setCloud_type(ccCursor.getString(13));
+					cur.setPrecipitation_type(ccCursor.getString(14));
+					cur.setPrecipitation_amount(ccCursor.getDouble(15));
+					cur.setPrecipitation_unit(ccCursor.getString(16));
+					cur.setThunderstorm_intensity(ccCursor.getString(17));
+					cur.setUser_comment(ccCursor.getString(18));
+					conditions.add(cur);
+				}
+				db.close();
+				
+				try {
+					msg.replyTo.send(Message.obtain(null, MSG_CURRENT_CONDITIONS,
+							conditions));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
 			default:
 				super.handleMessage(msg);
 			}
