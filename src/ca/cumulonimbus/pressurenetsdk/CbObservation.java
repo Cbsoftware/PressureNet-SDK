@@ -25,7 +25,7 @@ public class CbObservation {
 	private String sharing = "-";
 	private String user_id = "-";
 	private long time = 0;
-	private int timeZoneOffset = 0;
+	private long timeZoneOffset = 0;
 	private String clientKey = "";
 
 	
@@ -203,10 +203,10 @@ public class CbObservation {
 	public void setTime(long time) {
 		this.time = time;
 	}
-	public int getTimeZoneOffset() {
+	public long getTimeZoneOffset() {
 		return timeZoneOffset;
 	}
-	public void setTimeZoneOffset(int timeZoneOffset) {
+	public void setTimeZoneOffset(long timeZoneOffset) {
 		this.timeZoneOffset = timeZoneOffset;
 	}
 	

@@ -454,15 +454,17 @@ public class CbService extends Service {
 			case MSG_GET_API_RECENTS:
 				log("get api recents");
 				CbApiCall apiCacheCall = (CbApiCall) msg.obj;
-
+				log(apiCacheCall.toString());
 				// run API call
 				db.open();
+				
 				Cursor cacheCursor = db.runAPICacheCall(
 						apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(),
 						apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(),
 						apiCacheCall.getStartTime(), apiCacheCall.getEndTime(),
 						2000);
 				ArrayList<CbObservation> cacheResults = new ArrayList<CbObservation>();
+				System.out.println("cache cursor count " + cacheCursor.getCount());
 				while (cacheCursor.moveToNext()) {
 					// TODO: This is duplicated in CbDataCollector. Fix that
 					CbObservation obs = new CbObservation();
@@ -485,6 +487,7 @@ public class CbService extends Service {
 
 					cacheResults.add(obs);
 				}
+
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
 							cacheResults));

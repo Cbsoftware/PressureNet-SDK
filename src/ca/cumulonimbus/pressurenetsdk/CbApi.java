@@ -172,9 +172,9 @@ public class CbApi {
 					location.setAccuracy((float) jsonObject
 							.getDouble("location_accuracy"));
 					singleObs.setLocation(location);
-					singleObs.setTime(jsonObject.getInt("daterecorded"));
+					singleObs.setTime(jsonObject.getLong("daterecorded"));
 					singleObs.setTimeZoneOffset(jsonObject
-							.getInt("tzoffset"));
+							.getLong("tzoffset"));
 					singleObs.setSharing(jsonObject.getString("sharing"));
 					singleObs.setUser_id(jsonObject.getString("user_id"));
 					singleObs.setObservationValue(jsonObject

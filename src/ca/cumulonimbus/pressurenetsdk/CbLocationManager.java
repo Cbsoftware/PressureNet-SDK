@@ -74,7 +74,7 @@ public class CbLocationManager {
 	        gpsLocationManager = null;
 	        return true;
 		} catch(Exception e) {
-			log(e.getMessage());
+			e.printStackTrace();
 			return false;
 		}
 	}
@@ -107,7 +107,7 @@ public class CbLocationManager {
     		gpsLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
     	} catch(Exception e) {
     		startGettingLocations();
-    		log(e.getMessage());
+    		e.printStackTrace();
     		return false;
     	}
     	return true;

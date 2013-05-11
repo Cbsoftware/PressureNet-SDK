@@ -16,6 +16,11 @@ public class CbApiCall {
 	String format = "json";
 	ArrayList<CbObservation> observationResults;
 	
+	@Override
+	public String toString() {
+		return global + ", " + sinceLastCall + ", " + minLat + ", " + maxLat + "," + minLon + "," + maxLon + "," + startTime + "," + endTime;
+	}
+	
 	public static CbApiCall buildAPICall(boolean global, boolean sinceLastCall, int hoursAgo, double minLat, double maxLat, double minLon, double maxLon, String format, String apiKey) {
 		long startTime = System.currentTimeMillis() - (hoursAgo * 60 * 60 * 1000);
 		long endTime = System.currentTimeMillis();
