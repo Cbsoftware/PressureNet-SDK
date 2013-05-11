@@ -78,8 +78,11 @@ public class CbService extends Service {
 	
 	// Current Conditions
 	public static final int MSG_ADD_CURRENT_CONDITION = 23;	
-	public static final int MSG_GET_CURRENT_CONDITIONS = 24;
-	public static final int MSG_CURRENT_CONDITIONS = 25;
+	public static final int MSG_GET_LOCAL_CURRENT_CONDITIONS = 24;
+	public static final int MSG_LOCAL_CURRENT_CONDITIONS = 25;
+	
+	public static final int MSG_GET_API_CURRENT_CONDITIONS = 25;
+	public static final int MSG_API_CURRENT_CONDITIONS = 26;
 	
 	
 	private final Handler mHandler = new Handler();
@@ -213,6 +216,7 @@ public class CbService extends Service {
 	 * @return
 	 */
 	public boolean sendCbAccount(CbAccount account) {
+		
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
 			sender.setSettings(settingsHandler, locationManager);
@@ -478,8 +482,6 @@ public class CbService extends Service {
 
 					cacheResults.add(obs);
 				}
-
-				log("cbservice: " + cacheResults.size() + " api cache results");
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
 							cacheResults));
@@ -505,6 +507,18 @@ public class CbService extends Service {
 				db.open();
 				db.clearAPICache();
 				db.close();
+				break;
+			case MSG_ADD_CURRENT_CONDITION:
+				CbCurrentCondition cc = (CbCurrentCondition) msg.obj;
+				db.open();
+				db.addCondition(cc);
+				db.close();
+				break;
+			case MSG_GET_LOCAL_CURRENT_CONDITIONS:
+				
+				break;
+			case MSG_GET_API_CURRENT_CONDITIONS:
+
 				break;
 			default:
 				super.handleMessage(msg);
