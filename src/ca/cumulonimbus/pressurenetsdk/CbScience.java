@@ -94,7 +94,7 @@ public class CbScience {
 		for (CbObservation obs : recents) {
 			// we'd like to compare delta pressure and delta time
 			// preferably in millibars and hours.
-			obs.setTime((obs.getTime() - minTime) / (1000 * 3600));
+			obs.setTime((long)(obs.getTime() - minTime) / (1000 * 3600));
 			obs.setObservationValue(obs.getObservationValue() - minPressure);
 		}
 		int slope = slopeOfBestFit(recents);

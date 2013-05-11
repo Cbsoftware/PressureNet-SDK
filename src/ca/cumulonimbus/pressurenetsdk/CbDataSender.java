@@ -54,6 +54,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
+		System.out.println("cb send do in bg");
 		DefaultHttpClient client = new DefaultHttpClient();
 		HttpPost httppost = new HttpPost(settings.getServerURL());
 		try {
@@ -64,7 +65,9 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 				nvps.add(new BasicNameValuePair(key, value));
 			} 
 			httppost.setEntity(new UrlEncodedFormEntity(nvps));
-			client.execute(httppost);
+			System.out.println("executing post");
+			HttpResponse resp = client.execute(httppost);
+			
 			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();

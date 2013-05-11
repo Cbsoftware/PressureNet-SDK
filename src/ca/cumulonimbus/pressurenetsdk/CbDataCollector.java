@@ -75,8 +75,8 @@ public class CbDataCollector implements SensorEventListener{
 			obs.setObservationUnit(c.getString(7));
 			obs.setObservationValue(c.getDouble(8));
 			obs.setSharing(c.getString(9));
-			obs.setTime(c.getLong(10));
-			obs.setTimeZoneOffset(c.getLong(11));
+			obs.setTime(c.getInt(10));
+			obs.setTimeZoneOffset(c.getInt(11));
 			obs.setUser_id(c.getString(12));
 
 			// TODO: Add sensor information

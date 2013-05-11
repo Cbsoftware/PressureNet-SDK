@@ -24,9 +24,10 @@ public class CbObservation {
 	private String observationUnit = "-";
 	private String sharing = "-";
 	private String user_id = "-";
-	private double time = 0;
-	private double timeZoneOffset = 0;
+	private long time = 0;
+	private int timeZoneOffset = 0;
 	private String clientKey = "";
+
 	
 	private Date jDate;
 	private String trend = "";
@@ -116,7 +117,9 @@ public class CbObservation {
 						   "daterecorded," + time,
 						   "tzoffset," + timeZoneOffset,
 						   "user_id," + user_id,
-						   "client_key," + clientKey 
+						   "client_key," + clientKey, 
+						   "reading_accuracy," + 0.0
+
 						   /*
 						   "sensor_name," + sensor.getName(),
 						   "sensor_type," + sensor.getType() + "",
@@ -197,13 +200,13 @@ public class CbObservation {
 	public double getTime() {
 		return time;
 	}
-	public void setTime(double time) {
+	public void setTime(long time) {
 		this.time = time;
 	}
-	public double getTimeZoneOffset() {
+	public int getTimeZoneOffset() {
 		return timeZoneOffset;
 	}
-	public void setTimeZoneOffset(double timeZoneOffset) {
+	public void setTimeZoneOffset(int timeZoneOffset) {
 		this.timeZoneOffset = timeZoneOffset;
 	}
 	

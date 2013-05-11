@@ -133,19 +133,24 @@ public class CbService extends Service {
 			if (settingsHandler.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
-				if (singleObservation.getObservationValue() != 0.0) {
+				log("collected");
+				// singleObservation.getObservationValue() != 0.0
+				if (true) {
 					// Store in database
 					db.open();
 					long count = db.addObservation(singleObservation);
 					db.close();
 
 					try {
-						if (settingsHandler.isSharingData()) {
+						//if (settingsHandler.isSharingData()) {
+						if (true) {
 							// Send if we're online
 							if (isNetworkAvailable()) {
+								log("online and sending");
 								singleObservation.setClientKey(getApplicationContext().getPackageName());
 								sendCbObservation(singleObservation);
 							} else {
+								log("didn't send");
 								// TODO: and store for later if not
 							}
 						}
@@ -161,6 +166,7 @@ public class CbService extends Service {
 	};
 
 	public boolean isNetworkAvailable() {
+		log("is net available?");
 		ConnectivityManager cm = (ConnectivityManager) this
 				.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -168,8 +174,10 @@ public class CbService extends Service {
 		if (cm.getActiveNetworkInfo() != null
 				&& cm.getActiveNetworkInfo().isAvailable()
 				&& cm.getActiveNetworkInfo().isConnected()) {
+			log("yes");
 			return true;
 		} else {
+			log("no");
 			return false;
 		}
 	}
@@ -428,8 +436,8 @@ public class CbService extends Service {
 					obs.setObservationUnit(cursor.getString(7));
 					obs.setObservationValue(cursor.getDouble(8));
 					obs.setSharing(cursor.getString(9));
-					obs.setTime(cursor.getLong(10));
-					obs.setTimeZoneOffset(cursor.getLong(11));
+					obs.setTime(cursor.getInt(10));
+					obs.setTimeZoneOffset(cursor.getInt(11));
 					obs.setUser_id(cursor.getString(12));
 
 					// TODO: Add sensor information
@@ -471,8 +479,8 @@ public class CbService extends Service {
 					obs.setObservationUnit(cacheCursor.getString(7));
 					obs.setObservationValue(cacheCursor.getDouble(8));
 					obs.setSharing(cacheCursor.getString(9));
-					obs.setTime(cacheCursor.getLong(10));
-					obs.setTimeZoneOffset(cacheCursor.getLong(11));
+					obs.setTime(cacheCursor.getInt(10));
+					obs.setTimeZoneOffset(cacheCursor.getInt(11));
 					obs.setUser_id(cacheCursor.getString(12));
 
 					// TODO: Add sensor information
