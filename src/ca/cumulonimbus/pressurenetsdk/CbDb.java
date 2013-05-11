@@ -477,8 +477,8 @@ public class CbDb {
 				insert.bindString(7, ob.getObservationUnit());
 				insert.bindDouble(8, ob.getObservationValue());
 				insert.bindString(9, ob.getSharing());
-				insert.bindDouble(10, ob.getTime());
-				insert.bindDouble(11, ob.getTimeZoneOffset());
+				insert.bindLong(10, ob.getTime());
+				insert.bindLong(11, ob.getTimeZoneOffset());
 				insert.bindString(12, ob.getUser_id());
 				insert.bindString(12, ob.getUser_id());
 				if (ob.getSensor() == null) {

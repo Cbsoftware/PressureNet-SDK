@@ -158,7 +158,7 @@ public class CbDataCollector implements SensorEventListener{
 			recentTemperatureReading = event.values[0];
 			lastTemperatureTime = System.currentTimeMillis();
 		}
-		
+		stopCollectingData();
 		if(streaming) {
 			CbObservation observation = getPressureObservation();
 			CbLocationManager locationManager = new CbLocationManager(context);

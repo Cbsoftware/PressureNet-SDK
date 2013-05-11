@@ -197,7 +197,7 @@ public class CbObservation {
 	public void setUser_id(String user_id) {
 		this.user_id = user_id;
 	}
-	public double getTime() {
+	public long getTime() {
 		return time;
 	}
 	public void setTime(long time) {

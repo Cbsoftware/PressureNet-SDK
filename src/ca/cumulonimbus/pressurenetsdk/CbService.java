@@ -133,16 +133,15 @@ public class CbService extends Service {
 				// Collect
 				singleObservation = collectNewObservation();
 				log("collected");
-				// singleObservation.getObservationValue() != 0.0
-				if (true) {
+				
+				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
 					db.open();
 					long count = db.addObservation(singleObservation);
 					db.close();
 
 					try {
-						//if (settingsHandler.isSharingData()) {
-						if (true) {
+						if (settingsHandler.isSharingData()) {
 							// Send if we're online
 							if (isNetworkAvailable()) {
 								log("online and sending");
