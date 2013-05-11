@@ -149,7 +149,7 @@ public class CbDb {
 			+ KEY_USER_COMMENT + " text not null)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 13;
+	private static final int DATABASE_VERSION = 14;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -479,7 +479,6 @@ public class CbDb {
 				insert.bindString(9, ob.getSharing());
 				insert.bindLong(10, ob.getTime());
 				insert.bindLong(11, ob.getTimeZoneOffset());
-				insert.bindString(12, ob.getUser_id());
 				insert.bindString(12, ob.getUser_id());
 				if (ob.getSensor() == null) {
 					insert.bindString(13, "");

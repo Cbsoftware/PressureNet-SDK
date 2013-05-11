@@ -479,8 +479,8 @@ public class CbService extends Service {
 					obs.setObservationUnit(cacheCursor.getString(7));
 					obs.setObservationValue(cacheCursor.getDouble(8));
 					obs.setSharing(cacheCursor.getString(9));
-					obs.setTime(cacheCursor.getInt(10));
-					obs.setTimeZoneOffset(cacheCursor.getInt(11));
+					obs.setTime(cacheCursor.getLong(10));
+					obs.setTimeZoneOffset(cacheCursor.getLong(11));
 					obs.setUser_id(cacheCursor.getString(12));
 
 					// TODO: Add sensor information
