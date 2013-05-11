@@ -26,6 +26,7 @@ public class CbObservation {
 	private String user_id = "-";
 	private double time = 0;
 	private double timeZoneOffset = 0;
+	private String clientKey = "";
 	
 	private Date jDate;
 	private String trend = "";
@@ -106,15 +107,16 @@ public class CbObservation {
 		String[] params = {"latitude," + location.getLatitude(), 
 						   "longitude," + location.getLongitude(),
 						   "altitude," + location.getAltitude(),
-						   "accuracy," + location.getAccuracy(),
+						   "location_accuracy," + location.getAccuracy(),
 						   "provider," + location.getProvider(),
 						   "observation_type," + observationType,
 						   "observation_unit," + observationUnit,
-						   "observation_value," + observationValue,
+						   "reading," + observationValue,
 						   "sharing," + sharing,
-						   "time," + time,
-						   "timezone," + timeZoneOffset,
+						   "daterecorded," + time,
+						   "tzoffset," + timeZoneOffset,
 						   "user_id," + user_id,
+						   "client_key," + clientKey 
 						   /*
 						   "sensor_name," + sensor.getName(),
 						   "sensor_type," + sensor.getType() + "",
@@ -128,6 +130,16 @@ public class CbObservation {
 	
 	
 	
+	public String getClientKey() {
+		return clientKey;
+	}
+
+
+	public void setClientKey(String clientKey) {
+		this.clientKey = clientKey;
+	}
+
+
 	public Date getjDate() {
 		return jDate;
 	}

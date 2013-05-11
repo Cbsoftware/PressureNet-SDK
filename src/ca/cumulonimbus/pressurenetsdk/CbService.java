@@ -143,6 +143,7 @@ public class CbService extends Service {
 						if (settingsHandler.isSharingData()) {
 							// Send if we're online
 							if (isNetworkAvailable()) {
+								singleObservation.setClientKey(getApplicationContext().getPackageName());
 								sendCbObservation(singleObservation);
 							} else {
 								// TODO: and store for later if not
