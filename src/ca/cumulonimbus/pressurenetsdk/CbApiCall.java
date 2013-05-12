@@ -17,6 +17,7 @@ public class CbApiCall {
 	private String callType = "Readings";
 	private ArrayList<CbObservation> observationResults;
 	private ArrayList<CbCurrentCondition> conditionResults;
+	private int limit = 10000;
 	
 	@Override
 	public String toString() {
@@ -48,6 +49,14 @@ public class CbApiCall {
 	
 	
 	
+	public int getLimit() {
+		return limit;
+	}
+
+	public void setLimit(int limit) {
+		this.limit = limit;
+	}
+
 	public ArrayList<CbCurrentCondition> getConditionResults() {
 		return conditionResults;
 	}
