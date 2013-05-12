@@ -32,6 +32,10 @@ public class CbDb {
 	public static final String KEY_APP_ID = "app_id";
 	public static final String KEY_DATA_COLLECTION_FREQUENCY = "data_frequency";
 	public static final String KEY_SERVER_URL = "server_url";
+	public static final String KEY_ONLY_WHEN_CHARGING = "only_when_charging";
+	public static final String KEY_COLLECTING_DATA = "collecting_data";
+	public static final String KEY_SHARING_DATA = "sharing_data";
+	public static final String KEY_SHARE_LEVEL = "share_level";
 
 	// Observation Fields
 	public static final String KEY_LATITUDE = "latitude";
@@ -175,7 +179,7 @@ public class CbDb {
 			onCreate(db);
 		}
 	}
-	
+
 	/**
 	 * Get local current conditions
 	 * 
@@ -184,18 +188,20 @@ public class CbDb {
 	public Cursor getCurrentConditions(double min_lat, double max_lat,
 			double min_lon, double max_lon, long start_time, long end_time,
 			double limit) {
-		Cursor cursor = mDB.query(false, CURRENT_CONDITIONS_TABLE, new String[] {
-				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE,
-				KEY_ACCURACY, KEY_PROVIDER, KEY_SHARING,
-				KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_GENERAL_CONDITION,
-				KEY_WINDY, KEY_FOGGY, KEY_CLOUD_TYPE, KEY_PRECIPITATION_TYPE,
-				KEY_PRECIPITATION_AMOUNT, KEY_PRECIPITATION_UNIT,
-				KEY_THUNDERSTORM_INTENSITY,KEY_USER_COMMENT }, KEY_LATITUDE + " > ? and " + KEY_LATITUDE
-				+ " < ? and " + KEY_LONGITUDE + " > ? and " + KEY_LONGITUDE
-				+ " < ? and " + KEY_TIME + " > ? and " + KEY_TIME + " < ? ",
-				new String[] { min_lat + "", max_lat + "", min_lon + "",
-						max_lon + "", start_time + "", end_time + "" }, null,
-				null, null, null);
+		Cursor cursor = mDB.query(false, CURRENT_CONDITIONS_TABLE,
+				new String[] { KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE,
+						KEY_ALTITUDE, KEY_ACCURACY, KEY_PROVIDER, KEY_SHARING,
+						KEY_TIME, KEY_TIMEZONE, KEY_USERID,
+						KEY_GENERAL_CONDITION, KEY_WINDY, KEY_FOGGY,
+						KEY_CLOUD_TYPE, KEY_PRECIPITATION_TYPE,
+						KEY_PRECIPITATION_AMOUNT, KEY_PRECIPITATION_UNIT,
+						KEY_THUNDERSTORM_INTENSITY, KEY_USER_COMMENT },
+				KEY_LATITUDE + " > ? and " + KEY_LATITUDE + " < ? and "
+						+ KEY_LONGITUDE + " > ? and " + KEY_LONGITUDE
+						+ " < ? and " + KEY_TIME + " > ? and " + KEY_TIME
+						+ " < ? ", new String[] { min_lat + "", max_lat + "",
+						min_lon + "", max_lon + "", start_time + "",
+						end_time + "" }, null, null, null, null);
 		return cursor;
 	}
 
@@ -409,12 +415,17 @@ public class CbDb {
 	 * @return
 	 */
 	public long updateSetting(String appID, long dataCollectionFrequency,
-			String serverURL) {
+			String serverURL, boolean onlyWhenCharging, boolean collectingData,
+			boolean sharingData, String shareLevel) {
 
 		ContentValues newValues = new ContentValues();
 		newValues.put(KEY_APP_ID, appID);
 		newValues.put(KEY_DATA_COLLECTION_FREQUENCY, dataCollectionFrequency);
 		newValues.put(KEY_SERVER_URL, serverURL);
+		newValues.put(KEY_ONLY_WHEN_CHARGING, onlyWhenCharging);
+		newValues.put(KEY_COLLECTING_DATA, collectingData);
+		newValues.put(KEY_SHARING_DATA, sharingData);
+		newValues.put(KEY_SHARE_LEVEL, shareLevel);
 		return mDB.update(SETTINGS_TABLE, newValues, KEY_APP_ID + "='" + appID
 				+ "'", null);
 	}
@@ -632,16 +643,21 @@ public class CbDb {
 	 * @param dataCollectionFrequency
 	 * @return
 	 */
+
 	public long addSetting(String appID, long dataCollectionFrequency,
-			String serverURL) {
+			String serverURL, boolean onlyWhenCharging, boolean collectingData,
+			boolean sharingData, String shareLevel) {
 
 		ContentValues initialValues = new ContentValues();
-		// System.out.println("adding " + appID + " freq " +
-		// dataCollectionFrequency);
 		initialValues.put(KEY_APP_ID, appID);
 		initialValues.put(KEY_DATA_COLLECTION_FREQUENCY,
 				dataCollectionFrequency);
 		initialValues.put(KEY_SERVER_URL, serverURL);
+		initialValues.put(KEY_ONLY_WHEN_CHARGING, onlyWhenCharging);
+		initialValues.put(KEY_COLLECTING_DATA, collectingData);
+		initialValues.put(KEY_SHARING_DATA, sharingData);
+		initialValues.put(KEY_SHARE_LEVEL, shareLevel);
+
 		return mDB.insert(SETTINGS_TABLE, null, initialValues);
 	}
 
