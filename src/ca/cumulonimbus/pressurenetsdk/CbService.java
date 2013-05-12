@@ -80,6 +80,12 @@ public class CbService extends Service {
 	public static final int MSG_ADD_CURRENT_CONDITION = 23;	
 	public static final int MSG_GET_CURRENT_CONDITIONS = 24;
 	public static final int MSG_CURRENT_CONDITIONS = 25;
+
+	// Sending Data
+	public static final int MSG_SEND_OBSERVATION = 26;
+	public static final int MSG_SEND_CURRENT_CONDITION = 27;
+
+	
 	
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
@@ -212,6 +218,7 @@ public class CbService extends Service {
 		}
 	}
 
+	
 	/**
 	 * Send a new account to the server
 	 * 
@@ -230,6 +237,24 @@ public class CbService extends Service {
 		}
 	}
 
+	/**
+	 * Send the current condition to the server
+	 * 
+	 * @param observation
+	 * @return
+	 */
+	public boolean sendCbCurrentCondition(CbCurrentCondition condition) {
+		log("sending cbcurrent condition");
+		try {
+			CbDataSender sender = new CbDataSender(getApplicationContext());
+			sender.setSettings(settingsHandler, locationManager, dataCollector );
+			sender.execute(condition.getCurrentConditionAsParams());
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	
 	/**
 	 * Start the periodic data collection.
 	 */
@@ -565,6 +590,14 @@ public class CbService extends Service {
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
+				break;
+			case MSG_SEND_CURRENT_CONDITION:
+				CbCurrentCondition condition = (CbCurrentCondition) msg.obj;
+				sendCbCurrentCondition(condition);
+				break;
+			case MSG_SEND_OBSERVATION:
+				// TODO: Implement
+				break;
 			default:
 				super.handleMessage(msg);
 			}

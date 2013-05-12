@@ -10,25 +10,25 @@ import android.location.Location;
  *
  */
 public class CbCurrentCondition {
-	private double time = 0;
+	private long time = 0;
 	private int tzoffset = 0;
 	private Location location;
-	private String general_condition = "";
-	private String windy = "";
-	private String fog_thickness = "";
-	private String cloud_type = "";
-	private String precipitation_type = "";
+	private String general_condition = "-";
+	private String windy = "-";
+	private String fog_thickness = "-";
+	private String cloud_type = "-";
+	private String precipitation_type = "-";
 	private double precipitation_amount = 0;
-	private String precipitation_unit = "";
-	private String thunderstorm_intensity = "";
-	private String user_id = "";
-	private String sharing_policy = "";
-	private String user_comment = "";
+	private String precipitation_unit = "-";
+	private String thunderstorm_intensity = "-";
+	private String user_id = "-";
+	private String sharing_policy = "-";
+	private String user_comment = "-";
 	
 
 	public String[] getCurrentConditionAsParams() {
-		String[] params = {"time," + time, 
-						   "timezoneoffset," + tzoffset,
+		String[] params = {"daterecorded," + time, 
+						   "tzoffset," + tzoffset,
 						   "latitude," + location.getLatitude(),
 						   "longitude," + location.getLongitude(),
 						   "altitude," + location.getAltitude(),
@@ -43,8 +43,9 @@ public class CbCurrentCondition {
 						   "precipitation_unit," + precipitation_unit,
 						   "thunderstorm_intensity," + thunderstorm_intensity,
 						   "user_id," + user_id,
-						   "sharing_policy," + sharing_policy,
+						   "sharing," + sharing_policy,
 						   "user_comment," + user_comment,
+						   "client_key," + "TODO",
 		};
 		return params;
 	}
@@ -88,7 +89,7 @@ public class CbCurrentCondition {
 	public void setSharing_policy(String sharing_policy) {
 		this.sharing_policy = sharing_policy;
 	}
-	public double getTime() {
+	public long getTime() {
 		return time;
 	}
 	public int getTzoffset() {
@@ -97,7 +98,7 @@ public class CbCurrentCondition {
 	public void setTzoffset(int tzoffset) {
 		this.tzoffset = tzoffset;
 	}
-	public void setTime(double time) {
+	public void setTime(long time) {
 		this.time = time;
 	}
 	public String getGeneral_condition() {

@@ -59,14 +59,27 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	protected String doInBackground(String... params) {
 		System.out.println("cb send do in bg");
 		DefaultHttpClient client = new DefaultHttpClient();
-		HttpPost httppost = new HttpPost(settings.getServerURL());
 		try {
 			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
+			boolean isCbOb = true; // TODO: fix hack to determine the data type sent
 			for(String singleParam : params) {
 				String key = singleParam.split(",")[0];
 				String value = singleParam.split(",")[1];
 				nvps.add(new BasicNameValuePair(key, value));
+				if(key.equals("general_condition")) {
+					isCbOb = false;
+				}
 			} 
+			String serverURL = settings.getServerURL();
+			if(isCbOb) {
+				// cb observation
+				serverURL += "add/";
+			} else {
+				// current condition
+				serverURL += "conditions/add/";
+			}
+			
+			HttpPost httppost = new HttpPost(serverURL);
 			httppost.setEntity(new UrlEncodedFormEntity(nvps));
 			System.out.println("executing post");
 			HttpResponse resp = client.execute(httppost);
