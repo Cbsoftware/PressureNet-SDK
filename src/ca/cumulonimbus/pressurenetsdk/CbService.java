@@ -46,6 +46,8 @@ public class CbService extends Service {
 
 	ReadingSender sender;
 
+	String serverURL = "https://pressurenet.cumulonimbus.ca/";
+	
 	// Service Interaction API Messages
 	public static final int MSG_OKAY = 0;
 	public static final int MSG_STOP = 1;
@@ -311,10 +313,8 @@ public class CbService extends Service {
 
 	public void startWithIntent(Intent intent) {
 		try {
-			log("intent url " + intent.getExtras().getString("serverURL"));
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
-
-			settingsHandler.setServerURL(intent.getStringExtra("serverURL"));
+			settingsHandler.setServerURL(serverURL);
 			settingsHandler.setAppID(getID());
 
 			// Seems like new settings. Try adding to the db.
