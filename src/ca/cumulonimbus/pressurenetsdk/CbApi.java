@@ -31,7 +31,7 @@ import android.os.Messenger;
 public class CbApi {
 	
 	Context context;
-	String apiServerURL = "https://pressurenet.cumulonimbus.ca/live/?"; // TODO: Should be ArrayList
+	String apiServerURL = "https://pressurenet.cumulonimbus.ca/live/?"; 
 	private CbDb db;
 	private CbApiCall apiCall;
 	private ArrayList<CbObservation> callResults = new ArrayList<CbObservation>();

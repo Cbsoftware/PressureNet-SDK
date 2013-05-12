@@ -126,7 +126,7 @@ public class CbDataCollector implements SensorEventListener{
 		CbObservation pressureObservation = new CbObservation();
 		pressureObservation.setTime(System.currentTimeMillis());
 		pressureObservation.setUser_id(userID);
-		pressureObservation.setObservationType(Sensor.TYPE_PRESSURE + ""); // TODO: Fix hack
+		pressureObservation.setObservationType("pressure");
 		pressureObservation.setObservationValue(recentPressureReading);
 		pressureObservation.setObservationUnit("mbar");
 		pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
