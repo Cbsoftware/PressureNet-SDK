@@ -13,12 +13,14 @@ public class CbApiCall {
 	private String apiKey = "";
 	private long startTime = 0;
 	private long endTime = 0;
-	String format = "json";
-	ArrayList<CbObservation> observationResults;
+	private String format = "json";
+	private String callType = "Readings";
+	private ArrayList<CbObservation> observationResults;
+	private ArrayList<CbCurrentCondition> conditionResults;
 	
 	@Override
 	public String toString() {
-		return global + ", " + sinceLastCall + ", " + minLat + ", " + maxLat + "," + minLon + "," + maxLon + "," + startTime + "," + endTime;
+		return callType + "," + global + ", " + sinceLastCall + ", " + minLat + ", " + maxLat + "," + minLon + "," + maxLon + "," + startTime + "," + endTime;
 	}
 	
 	public static CbApiCall buildAPICall(boolean global, boolean sinceLastCall, int hoursAgo, double minLat, double maxLat, double minLon, double maxLon, String format, String apiKey) {
@@ -44,6 +46,24 @@ public class CbApiCall {
 		return api;
 	}
 	
+	
+	
+	public ArrayList<CbCurrentCondition> getConditionResults() {
+		return conditionResults;
+	}
+
+	public void setConditionResults(ArrayList<CbCurrentCondition> conditionResults) {
+		this.conditionResults = conditionResults;
+	}
+
+	public String getCallType() {
+		return callType;
+	}
+
+	public void setCallType(String callType) {
+		this.callType = callType;
+	}
+
 	public String getFormat() {
 		return format;
 	}

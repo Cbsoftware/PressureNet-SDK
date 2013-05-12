@@ -85,8 +85,9 @@ public class CbService extends Service {
 	public static final int MSG_SEND_OBSERVATION = 26;
 	public static final int MSG_SEND_CURRENT_CONDITION = 27;
 
-	
-	
+	// Current Conditions API
+	public static final int MSG_MAKE_CURRENT_CONDITIONS_API_CALL = 28;
+
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
 
@@ -597,6 +598,14 @@ public class CbService extends Service {
 				break;
 			case MSG_SEND_OBSERVATION:
 				// TODO: Implement
+				break;
+			case MSG_MAKE_CURRENT_CONDITIONS_API_CALL:
+				CbApi conditionApi = new CbApi(getApplicationContext());
+				CbApiCall conditionApiCall = (CbApiCall) msg.obj;
+				conditionApiCall.setCallType("Conditions");
+				conditionApi.makeAPICall(conditionApiCall, service, msg.replyTo);
+
+
 				break;
 			default:
 				super.handleMessage(msg);
