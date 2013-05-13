@@ -1,24 +1,29 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
+import org.json.JSONTokener;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.widget.Toast;
 
 
 /**
@@ -63,8 +68,15 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
 			boolean isCbOb = true; // TODO: fix hack to determine the data type sent
 			for(String singleParam : params) {
-				String key = singleParam.split(",")[0];
-				String value = singleParam.split(",")[1];
+				String[] fromCSV = singleParam.split(",");
+				String key = fromCSV[0];
+				String value = fromCSV[1];
+				// TODO: fix hack. put any lost commas back.
+				if(fromCSV.length > 2) {
+					for(int i = 2; i < fromCSV.length; i++) {
+						value += "," + fromCSV[i];
+					}
+				}
 				nvps.add(new BasicNameValuePair(key, value));
 				if(key.equals("general_condition")) {
 					isCbOb = false;
@@ -81,9 +93,27 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			
 			HttpPost httppost = new HttpPost(serverURL);
 			httppost.setEntity(new UrlEncodedFormEntity(nvps));
+			
 			System.out.println("executing post");
+
 			HttpResponse resp = client.execute(httppost);
-			dataCollector.stopCollectingData();
+			HttpEntity responseEntity = resp.getEntity();
+
+			String addResp = "";
+			BufferedReader r = new BufferedReader(new InputStreamReader(
+					responseEntity.getContent()));
+
+			StringBuilder total = new StringBuilder();
+			String line;
+			if (r != null) {
+				while ((line = r.readLine()) != null) {
+					total.append(line);
+				}
+				addResp = total.toString();
+			///	dataCollector.stopCollectingData();
+				
+			}
+			System.out.println("addresp " + addResp);
 			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();
@@ -114,8 +144,10 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected void onPostExecute(String result) {
-		//System.out.println("post execute " + result);
-		locationManager.stopGettingLocations();
+		System.out.println("data sender post execute " + result);
+		if(locationManager!=null) {
+			locationManager.stopGettingLocations();
+		}
 		super.onPostExecute(result);
 	}
 	

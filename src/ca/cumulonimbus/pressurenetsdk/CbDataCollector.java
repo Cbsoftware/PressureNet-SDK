@@ -52,6 +52,10 @@ public class CbDataCollector implements SensorEventListener{
 	
 	private Messenger msgr;
 	
+	private String sharingLevel = "";
+	
+	private CbSettingsHandler settings;
+	
     public ArrayList<CbObservation> getRecentObservations() {
 		return recentObservations;
 	}
@@ -95,6 +99,7 @@ public class CbDataCollector implements SensorEventListener{
 	public void startCollectingData(Messenger m) {
 		this.msgr = m;
     	streaming = true;
+    	settings = new CbSettingsHandler(context);
     	try {
 	    	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 	    	Sensor pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
@@ -130,6 +135,8 @@ public class CbDataCollector implements SensorEventListener{
 		pressureObservation.setObservationValue(recentPressureReading);
 		pressureObservation.setObservationUnit("mbar");
 		pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
+		pressureObservation.setSharing(settings.getShareLevel());
+		System.out.println("share level " + settings.getShareLevel() + " " + userID);
 		return pressureObservation;
 	}
 	
