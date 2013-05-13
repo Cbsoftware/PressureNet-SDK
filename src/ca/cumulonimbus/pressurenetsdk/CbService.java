@@ -297,11 +297,9 @@ public class CbService extends Service {
 		dataCollector = new CbDataCollector(getID(), getApplicationContext());
 
 		if (intent != null) {
-			if (intent.hasExtra("serverURL")) {
-				startWithIntent(intent);
-			} else {
-				startWithDatabase();
-			}
+		
+			startWithIntent(intent);
+		
 			return START_STICKY;
 		} else {
 			log("INTENT NULL; checking db");
@@ -356,7 +354,7 @@ public class CbService extends Service {
 				// but just once
 				break;
 			}
-			db.close();
+			db.close();			
 		} catch (Exception e) {
 			for (StackTraceElement ste : e.getStackTrace()) {
 				log(ste.getMethodName() + ste.getLineNumber());
