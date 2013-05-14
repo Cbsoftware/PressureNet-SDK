@@ -461,6 +461,7 @@ public class CbService extends Service {
 					obs.setTime(cursor.getInt(10));
 					obs.setTimeZoneOffset(cursor.getInt(11));
 					obs.setUser_id(cursor.getString(12));
+					obs.setTrend(cursor.getString(18));
 
 					// TODO: Add sensor information
 
@@ -506,7 +507,7 @@ public class CbService extends Service {
 					obs.setTime(cacheCursor.getLong(10));
 					obs.setTimeZoneOffset(cacheCursor.getLong(11));
 					obs.setUser_id(cacheCursor.getString(12));
-
+					obs.setTrend(cacheCursor.getString(18));
 					// TODO: Add sensor information
 
 					cacheResults.add(obs);

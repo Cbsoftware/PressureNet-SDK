@@ -196,7 +196,8 @@ public class CbApi {
 						singleObs.setObservationValue(jsonObject
 								.getDouble("reading"));
 						obsFromJSON.add(singleObs);
-						CbObservation.addDatesAndTrends(obsFromJSON);
+					
+						obsFromJSON = CbObservation.addDatesAndTrends(obsFromJSON);
 					} else {
 						CbCurrentCondition current = new CbCurrentCondition();
 						Location location = new Location("network");

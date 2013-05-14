@@ -156,7 +156,7 @@ public class CbDb {
 			+ KEY_USER_COMMENT + " text not null)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 18;
+	private static final int DATABASE_VERSION = 19;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 

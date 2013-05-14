@@ -40,8 +40,8 @@ public class CbObservation extends CbWeather {
 	 * those issues and return the new ArrayList.
 	 * @return
 	 */
-	public static ArrayList<CbObservation> addDatesAndTrends(ArrayList<CbWeather> rawListWeather) {
-		ArrayList<CbObservation> fixedList = new ArrayList<CbObservation>();
+	public static ArrayList<CbWeather> addDatesAndTrends(ArrayList<CbWeather> rawListWeather) {
+		ArrayList<CbWeather> fixedList = new ArrayList<CbWeather>();
 		HashMap<String, ArrayList<CbObservation>> userMap = new HashMap<String, ArrayList<CbObservation>>();
 		
 		for(CbWeather currentWeather : rawListWeather) {
