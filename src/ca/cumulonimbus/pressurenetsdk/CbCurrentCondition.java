@@ -9,7 +9,7 @@ import android.location.Location;
  * @author jacob
  *
  */
-public class CbCurrentCondition {
+public class CbCurrentCondition extends CbWeather {
 	private long time = 0;
 	private int tzoffset = 0;
 	private Location location;

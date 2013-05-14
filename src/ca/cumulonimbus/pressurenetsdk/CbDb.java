@@ -430,12 +430,108 @@ public class CbDb {
 				+ "'", null);
 	}
 
+	public boolean addWeatherArrayList(ArrayList<CbWeather> results) {
+		if(results.get(0).getClass() == (CbObservation.class)) {
+			addObservationArrayList(results);
+		} else {
+			addCurrentConditionArrayList(results);
+		}
+		
+		return true;
+	}
+	
+	public boolean addCurrentConditionArrayList(ArrayList<CbWeather> weather) {
+		/*
+	public Cursor fetchAllConditions() {
+		return mDB.query(CURRENT_CONDITIONS_TABLE, new String[] { KEY_ROW_ID,
+				KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY,
+				KEY_PROVIDER, KEY_SHARING, KEY_TIME, KEY_TIMEZONE, KEY_USERID,
+				KEY_GENERAL_CONDITION, KEY_WINDY, KEY_FOGGY, KEY_CLOUD_TYPE,
+				KEY_PRECIPITATION_TYPE, KEY_PRECIPITATION_AMOUNT,
+				KEY_PRECIPITATION_UNIT, KEY_THUNDERSTORM_INTENSITY,
+				KEY_USER_COMMENT }, null, null, null, null, null);*/
+		mDB.beginTransaction();
+
+		String insertSQL = "INSERT INTO "
+				+ CURRENT_CONDITIONS_TABLE
+				+ " ("
+				+ KEY_LATITUDE
+				+ ", "
+				+ KEY_LONGITUDE
+				+ ", "
+				+ KEY_ALTITUDE
+				+ ", "
+				+ KEY_ACCURACY
+				+ ", "
+				+ KEY_PROVIDER
+				+ ", "
+				+ KEY_SHARING
+				+ ", "
+				+ KEY_TIME
+				+ ", "
+				+ KEY_TIMEZONE
+				+ ", "
+				+ KEY_USERID
+				+ ", "
+				+ KEY_GENERAL_CONDITION
+				+ ", "
+				+ KEY_WINDY
+				+ ", "
+				+ KEY_FOGGY
+				+ ", "
+				+ KEY_CLOUD_TYPE
+				+ ", "
+				+ KEY_PRECIPITATION_TYPE
+				+ ", "
+				+ KEY_PRECIPITATION_AMOUNT
+				+ ", "
+				+ KEY_PRECIPITATION_UNIT
+				+ ", "
+				+ KEY_THUNDERSTORM_INTENSITY
+				+ ", "
+				+ KEY_USER_COMMENT
+				+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+		try {
+			SQLiteStatement insert = mDB.compileStatement(insertSQL);
+			for (CbWeather weatherItem : weather) {
+				CbCurrentCondition condition = (CbCurrentCondition) weatherItem;
+				insert.bindDouble(1, condition.getLocation().getLatitude());
+				insert.bindDouble(2, condition.getLocation().getLongitude());
+				insert.bindDouble(3, condition.getLocation().getAltitude());
+				insert.bindDouble(4, condition.getLocation().getAccuracy());
+				insert.bindString(5,condition.getLocation().getProvider());
+				insert.bindString(6, condition.getSharing_policy());
+				insert.bindLong(7, condition.getTime());
+				insert.bindLong(8, condition.getTzoffset());
+				insert.bindString(9, condition.getUser_id());
+				insert.bindString(10, condition.getGeneral_condition());
+				insert.bindString(11, condition.getWindy());
+				insert.bindString(12, condition.getFog_thickness());
+				insert.bindString(13, condition.getCloud_type());
+				insert.bindString(14, condition.getPrecipitation_type());
+				insert.bindDouble(15, condition.getPrecipitation_amount());
+				insert.bindString(16, condition.getPrecipitation_unit());
+				insert.bindString(17, condition.getThunderstorm_intensity());
+				insert.bindString(18, condition.getUser_comment());
+				insert.executeInsert();
+			}
+
+			mDB.setTransactionSuccessful();
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+		} finally {
+			mDB.endTransaction();
+		}
+
+		return true;
+	}
 	/**
 	 * Add a new Observations in an ArrayList
 	 * 
 	 * @return
 	 */
-	public boolean addObservationArrayList(ArrayList<CbObservation> observations) {
+	public boolean addObservationArrayList(ArrayList<CbWeather> weather) {
 		mDB.beginTransaction();
 
 		String insertSQL = "INSERT INTO "
@@ -478,7 +574,8 @@ public class CbDb {
 
 		try {
 			SQLiteStatement insert = mDB.compileStatement(insertSQL);
-			for (CbObservation ob : observations) {
+			for (CbWeather weatherItem : weather) {
+				CbObservation ob = (CbObservation) weatherItem;
 				insert.bindDouble(1, ob.getLocation().getLatitude());
 				insert.bindDouble(2, ob.getLocation().getLongitude());
 				insert.bindDouble(3, ob.getLocation().getAltitude());

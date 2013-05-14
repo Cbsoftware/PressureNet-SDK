@@ -15,7 +15,7 @@ import android.location.Location;
  * @author jacob
  *
  */
-public class CbObservation {
+public class CbObservation extends CbWeather {
 
 	private String observationType = "-";
 	private Location location;

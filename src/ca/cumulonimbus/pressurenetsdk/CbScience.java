@@ -102,6 +102,20 @@ public class CbScience {
 		return slope;
 	}
 
+
+	public static class ConditionTimeComparator implements Comparator<CbCurrentCondition> {
+		@Override
+		public int compare(CbCurrentCondition o1, CbCurrentCondition o2) {
+			if (o1.getTime() < o2.getTime()) {
+				return -1;
+			} else {
+				return 1;
+			}
+		}
+	}
+	
+
+	
 	public static class TimeComparator implements Comparator<CbObservation> {
 		@Override
 		public int compare(CbObservation o1, CbObservation o2) {
