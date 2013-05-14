@@ -29,8 +29,6 @@ public class CbScience {
 
 		int decision = guessedButGoodDecision(recents);
 
-		System.out.println("tendency decision: " + decision + " from size "
-				+ recents.size());
 
 		if (decision == 1) {
 			return "Rising";

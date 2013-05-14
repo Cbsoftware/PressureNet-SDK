@@ -55,6 +55,7 @@ public class CbDb {
 	public static final String KEY_SENSOR_VENDOR = "sensor_vendor";
 	public static final String KEY_SENSOR_RESOLUTION = "sensor_resolution";
 	public static final String KEY_SENSOR_VERSION = "sensor_version";
+	public static final String KEY_OBSERVATION_TREND = "observation_trend";
 
 	// Current Conditions Fields
 	// + KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY, KEY_PROVIDER,
@@ -92,8 +93,9 @@ public class CbDb {
 			+ " text not null, " + KEY_SENSOR_TYPE + " real not null, "
 			+ KEY_SENSOR_VENDOR + " text not null, " + KEY_SENSOR_RESOLUTION
 			+ " real not null, " + KEY_SENSOR_VERSION + " real not null,"
-			+ "UNIQUE (" + KEY_LATITUDE + ", " + KEY_LONGITUDE + "," + KEY_TIME
-			+ ", " + KEY_USERID + "," + KEY_OBSERVATION_VALUE
+			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE ("
+			+ KEY_LATITUDE + ", " + KEY_LONGITUDE + "," + KEY_TIME + ", "
+			+ KEY_USERID + "," + KEY_OBSERVATION_VALUE
 			+ ") ON CONFLICT REPLACE)";
 
 	private static final String API_CACHE_TABLE_CREATE = "create table "
@@ -109,8 +111,9 @@ public class CbDb {
 			+ " text not null, " + KEY_SENSOR_TYPE + " real not null, "
 			+ KEY_SENSOR_VENDOR + " text not null, " + KEY_SENSOR_RESOLUTION
 			+ " real not null, " + KEY_SENSOR_VERSION + " real not null,"
-			+ "UNIQUE (" + KEY_LATITUDE + ", " + KEY_LONGITUDE + "," + KEY_TIME
-			+ "," + KEY_USERID + "," + KEY_OBSERVATION_VALUE
+			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE ("
+			+ KEY_LATITUDE + ", " + KEY_LONGITUDE + "," + KEY_TIME + ","
+			+ KEY_USERID + "," + KEY_OBSERVATION_VALUE
 			+ ") ON CONFLICT REPLACE)";
 
 	private static final String CURRENT_CONDITIONS_TABLS_CREATE = "create table "
@@ -153,7 +156,7 @@ public class CbDb {
 			+ KEY_USER_COMMENT + " text not null)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 14;
+	private static final int DATABASE_VERSION = 18;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -219,12 +222,12 @@ public class CbDb {
 				KEY_OBSERVATION_UNIT, KEY_OBSERVATION_VALUE, KEY_SHARING,
 				KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_SENSOR_NAME,
 				KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION,
-				KEY_SENSOR_VERSION }, KEY_LATITUDE + " > ? and " + KEY_LATITUDE
-				+ " < ? and " + KEY_LONGITUDE + " > ? and " + KEY_LONGITUDE
-				+ " < ? and " + KEY_TIME + " > ? and " + KEY_TIME + " < ? ",
-				new String[] { min_lat + "", max_lat + "", min_lon + "",
-						max_lon + "", start_time + "", end_time + "" }, null,
-				null, null, null);
+				KEY_SENSOR_VERSION, KEY_OBSERVATION_TREND }, KEY_LATITUDE
+				+ " > ? and " + KEY_LATITUDE + " < ? and " + KEY_LONGITUDE
+				+ " > ? and " + KEY_LONGITUDE + " < ? and " + KEY_TIME
+				+ " > ? and " + KEY_TIME + " < ? ", new String[] {
+				min_lat + "", max_lat + "", min_lon + "", max_lon + "",
+				start_time + "", end_time + "" }, null, null, null, null);
 		return cursor;
 	}
 
@@ -242,7 +245,7 @@ public class CbDb {
 				KEY_OBSERVATION_UNIT, KEY_OBSERVATION_VALUE, KEY_SHARING,
 				KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_SENSOR_NAME,
 				KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION,
-				KEY_SENSOR_VERSION },
+				KEY_SENSOR_VERSION, KEY_OBSERVATION_TREND },
 
 		KEY_LATITUDE + " > ? and " + KEY_LATITUDE + " < ? and " + KEY_LONGITUDE
 				+ " > ? and " + KEY_LONGITUDE + " < ? and " + KEY_TIME
@@ -269,8 +272,9 @@ public class CbDb {
 				KEY_PROVIDER, KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT,
 				KEY_OBSERVATION_VALUE, KEY_SHARING, KEY_TIME, KEY_TIMEZONE,
 				KEY_USERID, KEY_SENSOR_NAME, KEY_SENSOR_TYPE,
-				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION },
-				KEY_ROW_ID + "=" + rowId, null, null, null, null, null);
+				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION,
+				KEY_OBSERVATION_TREND }, KEY_ROW_ID + "=" + rowId, null, null,
+				null, null, null);
 		if (mCursor != null) {
 			mCursor.moveToFirst();
 		}
@@ -296,7 +300,7 @@ public class CbDb {
 	}
 
 	/**
-	 * Get a single application's settings by row id
+	 * Get a single application's settings by row id TODO: Add more settings
 	 * 
 	 * @param rowId
 	 * @return
@@ -333,7 +337,7 @@ public class CbDb {
 	}
 
 	/**
-	 * Fetch every application setting.
+	 * Fetch every application setting. TODO: Add the other settings
 	 * 
 	 * @return
 	 */
@@ -369,8 +373,8 @@ public class CbDb {
 				KEY_PROVIDER, KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT,
 				KEY_OBSERVATION_VALUE, KEY_SHARING, KEY_TIME, KEY_TIMEZONE,
 				KEY_USERID, KEY_SENSOR_NAME, KEY_SENSOR_TYPE,
-				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION },
-				null, null, null, null, null);
+				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION,
+				KEY_OBSERVATION_TREND }, null, null, null, null, null);
 	}
 
 	/**
@@ -384,8 +388,8 @@ public class CbDb {
 				KEY_PROVIDER, KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT,
 				KEY_OBSERVATION_VALUE, KEY_SHARING, KEY_TIME, KEY_TIMEZONE,
 				KEY_USERID, KEY_SENSOR_NAME, KEY_SENSOR_TYPE,
-				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION },
-				null, null, null, null, null);
+				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION,
+				KEY_OBSERVATION_TREND }, null, null, null, null, null);
 	}
 
 	/**
@@ -431,25 +435,17 @@ public class CbDb {
 	}
 
 	public boolean addWeatherArrayList(ArrayList<CbWeather> results) {
-		if(results.get(0).getClass() == (CbObservation.class)) {
+		if (results.get(0).getClass() == (CbObservation.class)) {
 			addObservationArrayList(results);
 		} else {
 			addCurrentConditionArrayList(results);
 		}
-		
+
 		return true;
 	}
-	
+
 	public boolean addCurrentConditionArrayList(ArrayList<CbWeather> weather) {
-		/*
-	public Cursor fetchAllConditions() {
-		return mDB.query(CURRENT_CONDITIONS_TABLE, new String[] { KEY_ROW_ID,
-				KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY,
-				KEY_PROVIDER, KEY_SHARING, KEY_TIME, KEY_TIMEZONE, KEY_USERID,
-				KEY_GENERAL_CONDITION, KEY_WINDY, KEY_FOGGY, KEY_CLOUD_TYPE,
-				KEY_PRECIPITATION_TYPE, KEY_PRECIPITATION_AMOUNT,
-				KEY_PRECIPITATION_UNIT, KEY_THUNDERSTORM_INTENSITY,
-				KEY_USER_COMMENT }, null, null, null, null, null);*/
+
 		mDB.beginTransaction();
 
 		String insertSQL = "INSERT INTO "
@@ -500,7 +496,7 @@ public class CbDb {
 				insert.bindDouble(2, condition.getLocation().getLongitude());
 				insert.bindDouble(3, condition.getLocation().getAltitude());
 				insert.bindDouble(4, condition.getLocation().getAccuracy());
-				insert.bindString(5,condition.getLocation().getProvider());
+				insert.bindString(5, condition.getLocation().getProvider());
 				insert.bindString(6, condition.getSharing_policy());
 				insert.bindLong(7, condition.getTime());
 				insert.bindLong(8, condition.getTzoffset());
@@ -526,6 +522,7 @@ public class CbDb {
 
 		return true;
 	}
+
 	/**
 	 * Add a new Observations in an ArrayList
 	 * 
@@ -570,7 +567,9 @@ public class CbDb {
 				+ KEY_SENSOR_RESOLUTION
 				+ ", "
 				+ KEY_SENSOR_VERSION
-				+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				+ ", "
+				+ KEY_OBSERVATION_TREND
+				+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 		try {
 			SQLiteStatement insert = mDB.compileStatement(insertSQL);
@@ -601,6 +600,7 @@ public class CbDb {
 					insert.bindDouble(16, ob.getSensor().getResolution());
 					insert.bindDouble(17, ob.getSensor().getVersion());
 				}
+				insert.bindString(18, ob.getTrend());
 
 				insert.executeInsert();
 			}
@@ -680,6 +680,7 @@ public class CbDb {
 				.getResolution());
 		initialValues.put(KEY_SENSOR_VERSION, observation.getSensor()
 				.getVersion());
+		initialValues.put(KEY_OBSERVATION_TREND, observation.getTrend());
 		return mDB.insert(OBSERVATIONS_TABLE, null, initialValues);
 	}
 
@@ -730,6 +731,7 @@ public class CbDb {
 			initialValues.put(KEY_SENSOR_VERSION, observation.getSensor()
 					.getVersion());
 		}
+		initialValues.put(KEY_OBSERVATION_TREND, observation.getTrend());
 		return mDB.insert(API_CACHE_TABLE, null, initialValues);
 	}
 

@@ -56,7 +56,7 @@ public class CbObservation extends CbWeather {
 				userMap.put(current.getUser_id(), newList);
 			}
 		}
-		System.out.println("there are " + userMap.size() + " users nearby who reported " + rawListWeather.size() + " measurements");
+		//System.out.println("there are " + userMap.size() + " users nearby who reported " + rawListWeather.size() + " measurements");
 	
 		// Calculate the recent trend of this user's device readings
 		// Simple, short, naive is okay for now; this estimate will be
@@ -70,7 +70,7 @@ public class CbObservation extends CbWeather {
 			// into the values isn't a lasting solution
 			for(CbObservation current : obsList) {
 				current.setTrend(tendency);
-				System.out.println("for id " + id + " setting trend " + tendency);
+				//System.out.println("for id " + id + " setting trend " + tendency);
 				fixedList.add(current);
 			}
 		}
