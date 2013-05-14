@@ -40,12 +40,12 @@ public class CbObservation extends CbWeather {
 	 * those issues and return the new ArrayList.
 	 * @return
 	 */
-	public static ArrayList<CbObservation> addDatesAndTrends(ArrayList<CbObservation> rawList) {
+	public static ArrayList<CbObservation> addDatesAndTrends(ArrayList<CbWeather> rawListWeather) {
 		ArrayList<CbObservation> fixedList = new ArrayList<CbObservation>();
-		
 		HashMap<String, ArrayList<CbObservation>> userMap = new HashMap<String, ArrayList<CbObservation>>();
 		
-		for(CbObservation current : rawList) {
+		for(CbWeather currentWeather : rawListWeather) {
+			CbObservation current = (CbObservation) currentWeather;
 			Date jD = new Date((long)current.getTime() + (long)current.getTimeZoneOffset());
 			current.setjDate(jD);
 			if(userMap.containsKey(current.getUser_id())) {
@@ -56,7 +56,7 @@ public class CbObservation extends CbWeather {
 				userMap.put(current.getUser_id(), newList);
 			}
 		}
-		System.out.println("there are " + userMap.size() + " users nearby who reported " + rawList.size() + " measurements");
+		System.out.println("there are " + userMap.size() + " users nearby who reported " + rawListWeather.size() + " measurements");
 	
 		// Calculate the recent trend of this user's device readings
 		// Simple, short, naive is okay for now; this estimate will be

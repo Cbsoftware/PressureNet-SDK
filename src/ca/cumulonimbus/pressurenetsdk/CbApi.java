@@ -196,7 +196,7 @@ public class CbApi {
 						singleObs.setObservationValue(jsonObject
 								.getDouble("reading"));
 						obsFromJSON.add(singleObs);
-						
+						CbObservation.addDatesAndTrends(obsFromJSON);
 					} else {
 						CbCurrentCondition current = new CbCurrentCondition();
 						Location location = new Location("network");
@@ -226,10 +226,7 @@ public class CbApi {
 
 			// TODO: Add dates and trends prior to graphing.
 			// ArrayList<CbObservation> detailedList =
-			// CbObservation.addDatesAndTrends(apiCbObservationResults);
-			// recents =
-			// CbObservation.addDatesAndTrends(apiCbObservationResults);
-
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
