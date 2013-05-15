@@ -17,14 +17,14 @@ public class CbApiCall {
 	private String callType = "Readings";
 	private ArrayList<CbObservation> observationResults;
 	private ArrayList<CbCurrentCondition> conditionResults;
-	private int limit = 10000;
+	private int limit = 5000;
 	
 	@Override
 	public String toString() {
 		return callType + "," + global + ", " + sinceLastCall + ", " + minLat + ", " + maxLat + "," + minLon + "," + maxLon + "," + startTime + "," + endTime;
 	}
 	
-	public static CbApiCall buildAPICall(boolean global, boolean sinceLastCall, int hoursAgo, double minLat, double maxLat, double minLon, double maxLon, String format, String apiKey) {
+	public static CbApiCall buildAPICall(boolean global, boolean sinceLastCall, int hoursAgo, double minLat, double maxLat, double minLon, double maxLon, String format, String apiKey, int limit) {
 		long startTime = System.currentTimeMillis() - (hoursAgo * 60 * 60 * 1000);
 		long endTime = System.currentTimeMillis();
 		CbApiCall api = new CbApiCall();
@@ -44,6 +44,7 @@ public class CbApiCall {
 		}
 		api.setFormat(format);
 		api.setApiKey(apiKey);
+		api.setLimit(limit);
 		return api;
 	}
 	

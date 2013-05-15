@@ -74,11 +74,14 @@ public class CbDb {
 
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDB;
-
 	private static final String SETTINGS_TABLE_CREATE = "create table "
 			+ SETTINGS_TABLE + " (_id integer primary key autoincrement, "
-			+ KEY_APP_ID + " text not null, " + KEY_DATA_COLLECTION_FREQUENCY
-			+ " real not null, " + KEY_SERVER_URL + " text not null)";
+			+ KEY_APP_ID + " text not null, " + KEY_DATA_COLLECTION_FREQUENCY + " real not null, " 
+			+ KEY_SERVER_URL + " text not null, " 
+			+ KEY_ONLY_WHEN_CHARGING + "text, "
+			+ KEY_COLLECTING_DATA + " text, "
+			+ KEY_SHARING_DATA + " text," 
+			+ KEY_SHARE_LEVEL + " text)";
 
 	private static final String OBSERVATIONS_TABLE_CREATE = "create table "
 			+ OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, "
@@ -93,10 +96,9 @@ public class CbDb {
 			+ " text not null, " + KEY_SENSOR_TYPE + " real not null, "
 			+ KEY_SENSOR_VENDOR + " text not null, " + KEY_SENSOR_RESOLUTION
 			+ " real not null, " + KEY_SENSOR_VERSION + " real not null,"
-			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE ("
-			+ KEY_LATITUDE + ", " + KEY_LONGITUDE + "," + KEY_TIME + ", "
-			+ KEY_USERID + "," + KEY_OBSERVATION_VALUE
-			+ ") ON CONFLICT REPLACE)";
+			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE (" + KEY_LATITUDE
+			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + ", " + KEY_USERID + ","
+			+ KEY_OBSERVATION_VALUE + ") ON CONFLICT REPLACE)";
 
 	private static final String API_CACHE_TABLE_CREATE = "create table "
 			+ API_CACHE_TABLE + " (_id integer primary key autoincrement, "
@@ -111,10 +113,9 @@ public class CbDb {
 			+ " text not null, " + KEY_SENSOR_TYPE + " real not null, "
 			+ KEY_SENSOR_VENDOR + " text not null, " + KEY_SENSOR_RESOLUTION
 			+ " real not null, " + KEY_SENSOR_VERSION + " real not null,"
-			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE ("
-			+ KEY_LATITUDE + ", " + KEY_LONGITUDE + "," + KEY_TIME + ","
-			+ KEY_USERID + "," + KEY_OBSERVATION_VALUE
-			+ ") ON CONFLICT REPLACE)";
+			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE (" + KEY_LATITUDE
+			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + "," + KEY_USERID + ","
+			+ KEY_OBSERVATION_VALUE + ") ON CONFLICT REPLACE)";
 
 	private static final String CURRENT_CONDITIONS_TABLS_CREATE = "create table "
 			+ CURRENT_CONDITIONS_TABLE
@@ -156,7 +157,7 @@ public class CbDb {
 			+ KEY_USER_COMMENT + " text not null)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 19;
+	private static final int DATABASE_VERSION = 20;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -310,7 +311,9 @@ public class CbDb {
 		Cursor mCursor =
 
 		mDB.query(true, SETTINGS_TABLE, new String[] { KEY_ROW_ID, KEY_APP_ID,
-				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL }, KEY_ROW_ID
+				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL,
+				KEY_ONLY_WHEN_CHARGING, KEY_COLLECTING_DATA, KEY_SHARING_DATA,
+				KEY_SHARE_LEVEL }, KEY_ROW_ID
 				+ "=" + rowId, null, null, null, null, null);
 		if (mCursor != null) {
 			mCursor.moveToFirst();
@@ -342,8 +345,14 @@ public class CbDb {
 	 * @return
 	 */
 	public Cursor fetchAllSettings() {
-		return mDB.query(SETTINGS_TABLE, new String[] { KEY_ROW_ID, KEY_APP_ID,
-				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL }, null, null,
+		return mDB.query(SETTINGS_TABLE, new String[] { KEY_ROW_ID, 
+				KEY_APP_ID,
+				KEY_DATA_COLLECTION_FREQUENCY, 
+				KEY_SERVER_URL,
+				KEY_ONLY_WHEN_CHARGING,
+				KEY_COLLECTING_DATA,
+				KEY_SHARING_DATA,
+				KEY_SHARE_LEVEL }, null, null,
 				null, null, null);
 	}
 

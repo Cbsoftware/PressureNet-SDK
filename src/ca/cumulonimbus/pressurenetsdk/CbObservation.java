@@ -70,7 +70,7 @@ public class CbObservation extends CbWeather {
 			// into the values isn't a lasting solution
 			for(CbObservation current : obsList) {
 				current.setTrend(tendency);
-				//System.out.println("for id " + id + " setting trend " + tendency);
+				//System.out.println("for id " + id + " setting trend " + tendency + " u count" + obsList.size());
 				fixedList.add(current);
 			}
 		}
