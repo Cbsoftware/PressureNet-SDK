@@ -90,6 +90,8 @@ public class CbService extends Service {
 	// Current Conditions API
 	public static final int MSG_MAKE_CURRENT_CONDITIONS_API_CALL = 28;
 
+	long lastAPICall = System.currentTimeMillis();
+	
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
 
@@ -523,8 +525,14 @@ public class CbService extends Service {
 			case MSG_MAKE_API_CALL:
 				CbApi api = new CbApi(getApplicationContext());
 				CbApiCall liveApiCall = (CbApiCall) msg.obj;
-				api.makeAPICall(liveApiCall, service, msg.replyTo);
-
+				
+				long timeDiff = System.currentTimeMillis() - lastAPICall;
+				
+				if(timeDiff > 1000 * 3) {
+					lastAPICall = api.makeAPICall(liveApiCall, service, msg.replyTo);
+				} else {
+					log("service asked for api call, time diff too short " + timeDiff);
+				}
 				break;
 			case MSG_CLEAR_LOCAL_CACHE:
 				db.open();

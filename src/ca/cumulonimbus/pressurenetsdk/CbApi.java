@@ -45,7 +45,7 @@ public class CbApi {
 	 * 
 	 * @return
 	 */
-	public boolean makeAPICall(CbApiCall call, CbService caller, Messenger ms) {
+	public long makeAPICall(CbApiCall call, CbService caller, Messenger ms) {
 
 		this.replyResult = ms;
 		this.caller = caller;
@@ -54,7 +54,7 @@ public class CbApi {
 		api.setReplyToApp(ms);
 		api.execute("");
 
-		return true;
+		return System.currentTimeMillis();
 	}
 
 	/**
