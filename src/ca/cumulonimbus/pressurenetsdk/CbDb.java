@@ -78,7 +78,7 @@ public class CbDb {
 			+ SETTINGS_TABLE + " (_id integer primary key autoincrement, "
 			+ KEY_APP_ID + " text not null, " + KEY_DATA_COLLECTION_FREQUENCY + " real not null, " 
 			+ KEY_SERVER_URL + " text not null, " 
-			+ KEY_ONLY_WHEN_CHARGING + "text, "
+			+ KEY_ONLY_WHEN_CHARGING + " text, "
 			+ KEY_COLLECTING_DATA + " text, "
 			+ KEY_SHARING_DATA + " text," 
 			+ KEY_SHARE_LEVEL + " text)";
@@ -157,7 +157,7 @@ public class CbDb {
 			+ KEY_USER_COMMENT + " text not null)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 20;
+	private static final int DATABASE_VERSION = 21;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
