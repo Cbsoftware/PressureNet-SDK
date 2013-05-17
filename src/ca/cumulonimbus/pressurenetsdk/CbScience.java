@@ -37,7 +37,7 @@ public class CbScience {
 		} else if (decision == 0) {
 			return "Steady";
 		} else {
-			return "Unknown";
+			return "Unknown" + decision;
 		}
 	}
 
@@ -64,11 +64,11 @@ public class CbScience {
 			tpBar += (time[y] - timeBar) * (pressure[y] - pressureBar);
 		}
 		double beta1 = tpBar / ttBar;
-		if (beta1 < -0.05) {
+		if (beta1 < -0.1) {
 			return -1;
-		} else if (beta1 > 0.05) {
+		} else if (beta1 > 0.1) {
 			return 1;
-		} else if (beta1 >= -0.05 && beta1 <= 0.05) {
+		} else if (beta1 >= -0.1 && beta1 <= 0.1) {
 			return 0;
 		} else {
 			return 0;
