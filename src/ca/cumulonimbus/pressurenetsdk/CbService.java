@@ -143,12 +143,12 @@ public class CbService extends Service {
 			if (settingsHandler.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
-				log("collected");
 				
 				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
 					db.open();
 					long count = db.addObservation(singleObservation);
+
 					db.close();
 
 					try {
@@ -160,7 +160,7 @@ public class CbService extends Service {
 								sendCbObservation(singleObservation);
 							} else {
 								log("didn't send");
-								// TODO: and store for later if not
+								// TODO: mark as not sent, send later
 							}
 						}
 					} catch (Exception e) {
@@ -168,6 +168,8 @@ public class CbService extends Service {
 
 					}
 				}
+			} else {
+				log("tried collecting, reading zero");
 			}
 			mHandler.postAtTime(this,
 					base + (settingsHandler.getDataCollectionFrequency()));
@@ -438,13 +440,18 @@ public class CbService extends Service {
 			case MSG_GET_LOCAL_RECENTS:
 				log("get recents");
 				CbApiCall apiCall = (CbApiCall) msg.obj;
-
+				System.out.println(apiCall);
+				if(apiCall == null) {
+					System.out.println("apicall null, bailing");
+					break;
+				}
 				// run API call
 				db.open();
 				Cursor cursor = db.runLocalAPICall(apiCall.getMinLat(),
 						apiCall.getMaxLat(), apiCall.getMinLon(),
 						apiCall.getMaxLon(), apiCall.getStartTime(),
 						apiCall.getEndTime(), 2000);
+				System.out.println("local api cursor count " + cursor.getCount());
 				ArrayList<CbObservation> results = new ArrayList<CbObservation>();
 				while (cursor.moveToNext()) {
 					// TODO: This is duplicated in CbDataCollector. Fix that
@@ -469,7 +476,7 @@ public class CbService extends Service {
 
 					results.add(obs);
 				}
-
+				db.close();
 				log("cbservice: " + results.size() + " local api results");
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_LOCAL_RECENTS,
