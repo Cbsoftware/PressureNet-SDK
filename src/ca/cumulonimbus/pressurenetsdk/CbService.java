@@ -467,7 +467,7 @@ public class CbService extends Service {
 					obs.setObservationUnit(cursor.getString(7));
 					obs.setObservationValue(cursor.getDouble(8));
 					obs.setSharing(cursor.getString(9));
-					obs.setTime(cursor.getInt(10));
+					obs.setTime(cursor.getLong(10));
 					obs.setTimeZoneOffset(cursor.getInt(11));
 					obs.setUser_id(cursor.getString(12));
 					obs.setTrend(cursor.getString(18));
