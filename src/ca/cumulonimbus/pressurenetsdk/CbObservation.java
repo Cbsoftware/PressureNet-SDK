@@ -30,55 +30,6 @@ public class CbObservation extends CbWeather {
 	private Date jDate;
 	private String trend = "";
 
-	/**
-	 * Raw data on the server does not include trends and the only date
-	 * information is messy. Given an ArrayList, fix those issues and return the
-	 * new ArrayList.
-	 * 
-	 * @return
-	 */
-	public static ArrayList<CbWeather> addTrends(
-			ArrayList<CbWeather> rawListWeather) {
-		ArrayList<CbWeather> fixedList = new ArrayList<CbWeather>();
-		HashMap<String, ArrayList<CbObservation>> userMap = new HashMap<String, ArrayList<CbObservation>>();
-
-		System.out.println("making user map");
-		for (CbWeather currentWeather : rawListWeather) {
-			CbObservation current = (CbObservation) currentWeather;
-			if (userMap.containsKey(current.getUser_id())) {
-				userMap.get(current.getUser_id()).add(current);
-			} else {
-				ArrayList<CbObservation> newList = new ArrayList<CbObservation>();
-				newList.add(current);
-				userMap.put(current.getUser_id(), newList);
-			}
-		}
-
-		System.out.println("done. there are " + userMap.size()
-				+ " users nearby who reported " + rawListWeather.size()
-				+ " measurements");
-
-		// Calculate the recent trend of this user's device readings
-		// Simple, short, naive is okay for now; this estimate will be
-		// looked at in aggregate with all nearby devices.
-		// for each user
-
-		for (String id : userMap.keySet()) {
-			ArrayList<CbObservation> obsList = userMap.get(id);
-			String tendency = CbScience.findApproximateTendency(obsList);
-
-			// TODO: improve this. dropping the large trend individually
-			// into the values isn't a lasting solution
-			for (CbObservation current : obsList) {
-				current.setTrend(tendency);
-				// System.out.println("for id " + id + " setting trend " +
-				// tendency + " u count" + obsList.size());
-				fixedList.add(current);
-			}
-		}
-
-		return fixedList;
-	}
 
 	@Override
 	public String toString() {

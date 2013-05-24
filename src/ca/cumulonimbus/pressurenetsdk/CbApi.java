@@ -222,11 +222,7 @@ public class CbApi {
 				}
 			}
 
-			// TODO: Add dates and trends prior to graphing.
-			// ArrayList<CbObservation> detailedList =
 
-			obsFromJSON = CbObservation.addTrends(obsFromJSON);
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
