@@ -102,17 +102,17 @@ public class CbDb {
 
 	private static final String API_CACHE_TABLE_CREATE = "create table "
 			+ API_CACHE_TABLE + " (_id integer primary key autoincrement, "
-			+ KEY_LATITUDE + " real not null, " + KEY_LONGITUDE
-			+ " real not null, " + KEY_ALTITUDE + " real not null, "
-			+ KEY_ACCURACY + " real not null, " + KEY_PROVIDER
-			+ " text not null, " + KEY_OBSERVATION_TYPE + " text not null, "
+			+ KEY_LATITUDE + " real, " + KEY_LONGITUDE
+			+ " real, " + KEY_ALTITUDE + " real, "
+			+ KEY_ACCURACY + " real, " + KEY_PROVIDER
+			+ " text, " + KEY_OBSERVATION_TYPE + " text, "
 			+ KEY_OBSERVATION_UNIT + " text not null, " + KEY_OBSERVATION_VALUE
-			+ " real not null, " + KEY_SHARING + " text not null, " + KEY_TIME
-			+ " real not null, " + KEY_TIMEZONE + " real not null, "
-			+ KEY_USERID + " text not null, " + KEY_SENSOR_NAME
-			+ " text not null, " + KEY_SENSOR_TYPE + " real not null, "
-			+ KEY_SENSOR_VENDOR + " text not null, " + KEY_SENSOR_RESOLUTION
-			+ " real not null, " + KEY_SENSOR_VERSION + " real not null,"
+			+ " real, " + KEY_SHARING + " text, " + KEY_TIME
+			+ " real, " + KEY_TIMEZONE + " real, "
+			+ KEY_USERID + " text, " + KEY_SENSOR_NAME
+			+ " text, " + KEY_SENSOR_TYPE + " real, "
+			+ KEY_SENSOR_VENDOR + " text, " + KEY_SENSOR_RESOLUTION
+			+ " real, " + KEY_SENSOR_VERSION + " real,"
 			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE (" + KEY_LATITUDE
 			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + "," + KEY_USERID + ","
 			+ KEY_OBSERVATION_VALUE + ") ON CONFLICT REPLACE)";
@@ -159,7 +159,7 @@ public class CbDb {
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 22;
+	private static final int DATABASE_VERSION = 23;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
