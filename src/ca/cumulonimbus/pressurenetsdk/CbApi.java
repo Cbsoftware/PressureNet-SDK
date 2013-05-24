@@ -30,8 +30,8 @@ import android.os.Messenger;
 public class CbApi {
 
 	Context context;
-	String apiServerURL = "https://pressurenet.cumulonimbus.ca/live/?";
-	String apiConditionsServerURL = "https://pressurenet.cumulonimbus.ca/conditions/live/?";
+	String apiServerURL = "https://pressurenet.cumulonimbus.ca/list/?";
+	String apiConditionsServerURL = "https://pressurenet.cumulonimbus.ca/conditions/list/?";
 	private CbDb db;
 	private CbApiCall apiCall;
 	private ArrayList<CbWeather> callResults = new ArrayList<CbWeather>();

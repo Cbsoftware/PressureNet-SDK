@@ -608,6 +608,7 @@ public class CbService extends Service {
 				break;
 			case MSG_SEND_CURRENT_CONDITION:
 				CbCurrentCondition condition = (CbCurrentCondition) msg.obj;
+				condition.setSharing_policy(settingsHandler.getShareLevel());
 				sendCbCurrentCondition(condition);
 				break;
 			case MSG_SEND_OBSERVATION:
