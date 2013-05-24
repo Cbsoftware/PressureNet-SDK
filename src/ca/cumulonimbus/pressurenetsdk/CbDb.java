@@ -154,10 +154,12 @@ public class CbDb {
 			+ " text not null, "
 			+ KEY_THUNDERSTORM_INTENSITY
 			+ " real not null, "
-			+ KEY_USER_COMMENT + " text not null)";
+			+ KEY_USER_COMMENT + " text not null, " + "UNIQUE (" + KEY_LATITUDE
+			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + "," + KEY_USERID + ","
+			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 21;
+	private static final int DATABASE_VERSION = 22;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
