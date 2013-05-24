@@ -590,7 +590,8 @@ public class CbDb {
 				
 				insert.bindLong(3, ob.getTime());
 				insert.bindDouble(4, ob.getObservationValue());
-				// System.out.println("SAVING " + latitudeHalf + ", " + longitudeHalf + ", " + ob.getTime() + ", " + ob.getObservationValue());
+				insert.executeInsert();
+				System.out.println("SAVING " + latitudeHalf + ", " + longitudeHalf + ", " + ob.getTime() + ", " + ob.getObservationValue());
 				
 				
 /*				insert.bindDouble(1, ob.getLocation().getLatitude());
@@ -622,7 +623,7 @@ public class CbDb {
 
 
 */
-				insert.executeInsert();
+
 			}
 
 			mDB.setTransactionSuccessful();

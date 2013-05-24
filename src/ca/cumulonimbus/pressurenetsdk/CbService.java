@@ -501,7 +501,6 @@ public class CbService extends Service {
 				while (cacheCursor.moveToNext()) {
 					// TODO: This is duplicated in CbDataCollector. Fix that
 					CbObservation obs = new CbObservation();
-					Location location = new Location("network");
 					//location.setLatitude(cacheCursor.getDouble(1));
 					//location.setLongitude(cacheCursor.getDouble(2));
 					//location.setAltitude(cacheCursor.getDouble(3));
@@ -510,9 +509,10 @@ public class CbService extends Service {
 					//obs.setLocation(location);
 					//obs.setObservationType(cacheCursor.getString(6));
 					//obs.setObservationUnit(cacheCursor.getString(7));
-					
-					obs.setTime(cacheCursor.getLong(1));
-					obs.setObservationValue(cacheCursor.getDouble(0));
+
+					obs.setObservationValue(cacheCursor.getDouble(1));
+					obs.setTime(cacheCursor.getLong(2));
+
 					//obs.setSharing(cacheCursor.getString(9));
 					//obs.setTimeZoneOffset(cacheCursor.getLong(11));
 					//obs.setUser_id(cacheCursor.getString(12));
