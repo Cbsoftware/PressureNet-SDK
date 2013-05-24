@@ -202,14 +202,12 @@ public class CbApi {
 						Location location = new Location("network");
 						location.setLatitude(jsonObject.getDouble("latitude"));
 						location.setLongitude(jsonObject.getDouble("longitude"));
-						location.setAccuracy((float) jsonObject
-								.getDouble("accuracy"));
 						current.setLocation(location);
 						current.setGeneral_condition(jsonObject.getString("general_condition"));
 						current.setTime(jsonObject.getLong("daterecorded"));
-						current.setTzoffset(jsonObject.getInt("tzoffset"));
-						current.setSharing_policy(jsonObject.getString("sharing"));
-						current.setUser_id(jsonObject.getString("user_id"));
+						//current.setTzoffset(jsonObject.getInt("tzoffset"));
+						//current.setSharing_policy(jsonObject.getString("sharing"));
+						//current.setUser_id(jsonObject.getString("user_id"));
 						current.setWindy(jsonObject.getString("windy"));
 						current.setFog_thickness(jsonObject.getString("fog_thickness"));
 						current.setWindy(jsonObject.getString("precipitation_type"));
