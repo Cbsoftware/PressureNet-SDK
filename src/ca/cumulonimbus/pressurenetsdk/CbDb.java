@@ -106,15 +106,14 @@ public class CbDb {
 			+ " real, " + KEY_ALTITUDE + " real, "
 			+ KEY_ACCURACY + " real, " + KEY_PROVIDER
 			+ " text, " + KEY_OBSERVATION_TYPE + " text, "
-			+ KEY_OBSERVATION_UNIT + " text not null, " + KEY_OBSERVATION_VALUE
+			+ KEY_OBSERVATION_UNIT + " text, " + KEY_OBSERVATION_VALUE
 			+ " real, " + KEY_SHARING + " text, " + KEY_TIME
 			+ " real, " + KEY_TIMEZONE + " real, "
 			+ KEY_USERID + " text, " + KEY_SENSOR_NAME
 			+ " text, " + KEY_SENSOR_TYPE + " real, "
 			+ KEY_SENSOR_VENDOR + " text, " + KEY_SENSOR_RESOLUTION
 			+ " real, " + KEY_SENSOR_VERSION + " real,"
-			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE (" + KEY_LATITUDE
-			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + "," + KEY_USERID + ","
+			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE (" + KEY_TIME + "," 
 			+ KEY_OBSERVATION_VALUE + ") ON CONFLICT REPLACE)";
 
 	private static final String CURRENT_CONDITIONS_TABLS_CREATE = "create table "
@@ -159,7 +158,7 @@ public class CbDb {
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 23;
+	private static final int DATABASE_VERSION = 27;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -220,12 +219,7 @@ public class CbDb {
 			double min_lon, double max_lon, long start_time, long end_time,
 			double limit) {
 		Cursor cursor = mDB.query(false, API_CACHE_TABLE, new String[] {
-				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE,
-				KEY_ACCURACY, KEY_PROVIDER, KEY_OBSERVATION_TYPE,
-				KEY_OBSERVATION_UNIT, KEY_OBSERVATION_VALUE, KEY_SHARING,
-				KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_SENSOR_NAME,
-				KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION,
-				KEY_SENSOR_VERSION, KEY_OBSERVATION_TREND }, KEY_LATITUDE
+				KEY_ROW_ID, KEY_OBSERVATION_VALUE, KEY_TIME}, KEY_LATITUDE
 				+ " > ? and " + KEY_LATITUDE + " < ? and " + KEY_LONGITUDE
 				+ " > ? and " + KEY_LONGITUDE + " < ? and " + KEY_TIME
 				+ " > ? and " + KEY_TIME + " < ? ", new String[] {
@@ -445,17 +439,17 @@ public class CbDb {
 				+ "'", null);
 	}
 
-	public boolean addWeatherArrayList(ArrayList<CbWeather> results) {
+	public boolean addWeatherArrayList(ArrayList<CbWeather> results, CbApiCall api) {
 		if (results.get(0).getClass() == (CbObservation.class)) {
-			addObservationArrayList(results);
+			addObservationArrayList(results, api);
 		} else {
-			addCurrentConditionArrayList(results);
+			addCurrentConditionArrayList(results, api);
 		}
 
 		return true;
 	}
 
-	public boolean addCurrentConditionArrayList(ArrayList<CbWeather> weather) {
+	public boolean addCurrentConditionArrayList(ArrayList<CbWeather> weather, CbApiCall api) {
 
 		mDB.beginTransaction();
 
@@ -539,7 +533,7 @@ public class CbDb {
 	 * 
 	 * @return
 	 */
-	public boolean addObservationArrayList(ArrayList<CbWeather> weather) {
+	public boolean addObservationArrayList(ArrayList<CbWeather> weather, CbApiCall api) {
 		mDB.beginTransaction();
 
 		String insertSQL = "INSERT INTO "
@@ -549,6 +543,7 @@ public class CbDb {
 				+ ", "
 				+ KEY_LONGITUDE
 				+ ", "
+				/*
 				+ KEY_ALTITUDE
 				+ ", "
 				+ KEY_ACCURACY
@@ -559,12 +554,13 @@ public class CbDb {
 				+ ", "
 				+ KEY_OBSERVATION_UNIT
 				+ ", "
-				+ KEY_OBSERVATION_VALUE
-				+ ", "
+
 				+ KEY_SHARING
-				+ ", "
+				+ ", "*/
 				+ KEY_TIME
-				+ ", "
+				+ ", " 
+				+ KEY_OBSERVATION_VALUE
+				+ " "/*
 				+ KEY_TIMEZONE
 				+ ", "
 				+ KEY_USERID
@@ -579,14 +575,25 @@ public class CbDb {
 				+ ", "
 				+ KEY_SENSOR_VERSION
 				+ ", "
-				+ KEY_OBSERVATION_TREND
-				+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+				+ KEY_OBSERVATION_TREND*/
+				+ ") values (?, ?, ?, ?)";
 
 		try {
 			SQLiteStatement insert = mDB.compileStatement(insertSQL);
 			for (CbWeather weatherItem : weather) {
+				
 				CbObservation ob = (CbObservation) weatherItem;
-				insert.bindDouble(1, ob.getLocation().getLatitude());
+				double latitudeHalf = (api.getMinLat() + api.getMaxLat()) / 2; 
+				double longitudeHalf = (api.getMinLon() + api.getMaxLon()) / 2;
+				insert.bindDouble(1, latitudeHalf);
+				insert.bindDouble(2, longitudeHalf); 
+				
+				insert.bindLong(3, ob.getTime());
+				insert.bindDouble(4, ob.getObservationValue());
+				// System.out.println("SAVING " + latitudeHalf + ", " + longitudeHalf + ", " + ob.getTime() + ", " + ob.getObservationValue());
+				
+				
+/*				insert.bindDouble(1, ob.getLocation().getLatitude());
 				insert.bindDouble(2, ob.getLocation().getLongitude());
 				insert.bindDouble(3, ob.getLocation().getAltitude());
 				insert.bindDouble(4, ob.getLocation().getAccuracy());
@@ -613,6 +620,8 @@ public class CbDb {
 				}
 				insert.bindString(18, ob.getTrend());
 
+
+*/
 				insert.executeInsert();
 			}
 

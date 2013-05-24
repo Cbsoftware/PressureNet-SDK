@@ -486,9 +486,8 @@ public class CbService extends Service {
 				}
 				break;
 			case MSG_GET_API_RECENTS:
-				log("get api recents");
 				CbApiCall apiCacheCall = (CbApiCall) msg.obj;
-				log(apiCacheCall.toString());
+				log("get api recents " + apiCacheCall.toString());
 				// run API call
 				db.open();
 				
@@ -503,20 +502,21 @@ public class CbService extends Service {
 					// TODO: This is duplicated in CbDataCollector. Fix that
 					CbObservation obs = new CbObservation();
 					Location location = new Location("network");
-					location.setLatitude(cacheCursor.getDouble(1));
-					location.setLongitude(cacheCursor.getDouble(2));
-					location.setAltitude(cacheCursor.getDouble(3));
-					location.setAccuracy(cacheCursor.getInt(4));
-					location.setProvider(cacheCursor.getString(5));
-					obs.setLocation(location);
-					obs.setObservationType(cacheCursor.getString(6));
-					obs.setObservationUnit(cacheCursor.getString(7));
-					obs.setObservationValue(cacheCursor.getDouble(8));
-					obs.setSharing(cacheCursor.getString(9));
-					obs.setTime(cacheCursor.getLong(10));
-					obs.setTimeZoneOffset(cacheCursor.getLong(11));
-					obs.setUser_id(cacheCursor.getString(12));
-					obs.setTrend(cacheCursor.getString(18));
+					//location.setLatitude(cacheCursor.getDouble(1));
+					//location.setLongitude(cacheCursor.getDouble(2));
+					//location.setAltitude(cacheCursor.getDouble(3));
+					//location.setAccuracy(cacheCursor.getInt(4));
+					//location.setProvider(cacheCursor.getString(5));
+					//obs.setLocation(location);
+					//obs.setObservationType(cacheCursor.getString(6));
+					//obs.setObservationUnit(cacheCursor.getString(7));
+					
+					obs.setTime(cacheCursor.getLong(1));
+					obs.setObservationValue(cacheCursor.getDouble(0));
+					//obs.setSharing(cacheCursor.getString(9));
+					//obs.setTimeZoneOffset(cacheCursor.getLong(11));
+					//obs.setUser_id(cacheCursor.getString(12));
+					//obs.setTrend(cacheCursor.getString(18));
 					// TODO: Add sensor information
 
 					cacheResults.add(obs);
@@ -532,14 +532,23 @@ public class CbService extends Service {
 			case MSG_MAKE_API_CALL:
 				CbApi api = new CbApi(getApplicationContext());
 				CbApiCall liveApiCall = (CbApiCall) msg.obj;
-				
+				liveApiCall.setCallType("Readings");
 				long timeDiff = System.currentTimeMillis() - lastAPICall;
 				
 				if(timeDiff > 1000 * 3) {
-					lastAPICall = api.makeAPICall(liveApiCall, service, msg.replyTo);
+					lastAPICall = api.makeAPICall(liveApiCall, service, msg.replyTo, "Readings");
 				} else {
 					log("service asked for api call, time diff too short " + timeDiff);
 				}
+				break;
+			case MSG_MAKE_CURRENT_CONDITIONS_API_CALL:
+		
+				CbApi conditionApi = new CbApi(getApplicationContext());
+				CbApiCall conditionApiCall = (CbApiCall) msg.obj;
+				conditionApiCall.setCallType("Conditions");
+				conditionApi.makeAPICall(conditionApiCall, service, msg.replyTo, "Conditions");
+
+
 				break;
 			case MSG_CLEAR_LOCAL_CACHE:
 				db.open();
@@ -614,14 +623,7 @@ public class CbService extends Service {
 			case MSG_SEND_OBSERVATION:
 				// TODO: Implement
 				break;
-			case MSG_MAKE_CURRENT_CONDITIONS_API_CALL:
-				CbApi conditionApi = new CbApi(getApplicationContext());
-				CbApiCall conditionApiCall = (CbApiCall) msg.obj;
-				conditionApiCall.setCallType("Conditions");
-				conditionApi.makeAPICall(conditionApiCall, service, msg.replyTo);
 
-
-				break;
 			default:
 				super.handleMessage(msg);
 			}

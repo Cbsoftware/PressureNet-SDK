@@ -33,27 +33,30 @@ public class CbApi {
 	String apiServerURL = "https://pressurenet.cumulonimbus.ca/list/?";
 	String apiConditionsServerURL = "https://pressurenet.cumulonimbus.ca/conditions/list/?";
 	private CbDb db;
-	private CbApiCall apiCall;
 	private ArrayList<CbWeather> callResults = new ArrayList<CbWeather>();
 
 	private Messenger replyResult = null;
 
 	private CbService caller;
 
+	
+	
 	/**
 	 * Make an API call and store the results
 	 * 
 	 * @return
 	 */
-	public long makeAPICall(CbApiCall call, CbService caller, Messenger ms) {
+	public long makeAPICall(CbApiCall call, CbService caller, Messenger ms, String callType) {
 
 		this.replyResult = ms;
 		this.caller = caller;
-		apiCall = call;
 		APIDataDownload api = new APIDataDownload();
 		api.setReplyToApp(ms);
-		api.execute("");
-
+		call.setCallType(callType);
+		api.setApiCall(call);
+		
+		api.execute(callType);
+		
 		return System.currentTimeMillis();
 	}
 
@@ -64,12 +67,12 @@ public class CbApi {
 	 * @param results
 	 * @return
 	 */
-	private boolean saveAPIResults(ArrayList<CbWeather> results) {
+	private boolean saveAPIResults(ArrayList<CbWeather> results, CbApiCall api) {
 		db.open();
 		System.out.println("saving api results...");
 
 		if(results.size()> 0) {
-			db.addWeatherArrayList(results);
+			db.addWeatherArrayList(results, api);
 		}
 		
 		db.close();
@@ -84,6 +87,17 @@ public class CbApi {
 	private class APIDataDownload extends AsyncTask<String, String, String> {
 
 		Messenger replyToApp = null;
+		private CbApiCall apiCall;
+		
+		
+		
+		public CbApiCall getApiCall() {
+			return apiCall;
+		}
+
+		public void setApiCall(CbApiCall apiCall) {
+			this.apiCall = apiCall;
+		}
 
 		public Messenger getReplyToApp() {
 			return replyToApp;
@@ -94,7 +108,7 @@ public class CbApi {
 		}
 
 		@Override
-		protected String doInBackground(String... arg0) {
+		protected String doInBackground(String... params) {
 			String responseText = "";
 			try {
 				DefaultHttpClient client = new DefaultHttpClient();
@@ -123,8 +137,8 @@ public class CbApi {
 				String paramString = URLEncodedUtils.format(nvps, "utf-8");
 
 				String serverURL = apiServerURL;
-				System.out.println("CALLING " + apiCall.getCallType());
-				if (apiCall.getCallType().equals("Readings")) {
+				System.out.println("CALLING " + apiCall.getCallType() + " ACTUAL PARAMS  " + params[0]);
+				if (params[0].equals("Readings")) {
 					serverURL = apiServerURL;
 				} else {
 					serverURL = apiConditionsServerURL;
@@ -159,8 +173,8 @@ public class CbApi {
 		}
 
 		protected void onPostExecute(String result) {
-			callResults = processJSONResult(result);
-			saveAPIResults(callResults);
+			callResults = processJSONResult(result, apiCall.getCallType());
+			saveAPIResults(callResults, apiCall);
 			System.out.println("saved " + callResults.size()
 					+ " api call results");
 			caller.notifyAPIResult(replyToApp, callResults.size());
@@ -172,27 +186,27 @@ public class CbApi {
 	 * 
 	 * @param resultJSON
 	 */
-	private ArrayList<CbWeather> processJSONResult(String resultJSON) {
+	private ArrayList<CbWeather> processJSONResult(String resultJSON, String callType) {
 		ArrayList<CbWeather> obsFromJSON = new ArrayList<CbWeather>();
-		System.out.println("processing json result for call type " + apiCall.getCallType());
+		System.out.println("processing json result for call type " + callType);
 		try {
 			JSONArray jsonArray = new JSONArray(resultJSON);
 			for (int i = 0; i < jsonArray.length(); i++) {
 				JSONObject jsonObject = jsonArray.getJSONObject(i);
 				try {
-					if(apiCall.getCallType().equals("Readings")) {
+					if(callType.equals("Readings")) {
 						CbObservation singleObs = new CbObservation();
 
-						Location location = new Location("network");
-						location.setLatitude(jsonObject.getDouble("latitude"));
-						location.setLongitude(jsonObject.getDouble("longitude"));
-						location.setAccuracy((float) jsonObject
-								.getDouble("location_accuracy"));
-						singleObs.setLocation(location);
+						//Location location = new Location("network");
+						//location.setLatitude(jsonObject.getDouble("latitude"));
+						//location.setLongitude(jsonObject.getDouble("longitude"));
+						//location.setAccuracy((float) jsonObject
+							//	.getDouble("location_accuracy"));
+						//singleObs.setLocation(location);
 						singleObs.setTime(jsonObject.getLong("daterecorded"));
-						singleObs.setTimeZoneOffset(jsonObject.getLong("tzoffset"));
-						singleObs.setSharing(jsonObject.getString("sharing"));
-						singleObs.setUser_id(jsonObject.getString("user_id"));
+						//singleObs.setTimeZoneOffset(jsonObject.getLong("tzoffset"));
+						//singleObs.setSharing(jsonObject.getString("sharing"));
+						//singleObs.setUser_id(jsonObject.getString("user_id"));
 						singleObs.setObservationValue(jsonObject
 								.getDouble("reading"));
 						obsFromJSON.add(singleObs);
