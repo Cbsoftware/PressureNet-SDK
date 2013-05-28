@@ -495,30 +495,13 @@ public class CbService extends Service {
 						apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(),
 						apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(),
 						apiCacheCall.getStartTime(), apiCacheCall.getEndTime(),
-						2000);
+						apiCacheCall.getLimit());
 				ArrayList<CbObservation> cacheResults = new ArrayList<CbObservation>();
 				System.out.println("cache cursor count " + cacheCursor.getCount());
 				while (cacheCursor.moveToNext()) {
-					// TODO: This is duplicated in CbDataCollector. Fix that
-					CbObservation obs = new CbObservation();
-					//location.setLatitude(cacheCursor.getDouble(1));
-					//location.setLongitude(cacheCursor.getDouble(2));
-					//location.setAltitude(cacheCursor.getDouble(3));
-					//location.setAccuracy(cacheCursor.getInt(4));
-					//location.setProvider(cacheCursor.getString(5));
-					//obs.setLocation(location);
-					//obs.setObservationType(cacheCursor.getString(6));
-					//obs.setObservationUnit(cacheCursor.getString(7));
-
+					CbObservation obs = new CbObservation();				
 					obs.setObservationValue(cacheCursor.getDouble(1));
 					obs.setTime(cacheCursor.getLong(2));
-
-					//obs.setSharing(cacheCursor.getString(9));
-					//obs.setTimeZoneOffset(cacheCursor.getLong(11));
-					//obs.setUser_id(cacheCursor.getString(12));
-					//obs.setTrend(cacheCursor.getString(18));
-					// TODO: Add sensor information
-
 					cacheResults.add(obs);
 				}
 

@@ -543,39 +543,11 @@ public class CbDb {
 				+ ", "
 				+ KEY_LONGITUDE
 				+ ", "
-				/*
-				+ KEY_ALTITUDE
-				+ ", "
-				+ KEY_ACCURACY
-				+ ", "
-				+ KEY_PROVIDER
-				+ ", "
-				+ KEY_OBSERVATION_TYPE
-				+ ", "
-				+ KEY_OBSERVATION_UNIT
-				+ ", "
-
-				+ KEY_SHARING
-				+ ", "*/
+	
 				+ KEY_TIME
 				+ ", " 
 				+ KEY_OBSERVATION_VALUE
-				+ " "/*
-				+ KEY_TIMEZONE
-				+ ", "
-				+ KEY_USERID
-				+ ", "
-				+ KEY_SENSOR_NAME
-				+ ", "
-				+ KEY_SENSOR_TYPE
-				+ ", "
-				+ KEY_SENSOR_VENDOR
-				+ ", "
-				+ KEY_SENSOR_RESOLUTION
-				+ ", "
-				+ KEY_SENSOR_VERSION
-				+ ", "
-				+ KEY_OBSERVATION_TREND*/
+				+ " "
 				+ ") values (?, ?, ?, ?)";
 
 		try {
@@ -591,39 +563,6 @@ public class CbDb {
 				insert.bindLong(3, ob.getTime());
 				insert.bindDouble(4, ob.getObservationValue());
 				insert.executeInsert();
-				System.out.println("SAVING " + latitudeHalf + ", " + longitudeHalf + ", " + ob.getTime() + ", " + ob.getObservationValue());
-				
-				
-/*				insert.bindDouble(1, ob.getLocation().getLatitude());
-				insert.bindDouble(2, ob.getLocation().getLongitude());
-				insert.bindDouble(3, ob.getLocation().getAltitude());
-				insert.bindDouble(4, ob.getLocation().getAccuracy());
-				insert.bindString(5, ob.getLocation().getProvider());
-				insert.bindString(6, ob.getObservationType());
-				insert.bindString(7, ob.getObservationUnit());
-				insert.bindDouble(8, ob.getObservationValue());
-				insert.bindString(9, ob.getSharing());
-				insert.bindLong(10, ob.getTime());
-				insert.bindLong(11, ob.getTimeZoneOffset());
-				insert.bindString(12, ob.getUser_id());
-				if (ob.getSensor() == null) {
-					insert.bindString(13, "");
-					insert.bindDouble(14, 0.0);
-					insert.bindString(15, "");
-					insert.bindDouble(16, 0.0);
-					insert.bindDouble(17, 0.0);
-				} else {
-					insert.bindString(13, ob.getSensor().getName());
-					insert.bindDouble(14, ob.getSensor().getType());
-					insert.bindString(15, ob.getSensor().getVendor());
-					insert.bindDouble(16, ob.getSensor().getResolution());
-					insert.bindDouble(17, ob.getSensor().getVersion());
-				}
-				insert.bindString(18, ob.getTrend());
-
-
-*/
-
 			}
 
 			mDB.setTransactionSuccessful();
