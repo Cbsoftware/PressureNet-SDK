@@ -12,6 +12,7 @@ import java.util.Date;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.ConnectivityManager;
@@ -22,6 +23,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.widget.TextView;
 
@@ -313,12 +315,43 @@ public class CbService extends Service {
 		return START_STICKY;
 	}
 
+	/**
+	 * Convert time ago text to ms. TODO: not this. values in xml.
+	 * @param timeAgo
+	 * @return
+	 */
+	private long stringTimeToLongHack(String timeAgo) {
+		if (timeAgo.equals("1 minute")) {
+			return 1000 * 60;
+		} else if (timeAgo.equals("5 minutes")) {
+			return 1000 * 60 * 5;
+		} else if (timeAgo.equals("10 minutes")) {
+			return 1000 * 60 * 10;
+		} else if (timeAgo.equals("30 minutes")) {
+			return 1000 * 60 * 30;
+		} else if (timeAgo.equals("1 hour")) {
+			return 1000 * 60 * 60;
+		}
+		return 1000 * 60 * 5; 
+	}
+	
 	public void startWithIntent(Intent intent) {
 		try {
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
 			settingsHandler.setServerURL(serverURL);
 			settingsHandler.setAppID(getID());
+			
+			SharedPreferences sharedPreferences = PreferenceManager
+					.getDefaultSharedPreferences(this);
+			String preferenceCollectionFrequency = sharedPreferences.getString(
+					"autofrequency", "10 minutes");
+			boolean preferenceShareData = sharedPreferences.getBoolean("autoupdate", true);
+			String preferenceShareLevel = sharedPreferences.getString(
+					"sharing_preference", "Us, Researchers and Forecasters");
 
+			System.out.println(stringTimeToLongHack(preferenceCollectionFrequency) + ", from " + preferenceCollectionFrequency);
+			settingsHandler.setDataCollectionFrequency(stringTimeToLongHack(preferenceCollectionFrequency));
+			
 			// Seems like new settings. Try adding to the db.
 			settingsHandler.saveSettings();
 
