@@ -97,6 +97,8 @@ public class CbService extends Service {
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
 
+	ArrayList<CbObservation> offlineBuffer = new ArrayList<CbObservation>();
+	
 	/**
 	 * Find all the data for an observation.
 	 * 
@@ -160,9 +162,21 @@ public class CbService extends Service {
 								log("online and sending");
 								singleObservation.setClientKey(getApplicationContext().getPackageName());
 								sendCbObservation(singleObservation);
+								
+								// also check and send the offline buffer
+								if(offlineBuffer.size() > 0) {
+									System.out.println("sending " + offlineBuffer.size() + " offline buffered obs");
+									for(CbObservation singleOffline : offlineBuffer) {
+										sendCbObservation(singleObservation);
+									}
+									offlineBuffer.clear();
+								}
 							} else {
 								log("didn't send");
-								// TODO: mark as not sent, send later
+								/// offline buffer variable
+								// TODO: put this in the DB to survive longer
+								offlineBuffer.add(singleObservation);
+								
 							}
 						}
 					} catch (Exception e) {
