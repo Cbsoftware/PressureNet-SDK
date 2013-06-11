@@ -386,7 +386,7 @@ public class CbService extends Service {
 				settingsHandler.setAppID(allSettings.getString(1));
 				settingsHandler.setDataCollectionFrequency(allSettings
 						.getLong(2));
-				settingsHandler.setServerURL(allSettings.getString(3));
+				settingsHandler.setServerURL(serverURL);
 				startAutoSubmit();
 				// but just once
 				break;

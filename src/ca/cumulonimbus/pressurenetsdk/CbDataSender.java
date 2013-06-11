@@ -83,6 +83,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 				}
 			} 
 			String serverURL = settings.getServerURL();
+			System.out.println("settings url " + serverURL);
 			if(isCbOb) {
 				// cb observation
 				serverURL += "add/";
@@ -94,8 +95,8 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			HttpPost httppost = new HttpPost(serverURL);
 			httppost.setEntity(new UrlEncodedFormEntity(nvps));
 			
-			System.out.println("executing post");
-
+			System.out.println("executing post URL " + serverURL);
+			
 			HttpResponse resp = client.execute(httppost);
 			HttpEntity responseEntity = resp.getEntity();
 
