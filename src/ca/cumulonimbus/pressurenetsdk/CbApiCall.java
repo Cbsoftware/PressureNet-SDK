@@ -18,6 +18,7 @@ public class CbApiCall {
 	private ArrayList<CbObservation> observationResults;
 	private ArrayList<CbCurrentCondition> conditionResults;
 	private int limit = 5000;
+	private String callURL = "";
 	
 	@Override
 	public String toString() {
@@ -50,6 +51,14 @@ public class CbApiCall {
 	
 	
 	
+	public String getCallURL() {
+		return callURL;
+	}
+
+	public void setCallURL(String callURL) {
+		this.callURL = callURL;
+	}
+
 	public int getLimit() {
 		return limit;
 	}

@@ -31,6 +31,7 @@ public class CbApi {
 
 	Context context;
 	String apiServerURL = "https://pressurenet.cumulonimbus.ca/list/?";
+	String liveApiServerURL = "https://pressurenet.cumulonimbus.ca/live/?";
 	String apiConditionsServerURL = "https://pressurenet.cumulonimbus.ca/conditions/list/?";
 	private CbDb db;
 	private ArrayList<CbWeather> callResults = new ArrayList<CbWeather>();
@@ -145,7 +146,7 @@ public class CbApi {
 				}
 
 				serverURL = serverURL + paramString;
-
+				apiCall.setCallURL(serverURL);
 				System.out.println("cbservice api sending " + serverURL);
 				HttpGet get = new HttpGet(serverURL);
 				// Execute the GET call and obtain the response
@@ -173,7 +174,7 @@ public class CbApi {
 		}
 
 		protected void onPostExecute(String result) {
-			callResults = processJSONResult(result, apiCall.getCallType());
+			callResults = processJSONResult(result, apiCall);
 			saveAPIResults(callResults, apiCall);
 			System.out.println("saved " + callResults.size()
 					+ " api call results");
@@ -186,29 +187,37 @@ public class CbApi {
 	 * 
 	 * @param resultJSON
 	 */
-	private ArrayList<CbWeather> processJSONResult(String resultJSON, String callType) {
+	private ArrayList<CbWeather> processJSONResult(String resultJSON, CbApiCall apiCall) {
 		ArrayList<CbWeather> obsFromJSON = new ArrayList<CbWeather>();
-		System.out.println("processing json result for call type " + callType);
+		System.out.println("processing json result for call type " + apiCall.getCallType());
+		System.out.println("with url " + apiCall.getCallURL());
 		try {
 			JSONArray jsonArray = new JSONArray(resultJSON);
 			for (int i = 0; i < jsonArray.length(); i++) {
 				JSONObject jsonObject = jsonArray.getJSONObject(i);
 				try {
-					if(callType.equals("Readings")) {
+					if(apiCall.getCallType().equals("Readings")) {
 						CbObservation singleObs = new CbObservation();
+						if(apiCall.getCallURL().contains("/live/")) {
+							Location location = new Location("network");
+							location.setLatitude(jsonObject.getDouble("latitude"));
+							location.setLongitude(jsonObject.getDouble("longitude"));
+							location.setAccuracy((float) jsonObject
+							.getDouble("location_accuracy"));
+							singleObs.setLocation(location);
+							singleObs.setTime(jsonObject.getLong("daterecorded"));
+							singleObs.setTimeZoneOffset(jsonObject.getLong("tzoffset"));
+							singleObs.setSharing(jsonObject.getString("sharing"));
+							singleObs.setUser_id(jsonObject.getString("user_id"));
+							singleObs.setObservationValue(jsonObject
+									.getDouble("reading"));
+						} else if (apiCall.getCallURL().contains("/list/")) {
 
-						//Location location = new Location("network");
-						//location.setLatitude(jsonObject.getDouble("latitude"));
-						//location.setLongitude(jsonObject.getDouble("longitude"));
-						//location.setAccuracy((float) jsonObject
-							//	.getDouble("location_accuracy"));
-						//singleObs.setLocation(location);
-						singleObs.setTime(jsonObject.getLong("daterecorded"));
-						//singleObs.setTimeZoneOffset(jsonObject.getLong("tzoffset"));
-						//singleObs.setSharing(jsonObject.getString("sharing"));
-						//singleObs.setUser_id(jsonObject.getString("user_id"));
-						singleObs.setObservationValue(jsonObject
-								.getDouble("reading"));
+							singleObs.setTime(jsonObject.getLong("daterecorded"));
+							singleObs.setObservationValue(jsonObject
+									.getDouble("reading"));
+						}
+					
 						obsFromJSON.add(singleObs);
 					
 					} else {
