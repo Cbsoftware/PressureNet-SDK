@@ -19,6 +19,7 @@ public class CbApiCall {
 	private ArrayList<CbCurrentCondition> conditionResults;
 	private int limit = 5000;
 	private String callURL = "";
+	private String apiName = "list"; // list, live, ...
 	
 	@Override
 	public String toString() {
@@ -50,7 +51,14 @@ public class CbApiCall {
 	}
 	
 	
-	
+	public String getApiName() {
+		return apiName;
+	}
+
+	public void setApiName(String apiName) {
+		this.apiName = apiName;
+	}
+
 	public String getCallURL() {
 		return callURL;
 	}

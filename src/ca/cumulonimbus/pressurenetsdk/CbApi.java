@@ -138,6 +138,9 @@ public class CbApi {
 				String paramString = URLEncodedUtils.format(nvps, "utf-8");
 
 				String serverURL = apiServerURL;
+				if(apiCall.getApiName().equals("live")) {
+					serverURL = liveApiServerURL;
+				}
 				System.out.println("CALLING " + apiCall.getCallType() + " ACTUAL PARAMS  " + params[0]);
 				if (params[0].equals("Readings")) {
 					serverURL = apiServerURL;
