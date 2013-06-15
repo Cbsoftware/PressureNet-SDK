@@ -138,12 +138,15 @@ public class CbApi {
 				String paramString = URLEncodedUtils.format(nvps, "utf-8");
 
 				String serverURL = apiServerURL;
-				if(apiCall.getApiName().equals("live")) {
-					serverURL = liveApiServerURL;
-				}
-				System.out.println("CALLING " + apiCall.getCallType() + " ACTUAL PARAMS  " + params[0]);
+				
 				if (params[0].equals("Readings")) {
-					serverURL = apiServerURL;
+					if(apiCall.getApiName().equals("live")) {
+						serverURL = liveApiServerURL;
+					} else if (apiCall.getApiName().equals("list")) {
+						serverURL = apiServerURL;
+					} else {
+						serverURL = apiServerURL;
+					}
 				} else {
 					serverURL = apiConditionsServerURL;
 				}
@@ -192,8 +195,7 @@ public class CbApi {
 	 */
 	private ArrayList<CbWeather> processJSONResult(String resultJSON, CbApiCall apiCall) {
 		ArrayList<CbWeather> obsFromJSON = new ArrayList<CbWeather>();
-		System.out.println("processing json result for call type " + apiCall.getCallType());
-		System.out.println("with url " + apiCall.getCallURL());
+		System.out.println("processing json result for " + apiCall.getApiName() + " call type " + apiCall.getCallType());
 		try {
 			JSONArray jsonArray = new JSONArray(resultJSON);
 			for (int i = 0; i < jsonArray.length(); i++) {

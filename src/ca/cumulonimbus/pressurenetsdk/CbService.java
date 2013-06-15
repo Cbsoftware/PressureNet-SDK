@@ -565,11 +565,8 @@ public class CbService extends Service {
 				liveApiCall.setCallType("Readings");
 				long timeDiff = System.currentTimeMillis() - lastAPICall;
 				
-				if(timeDiff > 1000 * 3) {
-					lastAPICall = api.makeAPICall(liveApiCall, service, msg.replyTo, "Readings");
-				} else {
-					log("service asked for api call, time diff too short " + timeDiff);
-				}
+				lastAPICall = api.makeAPICall(liveApiCall, service, msg.replyTo, "Readings");
+				
 				break;
 			case MSG_MAKE_CURRENT_CONDITIONS_API_CALL:
 		
