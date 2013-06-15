@@ -585,7 +585,7 @@ public class CbDb {
 
 		if(api.getCallURL().contains("/list/")) {
 			String insertSQL = "INSERT INTO "
-					+ API_CACHE_TABLE
+					+ API_LIST_TABLE
 					+ " ("
 					+ KEY_MIN_LAT
 					+ ", "
