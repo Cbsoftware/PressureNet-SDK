@@ -555,7 +555,7 @@ public class CbService extends Service {
 					obs.setTime(cacheCursor.getLong(2));
 					cacheResults.add(obs);
 				}
-
+				db.close();
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
 							cacheResults));
@@ -602,6 +602,8 @@ public class CbService extends Service {
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
+				
+				db.close();
 				break;
 			case MSG_MAKE_API_CALL:
 				CbApi api = new CbApi(getApplicationContext());
