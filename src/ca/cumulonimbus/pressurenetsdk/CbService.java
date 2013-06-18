@@ -88,10 +88,14 @@ public class CbService extends Service {
 	// Sending Data
 	public static final int MSG_SEND_OBSERVATION = 26;
 	public static final int MSG_SEND_CURRENT_CONDITION = 27;
-
+	
 	// Current Conditions API
 	public static final int MSG_MAKE_CURRENT_CONDITIONS_API_CALL = 28;
 
+	// ... User-unique table
+	public static final int MSG_GET_API_UNIQUE_RECENTS = 29;
+	public static final int MSG_API_UNIQUE_RECENTS = 30;
+	
 	long lastAPICall = System.currentTimeMillis();
 	
 	private final Handler mHandler = new Handler();
@@ -555,6 +559,46 @@ public class CbService extends Service {
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
 							cacheResults));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+				break;
+			case MSG_GET_API_UNIQUE_RECENTS:
+				CbApiCall apiUniqueCacheCall = (CbApiCall) msg.obj;
+				log("get api recents " + apiUniqueCacheCall.toString());
+				// run API call
+				db.open();
+				
+				Cursor cacheUniqueCursor = db.runRecentReadingsCacheCall(
+						apiUniqueCacheCall.getMinLat(), apiUniqueCacheCall.getMaxLat(),
+						apiUniqueCacheCall.getMinLon(), apiUniqueCacheCall.getMaxLon(),
+						apiUniqueCacheCall.getStartTime(), apiUniqueCacheCall.getEndTime(),
+						apiUniqueCacheCall.getLimit());
+				ArrayList<CbObservation> cacheUniqueResults = new ArrayList<CbObservation>();
+				System.out.println("cache unique cursor count " + cacheUniqueCursor.getCount());
+				while (cacheUniqueCursor.moveToNext()) {
+					CbObservation obs = new CbObservation();
+					Location location = new Location("network");
+					location.setLatitude(cacheUniqueCursor.getDouble(1));
+					location.setLongitude(cacheUniqueCursor.getDouble(2));
+					location.setAltitude(cacheUniqueCursor.getDouble(3));
+					location.setAccuracy(cacheUniqueCursor.getInt(4));
+					location.setProvider(cacheUniqueCursor.getString(5));
+					obs.setLocation(location);
+					obs.setObservationType(cacheUniqueCursor.getString(6));
+					obs.setObservationUnit(cacheUniqueCursor.getString(7));
+					obs.setObservationValue(cacheUniqueCursor.getDouble(8));
+					obs.setSharing(cacheUniqueCursor.getString(9));
+					obs.setTime(cacheUniqueCursor.getLong(10));
+					obs.setTimeZoneOffset(cacheUniqueCursor.getInt(11));
+					obs.setUser_id(cacheUniqueCursor.getString(12));
+					//obs.setTrend(cacheUniqueCursor.getString(18));
+					cacheUniqueResults.add(obs);
+				}
+
+				try {
+					msg.replyTo.send(Message.obtain(null, MSG_API_UNIQUE_RECENTS,
+							cacheUniqueResults));
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
