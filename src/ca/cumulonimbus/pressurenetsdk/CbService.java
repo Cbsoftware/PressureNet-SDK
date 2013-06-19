@@ -367,7 +367,6 @@ public class CbService extends Service {
 			String preferenceShareLevel = sharedPreferences.getString(
 					"sharing_preference", "Us, Researchers and Forecasters");
 
-			System.out.println(stringTimeToLongHack(preferenceCollectionFrequency) + ", from " + preferenceCollectionFrequency);
 			settingsHandler.setDataCollectionFrequency(stringTimeToLongHack(preferenceCollectionFrequency));
 			
 			// Seems like new settings. Try adding to the db.
@@ -489,9 +488,8 @@ public class CbService extends Service {
 				newSettings.saveSettings();
 				break;
 			case MSG_GET_LOCAL_RECENTS:
-				log("get recents");
+				log("get local recents");
 				CbApiCall apiCall = (CbApiCall) msg.obj;
-				System.out.println(apiCall);
 				if(apiCall == null) {
 					System.out.println("apicall null, bailing");
 					break;
@@ -502,7 +500,6 @@ public class CbService extends Service {
 						apiCall.getMaxLat(), apiCall.getMinLon(),
 						apiCall.getMaxLon(), apiCall.getStartTime(),
 						apiCall.getEndTime(), 2000);
-				System.out.println("local api cursor count " + cursor.getCount());
 				ArrayList<CbObservation> results = new ArrayList<CbObservation>();
 				while (cursor.moveToNext()) {
 					// TODO: This is duplicated in CbDataCollector. Fix that
@@ -548,7 +545,6 @@ public class CbService extends Service {
 						apiCacheCall.getStartTime(), apiCacheCall.getEndTime(),
 						apiCacheCall.getLimit());
 				ArrayList<CbObservation> cacheResults = new ArrayList<CbObservation>();
-				System.out.println("cache cursor count " + cacheCursor.getCount());
 				while (cacheCursor.moveToNext()) {
 					CbObservation obs = new CbObservation();				
 					obs.setObservationValue(cacheCursor.getDouble(1));
@@ -575,7 +571,6 @@ public class CbService extends Service {
 						apiUniqueCacheCall.getStartTime(), apiUniqueCacheCall.getEndTime(),
 						apiUniqueCacheCall.getLimit());
 				ArrayList<CbObservation> cacheUniqueResults = new ArrayList<CbObservation>();
-				System.out.println("cache unique cursor count " + cacheUniqueCursor.getCount());
 				while (cacheUniqueCursor.moveToNext()) {
 					CbObservation obs = new CbObservation();
 					Location location = new Location("network");

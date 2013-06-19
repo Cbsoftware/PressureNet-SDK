@@ -729,11 +729,6 @@ public class CbDb {
 				+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 		String insertRecentReadingsSQL = insertCacheSQL.replace(API_CACHE_TABLE, API_RECENT_READINGS_TABLE);
-
-		System.out.println(insertCacheSQL);
-		System.out.println("--");
-		System.out.println(insertRecentReadingsSQL);
-		
 		try {
 			SQLiteStatement insert = mDB.compileStatement(insertCacheSQL);
 			SQLiteStatement insertRecentReadings = mDB.compileStatement(insertRecentReadingsSQL);
