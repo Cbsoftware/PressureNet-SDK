@@ -338,7 +338,7 @@ public class CbService extends Service {
 	 * @param timeAgo
 	 * @return
 	 */
-	private long stringTimeToLongHack(String timeAgo) {
+	public static long stringTimeToLongHack(String timeAgo) {
 		if (timeAgo.equals("1 minute")) {
 			return 1000 * 60;
 		} else if (timeAgo.equals("5 minutes")) {
