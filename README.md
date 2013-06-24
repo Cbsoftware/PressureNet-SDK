@@ -18,8 +18,6 @@ Usage
 Although the library is not stable yet, we currently envision usage to be very simple. We expect that all interaction will be done through the CbService class, where you can set parameter values and direct the behavior of the library. Here's a simple example that currently works in a test environment (but please note, this is very early-stage software and this is subject to change).
 
     Intent intent  = new Intent(getApplicationContext(), CbService.class);
-    intent.putExtra("serverURL", "http://example.com/Example");
-    intent.putExtra("appID", getApplication().getPackageName());
     startService(intent);
     
     
