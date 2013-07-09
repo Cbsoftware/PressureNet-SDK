@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import android.content.Context;
 import android.location.Location;
 import android.os.AsyncTask;
-import android.os.Message;
+import android.os.Handler;
 import android.os.Messenger;
 
 /**
@@ -40,7 +40,8 @@ public class CbApi {
 
 	private CbService caller;
 
-	
+	Handler handler = new Handler();
+	String resultText = "";
 	
 	/**
 	 * Make an API call and store the results
@@ -180,14 +181,29 @@ public class CbApi {
 		}
 
 		protected void onPostExecute(String result) {
-			callResults = processJSONResult(result, apiCall);
-			saveAPIResults(callResults, apiCall);
-			System.out.println("saved " + callResults.size()
-					+ " api call results");
-			caller.notifyAPIResult(replyToApp, callResults.size());
+			resultText = result;
+			
+			handler.postDelayed(jsonProcessor, 0);
+			
+
 		}
+		
+		final Runnable jsonProcessor = new Runnable()
+		{
+			public void run() 
+		    {
+		    	callResults = processJSONResult(resultText, apiCall);
+		    	saveAPIResults(callResults, apiCall);
+				System.out.println("saved " + callResults.size()
+						+ " api call results");
+				caller.notifyAPIResult(replyToApp, callResults.size());	       
+		    }
+		};
 	}
 
+	
+	
+	
 	/**
 	 * Take a JSON string and return the data in a useful structure
 	 * 
