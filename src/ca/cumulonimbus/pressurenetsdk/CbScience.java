@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import android.location.Location;
+
 /**
  * Science methods and classes. Provide simple data processing like trend
  * discovery. This will eventually expand to forecasting and other atmospheric
@@ -20,10 +22,18 @@ public class CbScience {
 	 * @return
 	 */
 	public static String findApproximateTendency(List<CbObservation> recents) {
+		// Reject the request if there's not enough data
 		if (recents == null) {
 			return "Unknown";
 		}
 		if (recents.size() < 3) {
+			return "Unknown";
+		}
+		
+		// Reject the request if the location coordinates vary too much
+		// TODO: future revisions should account for this change and perform
+		// the altitude correction in order to use the data rather than bailing
+		if (! locationsAreClose(recents)) {
 			return "Unknown";
 		}
 
@@ -38,6 +48,42 @@ public class CbScience {
 			return "Steady";
 		} else {
 			return "Unknown" + decision;
+		}
+	}
+	
+	private static boolean locationsAreClose(List<CbObservation> recents) {
+		double minLat = 90;
+		double maxLat = -90;
+		double minLon = 180;
+		double maxLon = -180;
+		for (CbObservation obs : recents ) {
+			Location location = obs.getLocation();
+			double latitude = location.getLatitude();
+			double longitude = location.getLongitude();
+			if(latitude > maxLat) {
+				maxLat = latitude;
+			} 
+			if(latitude < minLat) {
+				minLat = latitude;
+			}
+			if(longitude > maxLon) {
+				maxLon = longitude;
+			}
+			if(longitude < minLon) {
+				minLon = longitude;
+			}
+		}
+		
+		float[] results = null;
+		Location.distanceBetween(minLat, minLon, maxLat, maxLon, results);
+		float distanceMeters = results[0];
+		
+		System.out.println(distanceMeters + "; Locations' proximity for change notification: " + minLat + " to " + maxLat + ", " + minLon + " to " + minLon);
+
+		if(distanceMeters < 100) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 

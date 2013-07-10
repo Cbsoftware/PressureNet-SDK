@@ -25,7 +25,6 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
-import android.widget.TextView;
 
 /**
  * Represent developer-facing pressureNET API Background task; manage and run
@@ -95,6 +94,9 @@ public class CbService extends Service {
 	// ... User-unique table
 	public static final int MSG_GET_API_UNIQUE_RECENTS = 29;
 	public static final int MSG_API_UNIQUE_RECENTS = 30;
+	
+	// Notifications
+	public static final int MSG_CHANGE_NOTIFICATION = 31;
 	
 	long lastAPICall = System.currentTimeMillis();
 	
@@ -183,6 +185,26 @@ public class CbService extends Service {
 								
 							}
 						}
+						
+						// check for pressure local trend changes and notify the client
+						db.open();
+						Cursor localCursor = db.runLocalAPICall(-90, 90, -180, 180, System.currentTimeMillis() - (1000 * 60 * 60 * 2), System.currentTimeMillis(), 100);
+						db.close();
+						ArrayList<CbObservation> recents = new ArrayList<CbObservation>();
+						while(localCursor.moveToNext()) {
+							// just need observation value, time, and location
+							CbObservation obs = new CbObservation();
+							obs.setObservationValue(localCursor.getDouble(0));
+							obs.setTime(localCursor.getLong(0));
+							Location location = new Location("network");
+							location.setLatitude(localCursor.getDouble(0));
+							location.setLongitude(localCursor.getDouble(0));
+							obs.setLocation(location);
+							recents.add(obs);
+						}
+						String tendency = CbScience.findApproximateTendency(recents);
+						System.out.println("CbService CbScience submit-time tendency " + tendency + " from " + recents.size());
+						
 					} catch (Exception e) {
 						e.printStackTrace();
 
