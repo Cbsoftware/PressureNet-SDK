@@ -189,22 +189,21 @@ public class CbService extends Service {
 						// check for pressure local trend changes and notify the client
 						db.open();
 						Cursor localCursor = db.runLocalAPICall(-90, 90, -180, 180, System.currentTimeMillis() - (1000 * 60 * 60 * 2), System.currentTimeMillis(), 100);
-						db.close();
 						ArrayList<CbObservation> recents = new ArrayList<CbObservation>();
 						while(localCursor.moveToNext()) {
 							// just need observation value, time, and location
 							CbObservation obs = new CbObservation();
-							obs.setObservationValue(localCursor.getDouble(0));
-							obs.setTime(localCursor.getLong(0));
+							obs.setObservationValue(localCursor.getDouble(7));
+							obs.setTime(localCursor.getLong(9));
 							Location location = new Location("network");
-							location.setLatitude(localCursor.getDouble(0));
-							location.setLongitude(localCursor.getDouble(0));
+							location.setLatitude(localCursor.getDouble(1));
+							location.setLongitude(localCursor.getDouble(2));
 							obs.setLocation(location);
 							recents.add(obs);
 						}
 						String tendency = CbScience.findApproximateTendency(recents);
 						System.out.println("CbService CbScience submit-time tendency " + tendency + " from " + recents.size());
-						
+						db.close();						
 					} catch (Exception e) {
 						e.printStackTrace();
 

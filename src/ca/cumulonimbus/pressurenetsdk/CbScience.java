@@ -74,7 +74,7 @@ public class CbScience {
 			}
 		}
 		
-		float[] results = null;
+		float[] results = new float[2];
 		Location.distanceBetween(minLat, minLon, maxLat, maxLon, results);
 		float distanceMeters = results[0];
 		
