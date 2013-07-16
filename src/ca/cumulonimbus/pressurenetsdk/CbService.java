@@ -105,6 +105,13 @@ public class CbService extends Service {
 	
 	// Notifications
 	public static final int MSG_CHANGE_NOTIFICATION = 31;
+
+	// Data management
+	public static final int MSG_COUNT_LOCAL_OBS = 32;
+	public static final int MSG_COUNT_API_CACHE = 33;
+	public static final int MSG_COUNT_LOCAL_OBS_TOTALS = 34;
+	public static final int MSG_COUNT_API_CACHE_TOTALS = 35;
+	
 	
 	long lastAPICall = System.currentTimeMillis();
 	
@@ -790,7 +797,27 @@ public class CbService extends Service {
 			case MSG_SEND_OBSERVATION:
 				// TODO: Implement
 				break;
-
+				
+			case MSG_COUNT_LOCAL_OBS:
+				db.open();
+				long count = db.getUserDataCount();
+				db.close();
+				try {
+					msg.replyTo.send(Message.obtain(null, MSG_COUNT_LOCAL_OBS_TOTALS,(int)count,0));
+				} catch(RemoteException re) {
+					re.printStackTrace();
+				}
+				break;
+			case MSG_COUNT_API_CACHE:
+				db.open();
+				long countCache = db.getDataCacheCount();
+				db.close();
+				try {
+					msg.replyTo.send(Message.obtain(null, MSG_COUNT_API_CACHE_TOTALS,(int)countCache, 0));
+				} catch(RemoteException re) {
+					re.printStackTrace();
+				}
+				break;
 			default:
 				super.handleMessage(msg);
 			}

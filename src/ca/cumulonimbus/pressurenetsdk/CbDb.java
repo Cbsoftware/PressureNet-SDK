@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
+import android.widget.TableLayout;
 
 /**
  * Keep track of app settings, as this SDK may be used by more than one app on a
@@ -223,6 +225,29 @@ public class CbDb {
 			
 			onCreate(db);
 		}
+	}
+	
+	
+	/**
+	 * Return the total number of recorded and stored measurements
+	 * that came directly from this device
+	 * @return
+	 */
+	public long getUserDataCount() {
+		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
+                null,null);
+	}
+	
+	/**
+	 * This service caches data from the pressureNET API to improve app performance.
+	 * Return the number of cached measurements. 
+	 * @return
+	 */
+	public long getDataCacheCount() {
+		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
+                null,null) + DatabaseUtils.queryNumEntries(mDB, API_CACHE_TABLE,
+                        null,null) + DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
+                                null,null);
 	}
 
 	/**
