@@ -24,17 +24,17 @@ public class CbScience {
 	public static String findApproximateTendency(List<CbObservation> recents) {
 		// Reject the request if there's not enough data
 		if (recents == null) {
-			return "Unknown";
+			return "Unknown null";
 		}
 		if (recents.size() < 3) {
-			return "Unknown";
+			return "Unknown too small";
 		}
 		
 		// Reject the request if the location coordinates vary too much
 		// TODO: future revisions should account for this change and perform
 		// the altitude correction in order to use the data rather than bailing
 		if (! locationsAreClose(recents)) {
-			return "Unknown";
+			return "Unknown distance";
 		}
 
 		int decision = guessedButGoodDecision(recents);
@@ -47,7 +47,7 @@ public class CbScience {
 		} else if (decision == 0) {
 			return "Steady";
 		} else {
-			return "Unknown" + decision;
+			return "Unknown decision " + decision;
 		}
 	}
 	
@@ -80,7 +80,7 @@ public class CbScience {
 		
 		System.out.println(distanceMeters + "; Locations' proximity for change notification: " + minLat + " to " + maxLat + ", " + minLon + " to " + minLon);
 
-		if(distanceMeters < 100) {
+		if(distanceMeters < 2000) {
 			return true;
 		} else {
 			return false;
