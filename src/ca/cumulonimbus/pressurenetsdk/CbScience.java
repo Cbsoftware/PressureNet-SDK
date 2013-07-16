@@ -1,5 +1,6 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -16,6 +17,28 @@ import android.location.Location;
  */
 public class CbScience {
 
+	
+	/**
+	 * Look for a recent change in trend
+	 */
+	public static String changeInTrend(List<CbObservation> recents) {
+		// Reject the request if there's not enough data
+		if(recents == null) {
+			return "";
+		} else if (recents.size() < 3 ) {
+			return "";
+		}
+		
+		// split up the lists.
+		Collections.sort(recents, new TimeComparator());
+		List<CbObservation> firstHalf = recents.subList(0, recents.size() / 2);
+		List<CbObservation> secondHalf = recents.subList(recents.size() / 2, recents.size() - 1);
+		String firstTendency = CbScience.findApproximateTendency(firstHalf);
+		String secondTendency = CbScience.findApproximateTendency(secondHalf);
+		
+		return firstTendency + " to " + secondTendency;
+	}
+	
 	/**
 	 * Take a list of recent observations and return their trend
 	 * @param recents

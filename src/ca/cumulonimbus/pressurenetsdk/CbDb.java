@@ -38,6 +38,7 @@ public class CbDb {
 	public static final String KEY_COLLECTING_DATA = "collecting_data";
 	public static final String KEY_SHARING_DATA = "sharing_data";
 	public static final String KEY_SHARE_LEVEL = "share_level";
+	public static final String KEY_SEND_NOTIFICATIONS = "send_notifications";
 
 	// Observation Fields
 	public static final String KEY_LATITUDE = "latitude";
@@ -89,7 +90,8 @@ public class CbDb {
 			+ KEY_ONLY_WHEN_CHARGING + " text, "
 			+ KEY_COLLECTING_DATA + " text, "
 			+ KEY_SHARING_DATA + " text," 
-			+ KEY_SHARE_LEVEL + " text)";
+			+ KEY_SHARE_LEVEL + " text," 
+			+ KEY_SEND_NOTIFICATIONS + " text)";
 
 	private static final String OBSERVATIONS_TABLE_CREATE = "create table "
 			+ OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, "
@@ -191,7 +193,7 @@ public class CbDb {
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 31;
+	private static final int DATABASE_VERSION = 32;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -397,7 +399,7 @@ public class CbDb {
 		mDB.query(true, SETTINGS_TABLE, new String[] { KEY_ROW_ID, KEY_APP_ID,
 				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL,
 				KEY_ONLY_WHEN_CHARGING, KEY_COLLECTING_DATA, KEY_SHARING_DATA,
-				KEY_SHARE_LEVEL }, KEY_ROW_ID
+				KEY_SHARE_LEVEL, KEY_SEND_NOTIFICATIONS }, KEY_ROW_ID
 				+ "=" + rowId, null, null, null, null, null);
 		if (mCursor != null) {
 			mCursor.moveToFirst();
@@ -440,7 +442,8 @@ public class CbDb {
 				KEY_ONLY_WHEN_CHARGING,
 				KEY_COLLECTING_DATA,
 				KEY_SHARING_DATA,
-				KEY_SHARE_LEVEL }, null, null,
+				KEY_SHARE_LEVEL,
+				KEY_SEND_NOTIFICATIONS}, null, null,
 				null, null, null);
 	}
 
@@ -500,7 +503,7 @@ public class CbDb {
 		Cursor mCursor =
 
 		mDB.query(true, SETTINGS_TABLE, new String[] { KEY_ROW_ID, KEY_APP_ID,
-				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL }, KEY_APP_ID
+				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL, KEY_SEND_NOTIFICATIONS}, KEY_APP_ID
 				+ "='" + appID + "'", null, null, null, null, null);
 		if (mCursor != null) {
 			mCursor.moveToFirst();
@@ -517,7 +520,7 @@ public class CbDb {
 	 */
 	public long updateSetting(String appID, long dataCollectionFrequency,
 			String serverURL, boolean onlyWhenCharging, boolean collectingData,
-			boolean sharingData, String shareLevel) {
+			boolean sharingData, String shareLevel, boolean sendNotifications) {
 
 		ContentValues newValues = new ContentValues();
 		newValues.put(KEY_APP_ID, appID);
@@ -527,6 +530,7 @@ public class CbDb {
 		newValues.put(KEY_COLLECTING_DATA, collectingData);
 		newValues.put(KEY_SHARING_DATA, sharingData);
 		newValues.put(KEY_SHARE_LEVEL, shareLevel);
+		newValues.put(KEY_SEND_NOTIFICATIONS, sendNotifications);
 		return mDB.update(SETTINGS_TABLE, newValues, KEY_APP_ID + "='" + appID
 				+ "'", null);
 	}
@@ -882,7 +886,7 @@ public class CbDb {
 
 	public long addSetting(String appID, long dataCollectionFrequency,
 			String serverURL, boolean onlyWhenCharging, boolean collectingData,
-			boolean sharingData, String shareLevel) {
+			boolean sharingData, String shareLevel, boolean sendNotifications) {
 
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_APP_ID, appID);
@@ -893,6 +897,7 @@ public class CbDb {
 		initialValues.put(KEY_COLLECTING_DATA, collectingData);
 		initialValues.put(KEY_SHARING_DATA, sharingData);
 		initialValues.put(KEY_SHARE_LEVEL, shareLevel);
+		initialValues.put(KEY_SEND_NOTIFICATIONS, sendNotifications);
 
 		return mDB.insert(SETTINGS_TABLE, null, initialValues);
 	}

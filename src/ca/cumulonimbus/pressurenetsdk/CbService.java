@@ -9,7 +9,11 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -46,8 +50,12 @@ public class CbService extends Service {
 	IBinder mBinder;
 
 	ReadingSender sender;
+	
+	Message recentMsg;
 
 	String serverURL = "https://pressurenet.cumulonimbus.ca/";
+	
+	private static final int NOTIFICATION_ID = 12345;
 	
 	// Service Interaction API Messages
 	public static final int MSG_OKAY = 0;
@@ -104,6 +112,8 @@ public class CbService extends Service {
 	Messenger mMessenger = new Messenger(new IncomingHandler());
 
 	ArrayList<CbObservation> offlineBuffer = new ArrayList<CbObservation>();
+	
+	private long lastPressureChangeAlert = 0;
 	
 	/**
 	 * Find all the data for an observation.
@@ -186,24 +196,67 @@ public class CbService extends Service {
 							}
 						}
 						
-						// check for pressure local trend changes and notify the client
-						db.open();
-						Cursor localCursor = db.runLocalAPICall(-90, 90, -180, 180, System.currentTimeMillis() - (1000 * 60 * 60 * 2), System.currentTimeMillis(), 100);
-						ArrayList<CbObservation> recents = new ArrayList<CbObservation>();
-						while(localCursor.moveToNext()) {
-							// just need observation value, time, and location
-							CbObservation obs = new CbObservation();
-							obs.setObservationValue(localCursor.getDouble(7));
-							obs.setTime(localCursor.getLong(9));
-							Location location = new Location("network");
-							location.setLatitude(localCursor.getDouble(1));
-							location.setLongitude(localCursor.getDouble(2));
-							obs.setLocation(location);
-							recents.add(obs);
+						// If notifications are enabled,
+						if(settingsHandler.isSendNotifications()) {
+							// check for pressure local trend changes and notify the client
+							
+							// ensure this only happens every once in a while
+							long rightNow = System.currentTimeMillis();
+							long threeHours = 1000 * 60 * 60 * 3;
+							if(rightNow - lastPressureChangeAlert > (threeHours)) {
+								long timeLength = 1000 * 60 * 60 * 6;
+								db.open();
+								Cursor localCursor = db.runLocalAPICall(-90, 90, -180, 180, System.currentTimeMillis() - (timeLength), System.currentTimeMillis(), 100);
+								ArrayList<CbObservation> recents = new ArrayList<CbObservation>();
+								while(localCursor.moveToNext()) {
+									// just need observation value, time, and location
+									CbObservation obs = new CbObservation();
+									obs.setObservationValue(localCursor.getDouble(7));
+									obs.setTime(localCursor.getLong(9));
+									Location location = new Location("network");
+									location.setLatitude(localCursor.getDouble(1));
+									location.setLongitude(localCursor.getDouble(2));
+									obs.setLocation(location);
+									recents.add(obs);
+								}
+								String tendencyChange = CbScience.changeInTrend(recents);
+								db.close();
+								System.out.println("Trend change? "  + tendencyChange);
+								
+								//String tendency = CbScience.findApproximateTendency(recents);
+								//System.out.println("CbService CbScience submit-time tendency " + tendency + " from " + recents.size());
+								Notification.Builder mBuilder =
+								        new Notification.Builder(service) 
+								        .setSmallIcon(android.R.drawable.ic_dialog_info)
+								        .setContentTitle("pressureNET")
+								        .setContentText("Trend change: " + tendencyChange);
+								// Creates an explicit intent for an Activity in your app
+								Intent resultIntent = new Intent();
+	
+								// The stack builder object will contain an artificial back stack for the
+								// started Activity.
+								// This ensures that navigating backward from the Activity leads out of
+								// your application to the Home screen.
+								TaskStackBuilder stackBuilder = TaskStackBuilder.create(service);
+								// Adds the back stack for the Intent (but not the Intent itself)
+								//stackBuilder.addParentStack(CbService.class);
+								// Adds the Intent that starts the Activity to the top of the stack
+								stackBuilder.addNextIntent(resultIntent);
+								PendingIntent resultPendingIntent =
+								        stackBuilder.getPendingIntent(
+								            0,
+								            PendingIntent.FLAG_UPDATE_CURRENT
+								        );
+								mBuilder.setContentIntent(resultPendingIntent);
+								NotificationManager mNotificationManager =
+								    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+								// mId allows you to update the notification later on.
+								mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+								lastPressureChangeAlert = rightNow;
+							} else {
+								// wait
+							}
 						}
-						String tendency = CbScience.findApproximateTendency(recents);
-						System.out.println("CbService CbScience submit-time tendency " + tendency + " from " + recents.size());
-						db.close();						
 					} catch (Exception e) {
 						e.printStackTrace();
 
@@ -387,8 +440,10 @@ public class CbService extends Service {
 			boolean preferenceShareData = sharedPreferences.getBoolean("autoupdate", true);
 			String preferenceShareLevel = sharedPreferences.getString(
 					"sharing_preference", "Us, Researchers and Forecasters");
-
+			boolean preferenceSendNotifications = sharedPreferences.getBoolean("send_notifications", false);
 			settingsHandler.setDataCollectionFrequency(stringTimeToLongHack(preferenceCollectionFrequency));
+			
+			settingsHandler.setSendNotifications(preferenceSendNotifications);
 			
 			// Seems like new settings. Try adding to the db.
 			settingsHandler.saveSettings();
@@ -510,6 +565,7 @@ public class CbService extends Service {
 				break;
 			case MSG_GET_LOCAL_RECENTS:
 				log("get local recents");
+				recentMsg = msg;
 				CbApiCall apiCall = (CbApiCall) msg.obj;
 				if(apiCall == null) {
 					System.out.println("apicall null, bailing");
@@ -671,6 +727,7 @@ public class CbService extends Service {
 				db.close();
 				break;
 			case MSG_GET_CURRENT_CONDITIONS:
+				recentMsg = msg;
 				db.open();
 				CbApiCall currentConditionAPI = (CbApiCall) msg.obj;
 

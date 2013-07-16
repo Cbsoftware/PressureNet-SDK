@@ -18,6 +18,7 @@ public class CbSettingsHandler {
 	private long dataCollectionFrequency = 1000 * 60 * 1; // in ms. launch default: 5-10 minutes
 	private String serverURL = ""; // may expand to array for multiple servers
 	private boolean onlyWhenCharging = false; // only run when charging
+	private boolean sendNotifications = false;
 	
 	// Science Settings
 	private boolean collectingData = true;
@@ -40,9 +41,9 @@ public class CbSettingsHandler {
 			db.open();
 			Cursor existing = db.fetchSettingByApp(appID);
 			if (existing.getCount() < 1) {
-				db.addSetting(appID, dataCollectionFrequency, serverURL, onlyWhenCharging, collectingData, sharingData, shareLevel);
+				db.addSetting(appID, dataCollectionFrequency, serverURL, onlyWhenCharging, collectingData, sharingData, shareLevel, sendNotifications);
 			} else {
-				db.updateSetting(appID, dataCollectionFrequency, serverURL, onlyWhenCharging, collectingData, sharingData, shareLevel);
+				db.updateSetting(appID, dataCollectionFrequency, serverURL, onlyWhenCharging, collectingData, sharingData, shareLevel, sendNotifications);
 			}
 			db.close();
 		} catch(Exception e) {
@@ -69,6 +70,16 @@ public class CbSettingsHandler {
 	}
 
 	
+	
+	
+	public boolean isSendNotifications() {
+		return sendNotifications;
+	}
+
+	public void setSendNotifications(boolean sendNotifications) {
+		this.sendNotifications = sendNotifications;
+	}
+
 	public String getAppID() {
 		return appID;
 	}
