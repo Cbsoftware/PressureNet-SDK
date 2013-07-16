@@ -221,38 +221,47 @@ public class CbService extends Service {
 								}
 								String tendencyChange = CbScience.changeInTrend(recents);
 								db.close();
-								System.out.println("Trend change? "  + tendencyChange);
 								
-								//String tendency = CbScience.findApproximateTendency(recents);
-								//System.out.println("CbService CbScience submit-time tendency " + tendency + " from " + recents.size());
-								Notification.Builder mBuilder =
-								        new Notification.Builder(service) 
-								        .setSmallIcon(android.R.drawable.ic_dialog_info)
-								        .setContentTitle("pressureNET")
-								        .setContentText("Trend change: " + tendencyChange);
-								// Creates an explicit intent for an Activity in your app
-								Intent resultIntent = new Intent();
-	
-								// The stack builder object will contain an artificial back stack for the
-								// started Activity.
-								// This ensures that navigating backward from the Activity leads out of
-								// your application to the Home screen.
-								TaskStackBuilder stackBuilder = TaskStackBuilder.create(service);
-								// Adds the back stack for the Intent (but not the Intent itself)
-								//stackBuilder.addParentStack(CbService.class);
-								// Adds the Intent that starts the Activity to the top of the stack
-								stackBuilder.addNextIntent(resultIntent);
-								PendingIntent resultPendingIntent =
-								        stackBuilder.getPendingIntent(
-								            0,
-								            PendingIntent.FLAG_UPDATE_CURRENT
-								        );
-								mBuilder.setContentIntent(resultPendingIntent);
-								NotificationManager mNotificationManager =
-								    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-								// mId allows you to update the notification later on.
-								mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-								lastPressureChangeAlert = rightNow;
+								if(tendencyChange.contains(",")) {
+									String[] tendencies = tendencyChange.split(",");
+									if(!tendencies[0].equals(tendencies[1])) {
+										System.out.println("Trend change! "  + tendencyChange);
+										
+										//String tendency = CbScience.findApproximateTendency(recents);
+										//System.out.println("CbService CbScience submit-time tendency " + tendency + " from " + recents.size());
+										Notification.Builder mBuilder =
+										        new Notification.Builder(service) 
+										        .setSmallIcon(android.R.drawable.ic_dialog_info)
+										        .setContentTitle("pressureNET")
+										        .setContentText("Trend change: " + tendencyChange);
+										// Creates an explicit intent for an Activity in your app
+										Intent resultIntent = new Intent();
+			
+										// The stack builder object will contain an artificial back stack for the
+										// started Activity.
+										// This ensures that navigating backward from the Activity leads out of
+										// your application to the Home screen.
+										TaskStackBuilder stackBuilder = TaskStackBuilder.create(service);
+										// Adds the back stack for the Intent (but not the Intent itself)
+										//stackBuilder.addParentStack(CbService.class);
+										// Adds the Intent that starts the Activity to the top of the stack
+										stackBuilder.addNextIntent(resultIntent);
+										PendingIntent resultPendingIntent =
+										        stackBuilder.getPendingIntent(
+										            0,
+										            PendingIntent.FLAG_UPDATE_CURRENT
+										        );
+										mBuilder.setContentIntent(resultPendingIntent);
+										NotificationManager mNotificationManager =
+										    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+										// mId allows you to update the notification later on.
+										mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+										lastPressureChangeAlert = rightNow;
+									} else {
+										System.out.println("trends equal " + tendencyChange);
+									}
+								} 
+
 							} else {
 								// wait
 							}

@@ -36,7 +36,7 @@ public class CbScience {
 		String firstTendency = CbScience.findApproximateTendency(firstHalf);
 		String secondTendency = CbScience.findApproximateTendency(secondHalf);
 		
-		return firstTendency + " to " + secondTendency;
+		return firstTendency + "," + secondTendency;
 	}
 	
 	/**
