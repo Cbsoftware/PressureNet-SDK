@@ -244,8 +244,7 @@ public class CbDb {
 	 * @return
 	 */
 	public long getDataCacheCount() {
-		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
-                null,null) + DatabaseUtils.queryNumEntries(mDB, API_CACHE_TABLE,
+		return DatabaseUtils.queryNumEntries(mDB, API_CACHE_TABLE,
                         null,null) + DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
                                 null,null);
 	}
@@ -452,6 +451,7 @@ public class CbDb {
 		mDB.execSQL("delete from " + API_CACHE_TABLE);
 		mDB.execSQL("delete from " + API_LIST_TABLE);
 		mDB.execSQL("delete from " + API_RECENT_READINGS_TABLE);
+		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE);
 	}
 
 	/**

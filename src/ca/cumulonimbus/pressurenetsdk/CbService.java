@@ -726,7 +726,13 @@ public class CbService extends Service {
 			case MSG_CLEAR_LOCAL_CACHE:
 				db.open();
 				db.clearLocalCache();
+				long count = db.getUserDataCount();
 				db.close();
+				try {
+					msg.replyTo.send(Message.obtain(null, MSG_COUNT_LOCAL_OBS_TOTALS,(int)count,0));
+				} catch(RemoteException re) {
+					re.printStackTrace();
+				}
 				break;
 			case MSG_REMOVE_FROM_PRESSURENET:
 				// TODO: Implement
@@ -734,7 +740,14 @@ public class CbService extends Service {
 			case MSG_CLEAR_API_CACHE:
 				db.open();
 				db.clearAPICache();
+				db.open();
+				long countCache = db.getDataCacheCount();
 				db.close();
+				try {
+					msg.replyTo.send(Message.obtain(null, MSG_COUNT_API_CACHE_TOTALS,(int)countCache, 0));
+				} catch(RemoteException re) {
+					re.printStackTrace();
+				}
 				break;
 			case MSG_ADD_CURRENT_CONDITION:
 				CbCurrentCondition cc = (CbCurrentCondition) msg.obj;
@@ -800,20 +813,20 @@ public class CbService extends Service {
 				
 			case MSG_COUNT_LOCAL_OBS:
 				db.open();
-				long count = db.getUserDataCount();
+				long countLocalObsOnly = db.getUserDataCount();
 				db.close();
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_COUNT_LOCAL_OBS_TOTALS,(int)count,0));
+					msg.replyTo.send(Message.obtain(null, MSG_COUNT_LOCAL_OBS_TOTALS,(int)countLocalObsOnly,0));
 				} catch(RemoteException re) {
 					re.printStackTrace();
 				}
 				break;
 			case MSG_COUNT_API_CACHE:
 				db.open();
-				long countCache = db.getDataCacheCount();
+				long countCacheOnly = db.getDataCacheCount();
 				db.close();
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_COUNT_API_CACHE_TOTALS,(int)countCache, 0));
+					msg.replyTo.send(Message.obtain(null, MSG_COUNT_API_CACHE_TOTALS,(int)countCacheOnly, 0));
 				} catch(RemoteException re) {
 					re.printStackTrace();
 				}
