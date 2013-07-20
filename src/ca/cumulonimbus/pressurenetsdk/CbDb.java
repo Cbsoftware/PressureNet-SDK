@@ -250,6 +250,15 @@ public class CbDb {
 	}
 
 	/**
+	 * Keep the database cache clean
+	 */
+	public void deleteOldCacheData() {
+		long hoursAgo = 5;
+		long timeAgo = System.currentTimeMillis() - (1000 * 60 * 60 * hoursAgo);
+		mDB.execSQL("delete from " + API_CACHE_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
+	}
+	
+	/**
 	 * Get local current conditions
 	 * 
 	 * @return

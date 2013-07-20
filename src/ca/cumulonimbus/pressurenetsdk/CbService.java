@@ -711,6 +711,8 @@ public class CbService extends Service {
 				liveApiCall.setCallType("Readings");
 				long timeDiff = System.currentTimeMillis() - lastAPICall;
 				
+				deleteOldData();
+				
 				lastAPICall = api.makeAPICall(liveApiCall, service, msg.replyTo, "Readings");
 				
 				break;
@@ -837,6 +839,17 @@ public class CbService extends Service {
 		}
 	}
 
+	/**
+	 * Remove older data from cache to keep the size reasonable
+	 * @return
+	 */
+	public void deleteOldData() {
+		System.out.println("deleting old data");
+		db.open();
+		db.deleteOldCacheData();
+		db.close();
+	}
+	
 	public boolean notifyAPIResult(Messenger reply, int count) {
 		try {
 			if (reply == null) {
