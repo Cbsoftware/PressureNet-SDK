@@ -256,6 +256,8 @@ public class CbDb {
 		long hoursAgo = 5;
 		long timeAgo = System.currentTimeMillis() - (1000 * 60 * 60 * hoursAgo);
 		mDB.execSQL("delete from " + API_CACHE_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
+		mDB.execSQL("delete from " + API_LIST_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
+		mDB.execSQL("delete from " + API_RECENT_READINGS_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
 	}
 	
 	/**
