@@ -229,7 +229,7 @@ public class CbService extends Service {
 								String tendencyChange = CbScience.changeInTrend(recents);
 								db.close();
 								
-								if(tendencyChange.contains(",")) {
+								if(tendencyChange.contains(",") && (!tendencyChange.toLowerCase().contains("unknown"))) {
 									String[] tendencies = tendencyChange.split(",");
 									if(!tendencies[0].equals(tendencies[1])) {
 										System.out.println("Trend change! "  + tendencyChange);
