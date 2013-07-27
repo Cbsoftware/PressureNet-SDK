@@ -69,11 +69,9 @@ public class CbService extends Service {
 	public static final int MSG_SET_SETTINGS = 8;
 	public static final int MSG_GET_SETTINGS = 9;
 	public static final int MSG_SETTINGS = 10;
-
 	public static final int MSG_START_DATA_STREAM = 11;
 	public static final int MSG_DATA_STREAM = 12;
 	public static final int MSG_STOP_DATA_STREAM = 13;
-
 	// pressureNET Live API
 	public static final int MSG_GET_LOCAL_RECENTS = 14;
 	public static final int MSG_LOCAL_RECENTS = 15;
@@ -81,31 +79,24 @@ public class CbService extends Service {
 	public static final int MSG_API_RECENTS = 17;
 	public static final int MSG_MAKE_API_CALL = 18;
 	public static final int MSG_API_RESULT_COUNT = 19;
-	
 	// pressureNET API Cache
 	public static final int MSG_CLEAR_LOCAL_CACHE = 20;
 	public static final int MSG_REMOVE_FROM_PRESSURENET = 21;
 	public static final int MSG_CLEAR_API_CACHE = 22;
-	
 	// Current Conditions
 	public static final int MSG_ADD_CURRENT_CONDITION = 23;	
 	public static final int MSG_GET_CURRENT_CONDITIONS = 24;
 	public static final int MSG_CURRENT_CONDITIONS = 25;
-
 	// Sending Data
 	public static final int MSG_SEND_OBSERVATION = 26;
 	public static final int MSG_SEND_CURRENT_CONDITION = 27;
-	
 	// Current Conditions API
 	public static final int MSG_MAKE_CURRENT_CONDITIONS_API_CALL = 28;
-
 	// ... User-unique table
 	public static final int MSG_GET_API_UNIQUE_RECENTS = 29;
 	public static final int MSG_API_UNIQUE_RECENTS = 30;
-	
 	// Notifications
 	public static final int MSG_CHANGE_NOTIFICATION = 31;
-
 	// Data management
 	public static final int MSG_COUNT_LOCAL_OBS = 32;
 	public static final int MSG_COUNT_API_CACHE = 33;
@@ -802,9 +793,10 @@ public class CbService extends Service {
 				sendCbCurrentCondition(condition);
 				break;
 			case MSG_SEND_OBSERVATION:
-				// TODO: Implement
+				CbObservation observation = new CbObservation();
+				observation.setSharing(settingsHandler.getShareLevel());
+				sendCbObservation(observation);
 				break;
-				
 			case MSG_COUNT_LOCAL_OBS:
 				db.open();
 				long countLocalObsOnly = db.getUserDataCount();
