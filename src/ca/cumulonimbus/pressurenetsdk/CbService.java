@@ -643,17 +643,9 @@ public class CbService extends Service {
 					Location location = new Location("network");
 					location.setLatitude(cacheCursor.getDouble(1));
 					location.setLongitude(cacheCursor.getDouble(2));
-					location.setAltitude(cacheCursor.getDouble(3));
-					location.setAccuracy(cacheCursor.getInt(4));
-					location.setProvider(cacheCursor.getString(5));
 					obs.setLocation(location);
-					obs.setObservationType(cacheCursor.getString(6));
-					obs.setObservationUnit(cacheCursor.getString(7));
-					obs.setObservationValue(cacheCursor.getDouble(8));
-					obs.setSharing(cacheCursor.getString(9));
-					obs.setTime(cacheCursor.getLong(10));
-					obs.setTimeZoneOffset(cacheCursor.getInt(11));
-					obs.setUser_id(cacheCursor.getString(12));
+					obs.setObservationValue(cacheCursor.getDouble(3));
+					obs.setTime(cacheCursor.getLong(4));
 					cacheResults.add(obs);
 				}
 				db.close();

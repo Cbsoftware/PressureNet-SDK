@@ -31,7 +31,6 @@ public class CbApi {
 
 	Context context;
 	String apiServerURL = "https://pressurenet.cumulonimbus.ca/list/?";
-	String liveApiServerURL = "https://pressurenet.cumulonimbus.ca/live/?";
 	String apiConditionsServerURL = "https://pressurenet.cumulonimbus.ca/conditions/list/?";
 	private CbDb db;
 	private ArrayList<CbWeather> callResults = new ArrayList<CbWeather>();
@@ -141,13 +140,7 @@ public class CbApi {
 				String serverURL = apiServerURL;
 				
 				if (params[0].equals("Readings")) {
-					if(apiCall.getApiName().equals("live")) {
-						serverURL = liveApiServerURL;
-					} else if (apiCall.getApiName().equals("list")) {
-						serverURL = apiServerURL;
-					} else {
-						serverURL = apiServerURL;
-					}
+					serverURL = apiServerURL;
 				} else {
 					serverURL = apiConditionsServerURL;
 				}
@@ -219,26 +212,14 @@ public class CbApi {
 				try {
 					if(apiCall.getCallType().equals("Readings")) {
 						CbObservation singleObs = new CbObservation();
-						if(apiCall.getCallURL().contains("/live/")) {
-							Location location = new Location("network");
-							location.setLatitude(jsonObject.getDouble("latitude"));
-							location.setLongitude(jsonObject.getDouble("longitude"));
-							location.setAccuracy((float) jsonObject
-							.getDouble("location_accuracy"));
-							singleObs.setLocation(location);
-							singleObs.setTime(jsonObject.getLong("daterecorded"));
-							singleObs.setTimeZoneOffset(jsonObject.getLong("tzoffset"));
-							singleObs.setSharing(jsonObject.getString("sharing"));
-							singleObs.setUser_id(jsonObject.getString("user_id"));
-							singleObs.setObservationValue(jsonObject
-									.getDouble("reading"));
-						} else if (apiCall.getCallURL().contains("/list/")) {
-
-							singleObs.setTime(jsonObject.getLong("daterecorded"));
-							singleObs.setObservationValue(jsonObject
-									.getDouble("reading"));
-						}
-					
+						
+						singleObs.setTime(jsonObject.getLong("daterecorded"));
+						singleObs.setObservationValue(jsonObject
+								.getDouble("reading"));
+						Location location = new Location("network");
+						location.setLatitude(jsonObject.getDouble("latitude"));
+						location.setLongitude(jsonObject.getDouble("longitude"));
+						singleObs.setLocation(location);
 						obsFromJSON.add(singleObs);
 					
 					} else {
