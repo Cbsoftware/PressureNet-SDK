@@ -235,10 +235,11 @@ public class CbDb {
 	 * Keep the database cache clean
 	 */
 	public void deleteOldCacheData() {
-		long hoursAgo = 5;
+		long hoursAgo = 3;
 		long timeAgo = System.currentTimeMillis() - (1000 * 60 * 60 * hoursAgo);
 		mDB.execSQL("delete from " + API_LIST_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
 		mDB.execSQL("delete from " + API_RECENT_READINGS_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
+		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
 	}
 	
 	/**
