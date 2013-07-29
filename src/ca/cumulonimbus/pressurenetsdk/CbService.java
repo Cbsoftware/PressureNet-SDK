@@ -8,7 +8,11 @@ import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
+import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -50,13 +54,15 @@ public class CbService extends Service {
 	IBinder mBinder;
 
 	ReadingSender sender;
-	
+
 	Message recentMsg;
 
 	String serverURL = "https://pressurenet.cumulonimbus.ca/";
+
+	private int runningCount = 0;
 	
 	private static final int NOTIFICATION_ID = 12345;
-	
+
 	// Service Interaction API Messages
 	public static final int MSG_OKAY = 0;
 	public static final int MSG_STOP = 1;
@@ -84,7 +90,7 @@ public class CbService extends Service {
 	public static final int MSG_REMOVE_FROM_PRESSURENET = 21;
 	public static final int MSG_CLEAR_API_CACHE = 22;
 	// Current Conditions
-	public static final int MSG_ADD_CURRENT_CONDITION = 23;	
+	public static final int MSG_ADD_CURRENT_CONDITION = 23;
 	public static final int MSG_GET_CURRENT_CONDITIONS = 24;
 	public static final int MSG_CURRENT_CONDITIONS = 25;
 	// Sending Data
@@ -102,17 +108,16 @@ public class CbService extends Service {
 	public static final int MSG_COUNT_API_CACHE = 33;
 	public static final int MSG_COUNT_LOCAL_OBS_TOTALS = 34;
 	public static final int MSG_COUNT_API_CACHE_TOTALS = 35;
-	
-	
+
 	long lastAPICall = System.currentTimeMillis();
-	
+
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
 
 	ArrayList<CbObservation> offlineBuffer = new ArrayList<CbObservation>();
-	
+
 	private long lastPressureChangeAlert = 0;
-	
+
 	/**
 	 * Find all the data for an observation.
 	 * 
@@ -161,7 +166,7 @@ public class CbService extends Service {
 			if (settingsHandler.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
-				
+
 				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
 					db.open();
@@ -174,91 +179,124 @@ public class CbService extends Service {
 							// Send if we're online
 							if (isNetworkAvailable()) {
 								log("online and sending");
-								singleObservation.setClientKey(getApplicationContext().getPackageName());
+								singleObservation
+										.setClientKey(getApplicationContext()
+												.getPackageName());
 								sendCbObservation(singleObservation);
-								
+
 								// also check and send the offline buffer
-								if(offlineBuffer.size() > 0) {
-									System.out.println("sending " + offlineBuffer.size() + " offline buffered obs");
-									for(CbObservation singleOffline : offlineBuffer) {
+								if (offlineBuffer.size() > 0) {
+									System.out.println("sending "
+											+ offlineBuffer.size()
+											+ " offline buffered obs");
+									for (CbObservation singleOffline : offlineBuffer) {
 										sendCbObservation(singleObservation);
 									}
 									offlineBuffer.clear();
 								}
 							} else {
 								log("didn't send");
-								/// offline buffer variable
+								// / offline buffer variable
 								// TODO: put this in the DB to survive longer
 								offlineBuffer.add(singleObservation);
-								
+
 							}
 						}
-						
+
 						// If notifications are enabled,
-						if(settingsHandler.isSendNotifications()) {
-							// check for pressure local trend changes and notify the client
-							
+						if (settingsHandler.isSendNotifications()) {
+							// check for pressure local trend changes and notify
+							// the client
+
 							// ensure this only happens every once in a while
 							long rightNow = System.currentTimeMillis();
 							long threeHours = 1000 * 60 * 60 * 3;
-							if(rightNow - lastPressureChangeAlert > (threeHours)) {
+							if (rightNow - lastPressureChangeAlert > (threeHours)) {
 								long timeLength = 1000 * 60 * 60 * 6;
 								db.open();
-								Cursor localCursor = db.runLocalAPICall(-90, 90, -180, 180, System.currentTimeMillis() - (timeLength), System.currentTimeMillis(), 100);
+								Cursor localCursor = db.runLocalAPICall(-90,
+										90, -180, 180,
+										System.currentTimeMillis()
+												- (timeLength),
+										System.currentTimeMillis(), 100);
 								ArrayList<CbObservation> recents = new ArrayList<CbObservation>();
-								while(localCursor.moveToNext()) {
-									// just need observation value, time, and location
+								while (localCursor.moveToNext()) {
+									// just need observation value, time, and
+									// location
 									CbObservation obs = new CbObservation();
-									obs.setObservationValue(localCursor.getDouble(7));
+									obs.setObservationValue(localCursor
+											.getDouble(7));
 									obs.setTime(localCursor.getLong(9));
 									Location location = new Location("network");
-									location.setLatitude(localCursor.getDouble(1));
-									location.setLongitude(localCursor.getDouble(2));
+									location.setLatitude(localCursor
+											.getDouble(1));
+									location.setLongitude(localCursor
+											.getDouble(2));
 									obs.setLocation(location);
 									recents.add(obs);
 								}
-								String tendencyChange = CbScience.changeInTrend(recents);
+								String tendencyChange = CbScience
+										.changeInTrend(recents);
 								db.close();
-								
-								if(tendencyChange.contains(",") && (!tendencyChange.toLowerCase().contains("unknown"))) {
-									String[] tendencies = tendencyChange.split(",");
-									if(!tendencies[0].equals(tendencies[1])) {
-										System.out.println("Trend change! "  + tendencyChange);
-										
-										//String tendency = CbScience.findApproximateTendency(recents);
-										//System.out.println("CbService CbScience submit-time tendency " + tendency + " from " + recents.size());
-										Notification.Builder mBuilder =
-										        new Notification.Builder(service) 
-										        .setSmallIcon(android.R.drawable.ic_dialog_info)
-										        .setContentTitle("pressureNET")
-										        .setContentText("Trend change: " + tendencyChange);
-										// Creates an explicit intent for an Activity in your app
+
+								if (tendencyChange.contains(",")
+										&& (!tendencyChange.toLowerCase()
+												.contains("unknown"))) {
+									String[] tendencies = tendencyChange
+											.split(",");
+									if (!tendencies[0].equals(tendencies[1])) {
+										System.out.println("Trend change! "
+												+ tendencyChange);
+
+										// String tendency =
+										// CbScience.findApproximateTendency(recents);
+										// System.out.println("CbService CbScience submit-time tendency "
+										// + tendency + " from " +
+										// recents.size());
+										Notification.Builder mBuilder = new Notification.Builder(
+												service)
+												.setSmallIcon(
+														android.R.drawable.ic_dialog_info)
+												.setContentTitle("pressureNET")
+												.setContentText(
+														"Trend change: "
+																+ tendencyChange);
+										// Creates an explicit intent for an
+										// Activity in your app
 										Intent resultIntent = new Intent();
-			
-										// The stack builder object will contain an artificial back stack for the
+
+										// The stack builder object will contain
+										// an artificial back stack for the
 										// started Activity.
-										// This ensures that navigating backward from the Activity leads out of
+										// This ensures that navigating backward
+										// from the Activity leads out of
 										// your application to the Home screen.
-										TaskStackBuilder stackBuilder = TaskStackBuilder.create(service);
-										// Adds the back stack for the Intent (but not the Intent itself)
-										//stackBuilder.addParentStack(CbService.class);
-										// Adds the Intent that starts the Activity to the top of the stack
-										stackBuilder.addNextIntent(resultIntent);
-										PendingIntent resultPendingIntent =
-										        stackBuilder.getPendingIntent(
-										            0,
-										            PendingIntent.FLAG_UPDATE_CURRENT
-										        );
+										TaskStackBuilder stackBuilder = TaskStackBuilder
+												.create(service);
+										// Adds the back stack for the Intent
+										// (but not the Intent itself)
+										// stackBuilder.addParentStack(CbService.class);
+										// Adds the Intent that starts the
+										// Activity to the top of the stack
+										stackBuilder
+												.addNextIntent(resultIntent);
+										PendingIntent resultPendingIntent = stackBuilder
+												.getPendingIntent(
+														0,
+														PendingIntent.FLAG_UPDATE_CURRENT);
 										mBuilder.setContentIntent(resultPendingIntent);
-										NotificationManager mNotificationManager =
-										    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-										// mId allows you to update the notification later on.
-										mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+										NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+										// mId allows you to update the
+										// notification later on.
+										mNotificationManager.notify(
+												NOTIFICATION_ID,
+												mBuilder.build());
 										lastPressureChangeAlert = rightNow;
 									} else {
-										System.out.println("trends equal " + tendencyChange);
+										System.out.println("trends equal "
+												+ tendencyChange);
 									}
-								} 
+								}
 
 							} else {
 								// wait
@@ -308,7 +346,6 @@ public class CbService extends Service {
 		mHandler.removeCallbacks(sender);
 	}
 
-
 	/**
 	 * Send the observation to the server
 	 * 
@@ -318,7 +355,7 @@ public class CbService extends Service {
 	public boolean sendCbObservation(CbObservation observation) {
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settingsHandler, locationManager, dataCollector );
+			sender.setSettings(settingsHandler, locationManager, dataCollector);
 			sender.execute(observation.getObservationAsParams());
 			return true;
 		} catch (Exception e) {
@@ -326,7 +363,6 @@ public class CbService extends Service {
 		}
 	}
 
-	
 	/**
 	 * Send a new account to the server
 	 * 
@@ -334,7 +370,7 @@ public class CbService extends Service {
 	 * @return
 	 */
 	public boolean sendCbAccount(CbAccount account) {
-		
+
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
 			sender.setSettings(settingsHandler, locationManager, dataCollector);
@@ -355,14 +391,14 @@ public class CbService extends Service {
 		log("sending cbcurrent condition");
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settingsHandler, locationManager, dataCollector );
+			sender.setSettings(settingsHandler, locationManager, dataCollector);
 			sender.execute(condition.getCurrentConditionAsParams());
 			return true;
 		} catch (Exception e) {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Start the periodic data collection.
 	 */
@@ -397,18 +433,25 @@ public class CbService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cb onstartcommand");
-
+		
 		// Check the intent for Settings initialization
 		dataCollector = new CbDataCollector(getID(), getApplicationContext());
 
-		if (intent != null) {
-		
-			startWithIntent(intent);
-		
-			return START_STICKY;
+		if(runningCount==0) {
+
+			log("starting service code, run count 0");
+			if (intent != null) {
+
+				startWithIntent(intent);
+	
+				return START_STICKY;
+			} else {
+				log("INTENT NULL; checking db");
+				startWithDatabase();
+			}
+			runningCount++;
 		} else {
-			log("INTENT NULL; checking db");
-			startWithDatabase();
+			log("not starting, run count " + runningCount);
 		}
 		super.onStartCommand(intent, flags, startId);
 		return START_STICKY;
@@ -416,6 +459,7 @@ public class CbService extends Service {
 
 	/**
 	 * Convert time ago text to ms. TODO: not this. values in xml.
+	 * 
 	 * @param timeAgo
 	 * @return
 	 */
@@ -431,27 +475,30 @@ public class CbService extends Service {
 		} else if (timeAgo.equals("1 hour")) {
 			return 1000 * 60 * 60;
 		}
-		return 1000 * 60 * 5; 
+		return 1000 * 60 * 5;
 	}
-	
+
 	public void startWithIntent(Intent intent) {
 		try {
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
 			settingsHandler.setServerURL(serverURL);
 			settingsHandler.setAppID(getID());
-			
+
 			SharedPreferences sharedPreferences = PreferenceManager
 					.getDefaultSharedPreferences(this);
 			String preferenceCollectionFrequency = sharedPreferences.getString(
 					"autofrequency", "10 minutes");
-			boolean preferenceShareData = sharedPreferences.getBoolean("autoupdate", true);
+			boolean preferenceShareData = sharedPreferences.getBoolean(
+					"autoupdate", true);
 			String preferenceShareLevel = sharedPreferences.getString(
 					"sharing_preference", "Us, Researchers and Forecasters");
-			boolean preferenceSendNotifications = sharedPreferences.getBoolean("send_notifications", false);
-			settingsHandler.setDataCollectionFrequency(stringTimeToLongHack(preferenceCollectionFrequency));
-			
+			boolean preferenceSendNotifications = sharedPreferences.getBoolean(
+					"send_notifications", false);
+			settingsHandler
+					.setDataCollectionFrequency(stringTimeToLongHack(preferenceCollectionFrequency));
+
 			settingsHandler.setSendNotifications(preferenceSendNotifications);
-			
+
 			// Seems like new settings. Try adding to the db.
 			settingsHandler.saveSettings();
 
@@ -491,7 +538,7 @@ public class CbService extends Service {
 				// but just once
 				break;
 			}
-			db.close();			
+			db.close();
 		} catch (Exception e) {
 			for (StackTraceElement ste : e.getStackTrace()) {
 				log(ste.getMethodName() + ste.getLineNumber());
@@ -574,7 +621,7 @@ public class CbService extends Service {
 				log("get local recents");
 				recentMsg = msg;
 				CbApiCall apiCall = (CbApiCall) msg.obj;
-				if(apiCall == null) {
+				if (apiCall == null) {
 					System.out.println("apicall null, bailing");
 					break;
 				}
@@ -622,7 +669,7 @@ public class CbService extends Service {
 				log("get api recents " + apiCacheCall.toString());
 				// run API call
 				db.open();
-				
+
 				Cursor cacheCursor = db.runAPICacheCall(
 						apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(),
 						apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(),
@@ -652,11 +699,14 @@ public class CbService extends Service {
 				log("get api recents " + apiUniqueCacheCall.toString());
 				// run API call
 				db.open();
-				
+
 				Cursor cacheUniqueCursor = db.runRecentReadingsCacheCall(
-						apiUniqueCacheCall.getMinLat(), apiUniqueCacheCall.getMaxLat(),
-						apiUniqueCacheCall.getMinLon(), apiUniqueCacheCall.getMaxLon(),
-						apiUniqueCacheCall.getStartTime(), apiUniqueCacheCall.getEndTime(),
+						apiUniqueCacheCall.getMinLat(),
+						apiUniqueCacheCall.getMaxLat(),
+						apiUniqueCacheCall.getMinLon(),
+						apiUniqueCacheCall.getMaxLon(),
+						apiUniqueCacheCall.getStartTime(),
+						apiUniqueCacheCall.getEndTime(),
 						apiUniqueCacheCall.getLimit());
 				ArrayList<CbObservation> cacheUniqueResults = new ArrayList<CbObservation>();
 				while (cacheUniqueCursor.moveToNext()) {
@@ -675,17 +725,17 @@ public class CbService extends Service {
 					obs.setTime(cacheUniqueCursor.getLong(10));
 					obs.setTimeZoneOffset(cacheUniqueCursor.getInt(11));
 					obs.setUser_id(cacheUniqueCursor.getString(12));
-					//obs.setTrend(cacheUniqueCursor.getString(18));
+					// obs.setTrend(cacheUniqueCursor.getString(18));
 					cacheUniqueResults.add(obs);
 				}
 
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_API_UNIQUE_RECENTS,
-							cacheUniqueResults));
+					msg.replyTo.send(Message.obtain(null,
+							MSG_API_UNIQUE_RECENTS, cacheUniqueResults));
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
-				
+
 				db.close();
 				break;
 			case MSG_MAKE_API_CALL:
@@ -693,19 +743,20 @@ public class CbService extends Service {
 				CbApiCall liveApiCall = (CbApiCall) msg.obj;
 				liveApiCall.setCallType("Readings");
 				long timeDiff = System.currentTimeMillis() - lastAPICall;
-				
+
 				deleteOldData();
-				
-				lastAPICall = api.makeAPICall(liveApiCall, service, msg.replyTo, "Readings");
-				
+
+				lastAPICall = api.makeAPICall(liveApiCall, service,
+						msg.replyTo, "Readings");
+
 				break;
 			case MSG_MAKE_CURRENT_CONDITIONS_API_CALL:
-		
+
 				CbApi conditionApi = new CbApi(getApplicationContext());
 				CbApiCall conditionApiCall = (CbApiCall) msg.obj;
 				conditionApiCall.setCallType("Conditions");
-				conditionApi.makeAPICall(conditionApiCall, service, msg.replyTo, "Conditions");
-
+				conditionApi.makeAPICall(conditionApiCall, service,
+						msg.replyTo, "Conditions");
 
 				break;
 			case MSG_CLEAR_LOCAL_CACHE:
@@ -714,8 +765,9 @@ public class CbService extends Service {
 				long count = db.getUserDataCount();
 				db.close();
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_COUNT_LOCAL_OBS_TOTALS,(int)count,0));
-				} catch(RemoteException re) {
+					msg.replyTo.send(Message.obtain(null,
+							MSG_COUNT_LOCAL_OBS_TOTALS, (int) count, 0));
+				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
 				break;
@@ -729,8 +781,9 @@ public class CbService extends Service {
 				long countCache = db.getDataCacheCount();
 				db.close();
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_COUNT_API_CACHE_TOTALS,(int)countCache, 0));
-				} catch(RemoteException re) {
+					msg.replyTo.send(Message.obtain(null,
+							MSG_COUNT_API_CACHE_TOTALS, (int) countCache, 0));
+				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
 				break;
@@ -746,16 +799,15 @@ public class CbService extends Service {
 				CbApiCall currentConditionAPI = (CbApiCall) msg.obj;
 
 				Cursor ccCursor = db.getCurrentConditions(
-						currentConditionAPI.getMinLat(), 
-						currentConditionAPI.getMaxLat(), 
+						currentConditionAPI.getMinLat(),
+						currentConditionAPI.getMaxLat(),
 						currentConditionAPI.getMinLon(),
 						currentConditionAPI.getMaxLon(),
 						currentConditionAPI.getStartTime(),
-						currentConditionAPI.getEndTime(),
-						1000);
-				
+						currentConditionAPI.getEndTime(), 1000);
+
 				ArrayList<CbCurrentCondition> conditions = new ArrayList<CbCurrentCondition>();
-				while(ccCursor.moveToNext()) {
+				while (ccCursor.moveToNext()) {
 					CbCurrentCondition cur = new CbCurrentCondition();
 					Location location = new Location("network");
 					location.setLatitude(ccCursor.getDouble(1));
@@ -779,10 +831,10 @@ public class CbService extends Service {
 					conditions.add(cur);
 				}
 				db.close();
-				
+
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_CURRENT_CONDITIONS,
-							conditions));
+					msg.replyTo.send(Message.obtain(null,
+							MSG_CURRENT_CONDITIONS, conditions));
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
@@ -802,8 +854,10 @@ public class CbService extends Service {
 				long countLocalObsOnly = db.getUserDataCount();
 				db.close();
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_COUNT_LOCAL_OBS_TOTALS,(int)countLocalObsOnly,0));
-				} catch(RemoteException re) {
+					msg.replyTo.send(Message.obtain(null,
+							MSG_COUNT_LOCAL_OBS_TOTALS,
+							(int) countLocalObsOnly, 0));
+				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
 				break;
@@ -812,8 +866,10 @@ public class CbService extends Service {
 				long countCacheOnly = db.getDataCacheCount();
 				db.close();
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_COUNT_API_CACHE_TOTALS,(int)countCacheOnly, 0));
-				} catch(RemoteException re) {
+					msg.replyTo.send(Message
+							.obtain(null, MSG_COUNT_API_CACHE_TOTALS,
+									(int) countCacheOnly, 0));
+				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
 				break;
@@ -825,6 +881,7 @@ public class CbService extends Service {
 
 	/**
 	 * Remove older data from cache to keep the size reasonable
+	 * 
 	 * @return
 	 */
 	public void deleteOldData() {
@@ -833,14 +890,13 @@ public class CbService extends Service {
 		db.deleteOldCacheData();
 		db.close();
 	}
-	
+
 	public boolean notifyAPIResult(Messenger reply, int count) {
 		try {
 			if (reply == null) {
 				System.out.println("cannot notify, reply is null");
 			} else {
-				reply.send(Message.obtain(null, MSG_API_RESULT_COUNT,
-						count, 0));
+				reply.send(Message.obtain(null, MSG_API_RESULT_COUNT, count, 0));
 			}
 
 		} catch (RemoteException re) {
