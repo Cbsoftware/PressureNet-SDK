@@ -176,22 +176,32 @@ public class CbApi {
 		protected void onPostExecute(String result) {
 			resultText = result;
 			
-			handler.postDelayed(jsonProcessor, 0);
-			
-
+			//handler.postDelayed(jsonProcessor, 0);
+			SaveAPIData save = new SaveAPIData();
+			save.execute("");
 		}
 		
-		final Runnable jsonProcessor = new Runnable()
-		{
-			public void run() 
-		    {
-		    	callResults = processJSONResult(resultText, apiCall);
+
+		private class SaveAPIData extends AsyncTask<String, String, String> {
+
+			@Override
+			protected String doInBackground(String... params) {
+				callResults = processJSONResult(resultText, apiCall);
 		    	saveAPIResults(callResults, apiCall);
+				return null;
+			}
+
+			@Override
+			protected void onPostExecute(String result) {
 				System.out.println("saved " + callResults.size()
 						+ " api call results");
 				caller.notifyAPIResult(replyToApp, callResults.size());	       
-		    }
-		};
+			
+				super.onPostExecute(result);
+			}
+		}
+		
+		
 	}
 
 	
