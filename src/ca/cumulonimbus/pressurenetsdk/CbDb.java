@@ -28,7 +28,6 @@ public class CbDb {
 	public static final String OBSERVATIONS_TABLE = "cb_observations";
 	public static final String CURRENT_CONDITIONS_TABLE = "cb_current_conditions";
 	public static final String API_LIST_TABLE = "cb_api_list";
-	public static final String API_RECENT_READINGS_TABLE = "cb_api_recent_readings";
 	
 	// Settings Fields
 	public static final String KEY_ROW_ID = "_id";
@@ -120,21 +119,6 @@ public class CbDb {
 			+ " real not null, " + " UNIQUE (" + KEY_TIME + ", "
 			+ KEY_OBSERVATION_VALUE + "," + KEY_LATITUDE + "," 
 			+ KEY_LONGITUDE + ") ON CONFLICT REPLACE)";
-	
-	private static final String API_RECENT_READINGS_TABLE_CREATE = "create table "
-			+ API_RECENT_READINGS_TABLE + " (_id integer primary key autoincrement, "
-			+ KEY_LATITUDE + " real, " + KEY_LONGITUDE
-			+ " real, " + KEY_ALTITUDE + " real, "
-			+ KEY_ACCURACY + " real, " + KEY_PROVIDER
-			+ " text, " + KEY_OBSERVATION_TYPE + " text, "
-			+ KEY_OBSERVATION_UNIT + " text, " + KEY_OBSERVATION_VALUE
-			+ " real, " + KEY_SHARING + " text, " + KEY_TIME
-			+ " real, " + KEY_TIMEZONE + " real, "
-			+ KEY_USERID + " text, " + KEY_SENSOR_NAME
-			+ " text, " + KEY_SENSOR_TYPE + " real, "
-			+ KEY_SENSOR_VENDOR + " text, " + KEY_SENSOR_RESOLUTION
-			+ " real, " + KEY_SENSOR_VERSION + " real,"
-			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE (" + KEY_USERID + ") ON CONFLICT REPLACE)";
 
 	private static final String CURRENT_CONDITIONS_TABLE_CREATE = "create table "
 			+ CURRENT_CONDITIONS_TABLE
@@ -178,7 +162,7 @@ public class CbDb {
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 33;
+	private static final int DATABASE_VERSION = 35;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -192,7 +176,6 @@ public class CbDb {
 			db.execSQL(OBSERVATIONS_TABLE_CREATE);
 			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
 			db.execSQL(API_LIST_TABLE_CREATE);
-			db.execSQL(API_RECENT_READINGS_TABLE_CREATE);
 		}
 
 		@Override
@@ -201,9 +184,7 @@ public class CbDb {
 			db.execSQL("DROP TABLE IF EXISTS " + SETTINGS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + OBSERVATIONS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
-			db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);
-			db.execSQL("DROP TABLE IF EXISTS " + API_RECENT_READINGS_TABLE);
-			
+			db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);			
 			onCreate(db);
 		}
 	}
@@ -227,8 +208,7 @@ public class CbDb {
 	public long getDataCacheCount() {
 		return DatabaseUtils.queryNumEntries(mDB, API_LIST_TABLE,
                         null,null) + DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
-                                null,null) + DatabaseUtils.queryNumEntries(mDB,  API_RECENT_READINGS_TABLE,
-                                        null,null);
+                                null,null);
 	}
 
 	/**
@@ -238,7 +218,6 @@ public class CbDb {
 		long hoursAgo = 1;
 		long timeAgo = System.currentTimeMillis() - (1000 * 60 * 60 * hoursAgo);
 		mDB.execSQL("delete from " + API_LIST_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
-		mDB.execSQL("delete from " + API_RECENT_READINGS_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
 		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
 	}
 	
@@ -286,32 +265,6 @@ public class CbDb {
 				start_time + "", end_time + "" }, null, null, null, null);
 		return cursor;
 	}
-	
-
-
-	/**
-	 * Run an API call against the API recent readings cache
-	 * 
-	 * @return
-	 */
-	public Cursor runRecentReadingsCacheCall(double min_lat, double max_lat,
-			double min_lon, double max_lon, long start_time, long end_time,
-			double limit) {
-		Cursor cursor = mDB.query(false, API_RECENT_READINGS_TABLE, new String[] {
-				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE,
-				KEY_ACCURACY, KEY_PROVIDER, KEY_OBSERVATION_TYPE,
-				KEY_OBSERVATION_UNIT, KEY_OBSERVATION_VALUE, KEY_SHARING,
-				KEY_TIME, KEY_TIMEZONE, KEY_USERID, KEY_SENSOR_NAME,
-				KEY_SENSOR_TYPE, KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION,
-				KEY_SENSOR_VERSION, KEY_OBSERVATION_TREND }, KEY_LATITUDE
-				+ " > ? and " + KEY_LATITUDE + " < ? and " + KEY_LONGITUDE
-				+ " > ? and " + KEY_LONGITUDE + " < ? and " + KEY_TIME
-				+ " > ? and " + KEY_TIME + " < ? ", new String[] {
-				min_lat + "", max_lat + "", min_lon + "", max_lon + "",
-				start_time + "", end_time + "" }, null, null, null, null);
-		return cursor;
-	}
-	
 
 	
 	/**
@@ -439,7 +392,6 @@ public class CbDb {
 	 */
 	public void clearAPICache() {
 		mDB.execSQL("delete from " + API_LIST_TABLE);
-		mDB.execSQL("delete from " + API_RECENT_READINGS_TABLE);
 		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE);
 	}
 
@@ -659,11 +611,8 @@ public class CbDb {
 				+ KEY_OBSERVATION_VALUE
 				+ " "
 				+ ") values (?, ?, ?, ?)";
-		String insertRecentReadingsSQL = insertSQL.replace(API_LIST_TABLE, API_RECENT_READINGS_TABLE);
-		
 		try {
 			SQLiteStatement insert = mDB.compileStatement(insertSQL);
-			SQLiteStatement insertRecentReadings = mDB.compileStatement(insertRecentReadingsSQL);
 			
 			for (CbWeather weatherItem : weather) {
 				
@@ -675,12 +624,6 @@ public class CbDb {
 				insert.bindLong(3, ob.getTime());
 				insert.bindDouble(4, ob.getObservationValue());
 				insert.executeInsert();
-				
-				insertRecentReadings.bindDouble(1, latitude);
-				insertRecentReadings.bindDouble(2, longitude); 
-				insertRecentReadings.bindDouble(3, ob.getTime());
-				insertRecentReadings.bindDouble(4, ob.getObservationValue());
-				insertRecentReadings.executeInsert();
 			}
 
 			mDB.setTransactionSuccessful();
