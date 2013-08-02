@@ -46,6 +46,12 @@ public class CbLocationManager {
 	    	networkLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
 	    	gpsLocationManager = (LocationManager)  context.getSystemService(Context.LOCATION_SERVICE);
 	
+    		settings = new CbSettingsHandler(context);
+    		settings = settings.getSettings();
+    		
+    		System.out.println("cblocationmanager allowed gps? " + settings.isUseGPS());
+
+	    	
 	    	Location lastKnown = networkLocationManager.getLastKnownLocation("network");
 	    	if (lastKnown != null ) {
 	    		log("setting best = last known");

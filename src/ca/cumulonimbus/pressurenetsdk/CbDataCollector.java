@@ -99,7 +99,6 @@ public class CbDataCollector implements SensorEventListener{
 	public void startCollectingData(Messenger m) {
 		this.msgr = m;
     	streaming = true;
-    	settings = new CbSettingsHandler(context);
     	try {
 	    	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 	    	Sensor pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);

@@ -482,7 +482,7 @@ public class CbService extends Service {
 		try {
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
 			settingsHandler.setServerURL(serverURL);
-			settingsHandler.setAppID(getID());
+			settingsHandler.setAppID("ca.cumulonimbus.barometernetwork");
 
 			SharedPreferences sharedPreferences = PreferenceManager
 					.getDefaultSharedPreferences(this);
@@ -498,6 +498,12 @@ public class CbService extends Service {
 					.setDataCollectionFrequency(stringTimeToLongHack(preferenceCollectionFrequency));
 
 			settingsHandler.setSendNotifications(preferenceSendNotifications);
+			
+			boolean useGPS = sharedPreferences.getBoolean("use_gps", false);
+			boolean onlyWhenCharging = sharedPreferences.getBoolean("only_when_charging", false);
+			System.out.println("starting with intent gps " + useGPS);
+			settingsHandler.setUseGPS(useGPS);
+			settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
 
 			// Seems like new settings. Try adding to the db.
 			settingsHandler.saveSettings();
@@ -534,6 +540,17 @@ public class CbService extends Service {
 				settingsHandler.setDataCollectionFrequency(allSettings
 						.getLong(2));
 				settingsHandler.setServerURL(serverURL);
+				
+				// booleans
+				int onlyWhenCharging = allSettings.getInt(4);
+				int useGPS = allSettings.getInt(9);
+				boolean boolCharging = (onlyWhenCharging == 1) ? true : false;
+				boolean boolGPS = (useGPS == 1) ? true : false;
+				System.out.println("only when charging raw " + onlyWhenCharging + " gps " + useGPS);
+				System.out.println("only when charging processed " + boolCharging + " gps " + boolGPS);
+				settingsHandler.setOnlyWhenCharging(boolCharging);
+				settingsHandler.setUseGPS(boolGPS);
+				settingsHandler.saveSettings();
 				startAutoSubmit();
 				// but just once
 				break;

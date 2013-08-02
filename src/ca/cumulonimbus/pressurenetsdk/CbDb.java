@@ -79,6 +79,8 @@ public class CbDb {
 	public static final String KEY_MIN_LON = "min_lon";
 	public static final String KEY_MAX_LON = "max_lon";
 	
+	public static final String KEY_USE_GPS = "use_gps";
+	
 	private Context mContext;
 
 	private DatabaseHelper mDbHelper;
@@ -91,7 +93,8 @@ public class CbDb {
 			+ KEY_COLLECTING_DATA + " text, "
 			+ KEY_SHARING_DATA + " text," 
 			+ KEY_SHARE_LEVEL + " text," 
-			+ KEY_SEND_NOTIFICATIONS + " text)";
+			+ KEY_SEND_NOTIFICATIONS + " text,"
+			+ KEY_USE_GPS + " text)";
 
 	private static final String OBSERVATIONS_TABLE_CREATE = "create table "
 			+ OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, "
@@ -160,7 +163,7 @@ public class CbDb {
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 37;
+	private static final int DATABASE_VERSION = 39;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -364,7 +367,7 @@ public class CbDb {
 		mDB.query(true, SETTINGS_TABLE, new String[] { KEY_ROW_ID, KEY_APP_ID,
 				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL,
 				KEY_ONLY_WHEN_CHARGING, KEY_COLLECTING_DATA, KEY_SHARING_DATA,
-				KEY_SHARE_LEVEL, KEY_SEND_NOTIFICATIONS }, KEY_ROW_ID
+				KEY_SHARE_LEVEL, KEY_SEND_NOTIFICATIONS, KEY_USE_GPS }, KEY_ROW_ID
 				+ "=" + rowId, null, null, null, null, null);
 		if (mCursor != null) {
 			mCursor.moveToFirst();
@@ -407,7 +410,8 @@ public class CbDb {
 				KEY_COLLECTING_DATA,
 				KEY_SHARING_DATA,
 				KEY_SHARE_LEVEL,
-				KEY_SEND_NOTIFICATIONS}, null, null,
+				KEY_SEND_NOTIFICATIONS,
+				KEY_USE_GPS}, null, null,
 				null, null, null);
 	}
 
@@ -467,7 +471,7 @@ public class CbDb {
 		Cursor mCursor =
 
 		mDB.query(true, SETTINGS_TABLE, new String[] { KEY_ROW_ID, KEY_APP_ID,
-				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL, KEY_SEND_NOTIFICATIONS}, KEY_APP_ID
+				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL, KEY_SEND_NOTIFICATIONS, KEY_USE_GPS, KEY_ONLY_WHEN_CHARGING}, KEY_APP_ID
 				+ "='" + appID + "'", null, null, null, null, null);
 		if (mCursor != null) {
 			mCursor.moveToFirst();
@@ -484,7 +488,7 @@ public class CbDb {
 	 */
 	public long updateSetting(String appID, long dataCollectionFrequency,
 			String serverURL, boolean onlyWhenCharging, boolean collectingData,
-			boolean sharingData, String shareLevel, boolean sendNotifications) {
+			boolean sharingData, String shareLevel, boolean sendNotifications, boolean useGPS) {
 
 		ContentValues newValues = new ContentValues();
 		newValues.put(KEY_APP_ID, appID);
@@ -495,6 +499,7 @@ public class CbDb {
 		newValues.put(KEY_SHARING_DATA, sharingData);
 		newValues.put(KEY_SHARE_LEVEL, shareLevel);
 		newValues.put(KEY_SEND_NOTIFICATIONS, sendNotifications);
+		newValues.put(KEY_USE_GPS, useGPS);
 		return mDB.update(SETTINGS_TABLE, newValues, KEY_APP_ID + "='" + appID
 				+ "'", null);
 	}
@@ -714,7 +719,7 @@ public class CbDb {
 
 	public long addSetting(String appID, long dataCollectionFrequency,
 			String serverURL, boolean onlyWhenCharging, boolean collectingData,
-			boolean sharingData, String shareLevel, boolean sendNotifications) {
+			boolean sharingData, String shareLevel, boolean sendNotifications, boolean useGPS) {
 
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_APP_ID, appID);
@@ -726,7 +731,7 @@ public class CbDb {
 		initialValues.put(KEY_SHARING_DATA, sharingData);
 		initialValues.put(KEY_SHARE_LEVEL, shareLevel);
 		initialValues.put(KEY_SEND_NOTIFICATIONS, sendNotifications);
-
+		initialValues.put(KEY_USE_GPS, useGPS);
 		return mDB.insert(SETTINGS_TABLE, null, initialValues);
 	}
 
