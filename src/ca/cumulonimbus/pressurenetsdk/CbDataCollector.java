@@ -142,6 +142,8 @@ public class CbDataCollector implements SensorEventListener{
 	public CbDataCollector(String userID, Context ctx) {
 		this.userID = userID;
 		this.context = ctx;
+		settings = new CbSettingsHandler(ctx);
+		settings = settings.getSettings();
 	}
 
 	@Override

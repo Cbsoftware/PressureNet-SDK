@@ -540,7 +540,7 @@ public class CbService extends Service {
 				settingsHandler.setDataCollectionFrequency(allSettings
 						.getLong(2));
 				settingsHandler.setServerURL(serverURL);
-				
+				settingsHandler.setShareLevel(allSettings.getString(7));
 				// booleans
 				int onlyWhenCharging = allSettings.getInt(4);
 				int useGPS = allSettings.getInt(9);

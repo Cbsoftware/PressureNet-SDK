@@ -62,13 +62,9 @@ public class CbSettingsHandler {
 			Cursor settings = db.fetchAllSettings();
 			while(settings.moveToNext()) {
 				// TODO: fix and fill out all fields
+				this.shareLevel = settings.getString(7);
 				this.onlyWhenCharging = (settings.getInt(4) == 1) ? true: false;
 				this.useGPS = (settings.getInt(9) == 1) ? true : false;
-				/*
-				KEY_ROW_ID, KEY_APP_ID,
-				KEY_DATA_COLLECTION_FREQUENCY, KEY_SERVER_URL, KEY_SEND_NOTIFICATIONS, KEY_USE_GPS, KEY_ONLY_WHEN_CHARGING}, KEY_APP_ID
-				+ "='" + appID + "'", null, null, null, null
-			*/
 			}
 			System.out.println("get settings gps " + this.useGPS);
 			db.close();			
