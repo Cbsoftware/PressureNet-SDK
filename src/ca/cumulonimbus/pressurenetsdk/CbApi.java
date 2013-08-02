@@ -114,13 +114,13 @@ public class CbApi {
 			try {
 				DefaultHttpClient client = new DefaultHttpClient();
 				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-				nvps.add(new BasicNameValuePair("min_lat", apiCall.getMinLat()
+				nvps.add(new BasicNameValuePair("min_latitude", apiCall.getMinLat()
 						+ "" + ""));
-				nvps.add(new BasicNameValuePair("max_lat", apiCall.getMaxLat()
+				nvps.add(new BasicNameValuePair("max_latitude", apiCall.getMaxLat()
 						+ "" + ""));
-				nvps.add(new BasicNameValuePair("min_lon", apiCall.getMinLon()
+				nvps.add(new BasicNameValuePair("min_longitude", apiCall.getMinLon()
 						+ "" + ""));
-				nvps.add(new BasicNameValuePair("max_lon", apiCall.getMaxLon()
+				nvps.add(new BasicNameValuePair("max_longitude", apiCall.getMaxLon()
 						+ "" + ""));
 				nvps.add(new BasicNameValuePair("start_time", apiCall
 						.getStartTime() + ""));

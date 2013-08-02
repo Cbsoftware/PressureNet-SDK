@@ -105,7 +105,10 @@ public class CbService extends Service {
 	public static final int MSG_COUNT_API_CACHE = 33;
 	public static final int MSG_COUNT_LOCAL_OBS_TOTALS = 34;
 	public static final int MSG_COUNT_API_CACHE_TOTALS = 35;
-
+	// Graphing
+	public static final int MSG_GET_API_RECENTS_FOR_GRAPH = 36;
+	public static final int MSG_API_RECENTS_FOR_GRAPH = 37;
+	
 	long lastAPICall = System.currentTimeMillis();
 
 	private final Handler mHandler = new Handler();
@@ -691,6 +694,37 @@ public class CbService extends Service {
 					re.printStackTrace();
 				}
 				break;
+			case MSG_GET_API_RECENTS_FOR_GRAPH:
+				// TODO: Put this in a method. It's a copy+paste from GET_API_RECENTS
+				CbApiCall apiCacheCallGraph = (CbApiCall) msg.obj;
+				log("get api recents " + apiCacheCallGraph.toString());
+				// run API call
+				db.open();
+
+				Cursor cacheCursorGraph = db.runAPICacheCall(
+						apiCacheCallGraph.getMinLat(), apiCacheCallGraph.getMaxLat(),
+						apiCacheCallGraph.getMinLon(), apiCacheCallGraph.getMaxLon(),
+						apiCacheCallGraph.getStartTime(), apiCacheCallGraph.getEndTime(),
+						apiCacheCallGraph.getLimit());
+				ArrayList<CbObservation> cacheResultsGraph = new ArrayList<CbObservation>();
+				while (cacheCursorGraph.moveToNext()) {
+					CbObservation obs = new CbObservation();
+					Location location = new Location("network");
+					location.setLatitude(cacheCursorGraph.getDouble(1));
+					location.setLongitude(cacheCursorGraph.getDouble(2));
+					obs.setLocation(location);
+					obs.setObservationValue(cacheCursorGraph.getDouble(3));
+					obs.setTime(cacheCursorGraph.getLong(4));
+					cacheResultsGraph.add(obs);
+				}
+				db.close();
+				try {
+					msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS_FOR_GRAPH,
+							cacheResultsGraph));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+				break;
 			case MSG_MAKE_API_CALL:
 				CbApi api = new CbApi(getApplicationContext());
 				CbApiCall liveApiCall = (CbApiCall) msg.obj;
@@ -862,21 +896,25 @@ public class CbService extends Service {
 
 	public CbObservation recentPressureFromDatabase() {
 		CbObservation obs = new CbObservation();
-		long rowId = db.fetchObservationMaxID();
 		double pressure = 0.0;
-
-		Cursor c = db.fetchObservation(rowId);
-
-		while (c.moveToNext()) {
-			pressure = c.getDouble(8);
+		try {
+			long rowId = db.fetchObservationMaxID();
+			Cursor c = db.fetchObservation(rowId);
+	
+			while (c.moveToNext()) {
+				pressure = c.getDouble(8);
+			}
+			log(pressure + " pressure from db");
+			if (pressure == 0.0) {
+				log("returning null");
+				return null;
+			}
+			obs.setObservationValue(pressure);
+			return obs;
+		} catch(Exception e) {
+			obs.setObservationValue(pressure);
+			return obs;
 		}
-		log(pressure + " pressure from db");
-		if (pressure == 0.0) {
-			log("returning null");
-			return null;
-		}
-		obs.setObservationValue(pressure);
-		return obs;
 	}
 
 	private class StreamObservation extends AsyncTask<Messenger, Void, String> {

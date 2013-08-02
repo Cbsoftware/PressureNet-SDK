@@ -116,9 +116,7 @@ public class CbDb {
 			+ KEY_LATITUDE + " real not null, " 
 			+ KEY_LONGITUDE + " real not null, " + KEY_TIME
 			+ " real not null, " + KEY_OBSERVATION_VALUE
-			+ " real not null, " + " UNIQUE (" + KEY_TIME + ", "
-			+ KEY_OBSERVATION_VALUE + "," + KEY_LATITUDE + "," 
-			+ KEY_LONGITUDE + ") ON CONFLICT REPLACE)";
+			+ " real not null, UNIQUE (" + KEY_OBSERVATION_VALUE +", " + KEY_TIME + ") ON CONFLICT REPLACE)";
 
 	private static final String CURRENT_CONDITIONS_TABLE_CREATE = "create table "
 			+ CURRENT_CONDITIONS_TABLE
@@ -158,11 +156,11 @@ public class CbDb {
 			+ KEY_THUNDERSTORM_INTENSITY
 			+ " real not null, "
 			+ KEY_USER_COMMENT + " text not null, " + "UNIQUE (" + KEY_LATITUDE
-			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + "," + KEY_USERID + ","
+			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + ","
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 35;
+	private static final int DATABASE_VERSION = 37;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -215,7 +213,7 @@ public class CbDb {
 	 * Keep the database cache clean
 	 */
 	public void deleteOldCacheData() {
-		long hoursAgo = 1;
+		long hoursAgo = 12;
 		long timeAgo = System.currentTimeMillis() - (1000 * 60 * 60 * hoursAgo);
 		mDB.execSQL("delete from " + API_LIST_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
 		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
