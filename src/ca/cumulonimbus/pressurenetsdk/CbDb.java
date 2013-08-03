@@ -1,6 +1,7 @@
 package ca.cumulonimbus.pressurenetsdk;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -10,7 +11,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.widget.TableLayout;
 
 /**
  * Keep track of app settings, as this SDK may be used by more than one app on a
@@ -504,10 +504,30 @@ public class CbDb {
 				+ "'", null);
 	}
 
+	public ArrayList<CbWeather> fudgeGPSData(ArrayList<CbWeather> readings) {
+		ArrayList<CbWeather> fudgedReadings = new ArrayList<CbWeather>();
+		for(CbWeather obWeather : readings) {
+			CbObservation ob = (CbObservation) obWeather;
+			double longitude = ob.getLocation().getLongitude();
+			double latitude = ob.getLocation().getLatitude();
+			double range = .01;
+			Random lat = new Random(System.currentTimeMillis());
+			Random lon = new Random(System.currentTimeMillis());
+			latitude = (latitude - range) + (int)(lat.nextDouble()  * ((2 * range) + 1));
+			longitude = (longitude - range) + (int)(lon.nextDouble() * ((2 * range) + 1));
+			ob.getLocation().setLatitude(latitude);
+			ob.getLocation().setLongitude(longitude);
+			fudgedReadings.add(ob);
+		}
+
+		return fudgedReadings;
+	}
+
+	
 	public boolean addWeatherArrayList(ArrayList<CbWeather> results, CbApiCall api) {
 		if (results.get(0).getClass() == (CbObservation.class)) {
+			results = fudgeGPSData(results);
 			addObservationArrayList(results, api);
-			
 		} else {
 			addCurrentConditionArrayList(results, api);
 		}
