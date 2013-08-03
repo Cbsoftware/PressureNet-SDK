@@ -241,6 +241,9 @@ public class CbService extends Service  {
 				// Collect
 				CbObservation singleObservation = new CbObservation();
 				singleObservation = collectNewObservation();
+				if(singleObservation == null) {
+					return;
+				}
 				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
 					db.open();
@@ -769,31 +772,36 @@ public class CbService extends Service  {
 				CbApiCall apiCacheCall = (CbApiCall) msg.obj;
 				log("get api recents " + apiCacheCall.toString());
 				// run API call
-				db.open();
-
-				Cursor cacheCursor = db.runAPICacheCall(
-						apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(),
-						apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(),
-						apiCacheCall.getStartTime(), apiCacheCall.getEndTime(),
-						apiCacheCall.getLimit());
-				ArrayList<CbObservation> cacheResults = new ArrayList<CbObservation>();
-				while (cacheCursor.moveToNext()) {
-					CbObservation obs = new CbObservation();
-					Location location = new Location("network");
-					location.setLatitude(cacheCursor.getDouble(1));
-					location.setLongitude(cacheCursor.getDouble(2));
-					obs.setLocation(location);
-					obs.setObservationValue(cacheCursor.getDouble(3));
-					obs.setTime(cacheCursor.getLong(4));
-					cacheResults.add(obs);
-				}
-				db.close();
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
-							cacheResults));
-				} catch (RemoteException re) {
-					re.printStackTrace();
+					db.open();
+	
+					Cursor cacheCursor = db.runAPICacheCall(
+							apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(),
+							apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(),
+							apiCacheCall.getStartTime(), apiCacheCall.getEndTime(),
+							apiCacheCall.getLimit());
+					ArrayList<CbObservation> cacheResults = new ArrayList<CbObservation>();
+					while (cacheCursor.moveToNext()) {
+						CbObservation obs = new CbObservation();
+						Location location = new Location("network");
+						location.setLatitude(cacheCursor.getDouble(1));
+						location.setLongitude(cacheCursor.getDouble(2));
+						obs.setLocation(location);
+						obs.setObservationValue(cacheCursor.getDouble(3));
+						obs.setTime(cacheCursor.getLong(4));
+						cacheResults.add(obs);
+					}
+					db.close();
+					try {
+						msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
+								cacheResults));
+					} catch (RemoteException re) {
+						re.printStackTrace();
+					}
+				} catch(Exception e) {
+					
 				}
+
 				break;
 			case MSG_GET_API_RECENTS_FOR_GRAPH:
 				// TODO: Put this in a method. It's a copy+paste from GET_API_RECENTS
