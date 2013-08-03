@@ -96,7 +96,7 @@ public class CbDataCollector implements SensorEventListener{
 		this.recentObservations = recentObservations;
 	}
 
-	public void startCollectingData(Messenger m) {
+	public int startCollectingData(Messenger m) {
 		this.msgr = m;
     	streaming = true;
     	try {
@@ -114,8 +114,10 @@ public class CbDataCollector implements SensorEventListener{
 	    	if(humiditySensor!=null) {
 	    		humidityReadingsActive = sm.registerListener(this, humiditySensor, SensorManager.SENSOR_DELAY_UI);
 	    	}
+	    	return 1;
     	} catch(Exception e) {
     		e.printStackTrace();
+    		return -1;
     	}
     }
     

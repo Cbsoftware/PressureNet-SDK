@@ -109,6 +109,8 @@ public class CbService extends Service  {
 	
 	long lastAPICall = System.currentTimeMillis();
 
+	private CbObservation collectedObservation;
+	
 	private final Handler mHandler = new Handler();
 	Messenger mMessenger = new Messenger(new IncomingHandler());
 
@@ -116,8 +118,7 @@ public class CbService extends Service  {
 
 	private long lastPressureChangeAlert = 0;
 	
-	
-
+ 
 	/**
 	 * Find all the data for an observation.
 	 * 
@@ -136,19 +137,32 @@ public class CbService extends Service  {
 
 			// Measurement values
 			pressureObservation = dataCollector.getPressureObservation();
-			pressureObservation.setLocation(locationManager
-					.getCurrentBestLocation());
+			pressureObservation.setLocation(locationManager.getCurrentBestLocation());
 
 			// stop listening for locations
-			locationManager.stopGettingLocations();
-
+			LocationStopper stop = new LocationStopper();
+			mHandler.postDelayed(stop, 1000 * 10);
+			
 			return pressureObservation;
+
 		} catch (Exception e) {
-			e.printStackTrace();
-			return new CbObservation();
+			return null;
 		}
 	}
+	
+	private class LocationStopper implements Runnable  {
 
+		@Override
+		public void run() {
+			try {
+				locationManager.stopGettingLocations();
+			} catch(Exception e) {
+				
+			}
+		}
+		
+	}
+	
 	/**
 	 * Send a single reading. 
 	 * TODO: This is ugly copy+paste from the original ReadingSender. Fix that.
@@ -162,13 +176,10 @@ public class CbService extends Service  {
 			long base = SystemClock.uptimeMillis();
 
 			dataCollector.startCollectingData(null);
-
 			CbObservation singleObservation = new CbObservation();
-
 			if (settingsHandler.isCollectingData()) {
 				// Collect
 				singleObservation = collectNewObservation();
-
 				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
 					db.open();
@@ -224,14 +235,12 @@ public class CbService extends Service  {
 			log("collecting and submitting " + settingsHandler.getServerURL());
 			long base = SystemClock.uptimeMillis();
 
-			dataCollector.startCollectingData(null);
-
-			CbObservation singleObservation = new CbObservation();
-
+			int dataCollecting = dataCollector.startCollectingData(null);
+		
 			if (settingsHandler.isCollectingData()) {
 				// Collect
+				CbObservation singleObservation = new CbObservation();
 				singleObservation = collectNewObservation();
-
 				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
 					db.open();
@@ -504,6 +513,7 @@ public class CbService extends Service  {
 					// send just a single measurement
 					System.out.println("sending single observation, request from intent");
 					sendSingleObs();
+					return 0;
 				}
 			}
 		}
