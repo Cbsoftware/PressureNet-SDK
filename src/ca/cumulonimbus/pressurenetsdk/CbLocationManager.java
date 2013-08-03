@@ -73,9 +73,15 @@ public class CbLocationManager {
 	
 	public boolean stopGettingLocations() {
 		try {
-			networkLocationManager.removeUpdates(locationListener);
-	        gpsLocationManager.removeUpdates(locationListener);
-	        networkLocationManager = null;
+			if(locationListener!=null) {
+				if(networkLocationManager!=null) {
+					networkLocationManager.removeUpdates(locationListener);
+				}
+				if(gpsLocationManager!=null) {
+					gpsLocationManager.removeUpdates(locationListener);				
+				}
+			}
+			networkLocationManager = null;
 	        gpsLocationManager = null;
 	        return true;
 		} catch(Exception e) {
