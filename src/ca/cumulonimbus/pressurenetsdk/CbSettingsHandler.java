@@ -67,11 +67,12 @@ public class CbSettingsHandler {
 				this.useGPS = (settings.getInt(9) == 1) ? true : false;
 			}
 			System.out.println("get settings gps " + this.useGPS);
-			db.close();			
+			db.close();
+			return this;
 		} catch(Exception e) {
 			e.printStackTrace();
+			return null;
 		}
-		return this;
 	}
 	
 	public CbSettingsHandler(Context ctx) {

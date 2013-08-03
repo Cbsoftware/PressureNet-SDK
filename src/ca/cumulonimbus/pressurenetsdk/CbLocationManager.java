@@ -50,22 +50,21 @@ public class CbLocationManager {
     		settings = settings.getSettings();
     		
     		System.out.println("cblocationmanager allowed gps? " + settings.isUseGPS());
-
-	    	
-	    	Location lastKnown = networkLocationManager.getLastKnownLocation("network");
-	    	if (lastKnown != null ) {
-	    		log("setting best = last known");
-	    		currentBestLocation = lastKnown;
-	    	} else {
-	    		log("last known is null");
-	    	}
+    		Location lastKnownNetwork = networkLocationManager.getLastKnownLocation("network");
+    
+    		if(settings.isUseGPS()) {
+    			Location lastKnownGPS = gpsLocationManager.getLastKnownLocation("gps");
+    			if(lastKnownGPS != null ) {
+    				currentBestLocation = lastKnownGPS;
+    			} else {
+    				currentBestLocation = lastKnownNetwork;
+    			}
+    		} else {
+				currentBestLocation = lastKnownNetwork;
+	    	} 
     	} catch(Exception e) {
     		e.printStackTrace();
     	}
-    	
-		
-		currentBestLocation = networkLocationManager.getLastKnownLocation("network");
-    	
 	}
 	
 	public Location getCurrentBestLocation() {
@@ -110,13 +109,16 @@ public class CbLocationManager {
        	// Register the listener with the Location Manager to receive location updates
     	try {
     		networkLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, minTime, minDistance, locationListener);
-    		gpsLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
+    		if(settings.isUseGPS()) {
+    			gpsLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
+    		}
     	} catch(Exception e) {
     		startGettingLocations();
     		e.printStackTrace();
     		return false;
     	}
     	return true;
+    	
     }
 	
 	/** Determines whether one Location reading is better than the current Location fix
