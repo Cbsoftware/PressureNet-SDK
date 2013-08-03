@@ -8,11 +8,7 @@ import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
-import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -41,7 +37,7 @@ import android.provider.Settings.Secure;
  * @author jacob
  * 
  */
-public class CbService extends Service {
+public class CbService extends Service  {
 
 	private CbDataCollector dataCollector;
 	private CbLocationManager locationManager;
@@ -62,6 +58,8 @@ public class CbService extends Service {
 	private int runningCount = 0;
 	
 	private static final int NOTIFICATION_ID = 12345;
+	
+	public static String ACTION_SEND_MEASUREMENT = "SendMeasurement";
 
 	// Service Interaction API Messages
 	public static final int MSG_OKAY = 0;
@@ -117,6 +115,8 @@ public class CbService extends Service {
 	ArrayList<CbObservation> offlineBuffer = new ArrayList<CbObservation>();
 
 	private long lastPressureChangeAlert = 0;
+	
+	
 
 	/**
 	 * Find all the data for an observation.
@@ -149,6 +149,71 @@ public class CbService extends Service {
 		}
 	}
 
+	/**
+	 * Send a single reading. 
+	 * TODO: This is ugly copy+paste from the original ReadingSender. Fix that.
+	 */
+	
+	public class SingleReadingSender implements Runnable {
+
+		@Override
+		public void run() {
+			log("collecting and submitting single " + settingsHandler.getServerURL());
+			long base = SystemClock.uptimeMillis();
+
+			dataCollector.startCollectingData(null);
+
+			CbObservation singleObservation = new CbObservation();
+
+			if (settingsHandler.isCollectingData()) {
+				// Collect
+				singleObservation = collectNewObservation();
+
+				if (singleObservation.getObservationValue() != 0.0) {
+					// Store in database
+					db.open();
+					long count = db.addObservation(singleObservation);
+
+					db.close();
+
+					try {
+						if (settingsHandler.isSharingData()) {
+							// Send if we're online
+							if (isNetworkAvailable()) {
+								log("online and sending single");
+								singleObservation
+										.setClientKey(getApplicationContext()
+												.getPackageName());
+								sendCbObservation(singleObservation);
+
+								// also check and send the offline buffer
+								if (offlineBuffer.size() > 0) {
+									System.out.println("sending "
+											+ offlineBuffer.size()
+											+ " offline buffered obs");
+									for (CbObservation singleOffline : offlineBuffer) {
+										sendCbObservation(singleObservation);
+									}
+									offlineBuffer.clear();
+								}
+							} else {
+								log("didn't send");
+								// / offline buffer variable
+								// TODO: put this in the DB to survive longer
+								offlineBuffer.add(singleObservation);
+
+							}
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+
+					}
+				}
+			} 
+		}
+		
+	}
+	
 	/**
 	 * Collect and send data in a different thread. This runs itself every
 	 * "settingsHandler.getDataCollectionFrequency()" milliseconds
@@ -313,7 +378,7 @@ public class CbService extends Service {
 			mHandler.postAtTime(this,
 					base + (settingsHandler.getDataCollectionFrequency()));
 		}
-	};
+	}
 
 	public boolean isNetworkAvailable() {
 		log("is net available?");
@@ -407,7 +472,6 @@ public class CbService extends Service {
 
 		sender = new ReadingSender();
 		mHandler.post(sender);
-
 	}
 
 	@Override
@@ -434,6 +498,16 @@ public class CbService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cb onstartcommand");
 		
+		if(intent!= null) {
+			if(intent.getAction() != null ) {
+				if(intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
+					// send just a single measurement
+					System.out.println("sending single observation, request from intent");
+					sendSingleObs();
+				}
+			}
+		}
+			
 		// Check the intent for Settings initialization
 		dataCollector = new CbDataCollector(getID(), getApplicationContext());
 
@@ -849,9 +923,8 @@ public class CbService extends Service {
 				sendCbCurrentCondition(condition);
 				break;
 			case MSG_SEND_OBSERVATION:
-				CbObservation observation = new CbObservation();
-				observation.setSharing(settingsHandler.getShareLevel());
-				sendCbObservation(observation);
+				System.out.println("sending single observation, request from app");
+				sendSingleObs();
 				break;
 			case MSG_COUNT_LOCAL_OBS:
 				db.open();
@@ -883,6 +956,11 @@ public class CbService extends Service {
 		}
 	}
 
+	public void sendSingleObs() {
+		SingleReadingSender singleSender = new SingleReadingSender();
+		mHandler.post(singleSender);
+	}
+	
 	/**
 	 * Remove older data from cache to keep the size reasonable
 	 * 

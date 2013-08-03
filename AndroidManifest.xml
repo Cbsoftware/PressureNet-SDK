@@ -20,7 +20,11 @@
         android:theme="@style/AppTheme" >
         
         <service android:name=".CbService"
-            android:enabled="true" />
+            android:enabled="true" >
+             <intent-filter>
+                <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT" />
+            </intent-filter>
+            </service>
         
         <receiver android:name="ca.cumulonimbus.pressurenetsdk.CbBroadcastReceiver">  
 		    <intent-filter>  
