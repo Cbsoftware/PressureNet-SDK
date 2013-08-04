@@ -1072,7 +1072,9 @@ public class CbService extends Service  {
 
 	public void stopDataStream() {
 		log("cbservice stopping stream");
-		dataCollector.stopCollectingData();
+		if(dataCollector!=null) {
+			dataCollector.stopCollectingData();
+		}
 	}
 
 	/**
