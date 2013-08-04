@@ -16,11 +16,13 @@ import android.app.Service;
 import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
+import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -112,13 +114,13 @@ public class CbService extends Service  {
 	private CbObservation collectedObservation;
 	
 	private final Handler mHandler = new Handler();
+
 	Messenger mMessenger = new Messenger(new IncomingHandler());
 
 	ArrayList<CbObservation> offlineBuffer = new ArrayList<CbObservation>();
 
 	private long lastPressureChangeAlert = 0;
 	
- 
 	/**
 	 * Find all the data for an observation.
 	 * 
@@ -233,155 +235,165 @@ public class CbService extends Service  {
 
 		public void run() {
 			log("collecting and submitting " + settingsHandler.getServerURL());
+			int dataCollecting = dataCollector.startCollectingData(null);
 			long base = SystemClock.uptimeMillis();
 
-			int dataCollecting = dataCollector.startCollectingData(null);
-		
-			if (settingsHandler.isCollectingData()) {
+			boolean okayToGo = true;
+			
+			// Check if we're supposed to be charging and if we are.
+			// Bail if appropriate
+			if(settingsHandler.isOnlyWhenCharging()) {
+				if(!isCharging()) {
+					okayToGo = false;
+				}
+			}
+
+							
+			if (okayToGo && settingsHandler.isCollectingData()) {
 				// Collect
 				CbObservation singleObservation = new CbObservation();
 				singleObservation = collectNewObservation();
-				if(singleObservation == null) {
-					return;
-				}
-				if (singleObservation.getObservationValue() != 0.0) {
-					// Store in database
-					db.open();
-					long count = db.addObservation(singleObservation);
-
-					db.close();
-
-					try {
-						if (settingsHandler.isSharingData()) {
-							// Send if we're online
-							if (isNetworkAvailable()) {
-								log("online and sending");
-								singleObservation
-										.setClientKey(getApplicationContext()
-												.getPackageName());
-								sendCbObservation(singleObservation);
-
-								// also check and send the offline buffer
-								if (offlineBuffer.size() > 0) {
-									System.out.println("sending "
-											+ offlineBuffer.size()
-											+ " offline buffered obs");
-									for (CbObservation singleOffline : offlineBuffer) {
-										sendCbObservation(singleObservation);
+				if(singleObservation != null) {
+					
+					if (singleObservation.getObservationValue() != 0.0) {
+						// Store in database
+						db.open();
+						long count = db.addObservation(singleObservation);
+	
+						db.close();
+	
+						try {
+							if (settingsHandler.isSharingData()) {
+								// Send if we're online
+								if (isNetworkAvailable()) {
+									log("online and sending");
+									singleObservation
+											.setClientKey(getApplicationContext()
+													.getPackageName());
+									sendCbObservation(singleObservation);
+	
+									// also check and send the offline buffer
+									if (offlineBuffer.size() > 0) {
+										System.out.println("sending "
+												+ offlineBuffer.size()
+												+ " offline buffered obs");
+										for (CbObservation singleOffline : offlineBuffer) {
+											sendCbObservation(singleObservation);
+										}
+										offlineBuffer.clear();
 									}
-									offlineBuffer.clear();
+								} else {
+									log("didn't send");
+									// / offline buffer variable
+									// TODO: put this in the DB to survive longer
+									offlineBuffer.add(singleObservation);
+	
 								}
-							} else {
-								log("didn't send");
-								// / offline buffer variable
-								// TODO: put this in the DB to survive longer
-								offlineBuffer.add(singleObservation);
-
 							}
-						}
-
-						// If notifications are enabled,
-						if (settingsHandler.isSendNotifications()) {
-							// check for pressure local trend changes and notify
-							// the client
-
-							// ensure this only happens every once in a while
-							long rightNow = System.currentTimeMillis();
-							long threeHours = 1000 * 60 * 60 * 3;
-							if (rightNow - lastPressureChangeAlert > (threeHours)) {
-								long timeLength = 1000 * 60 * 60 * 6;
-								db.open();
-								Cursor localCursor = db.runLocalAPICall(-90,
-										90, -180, 180,
-										System.currentTimeMillis()
-												- (timeLength),
-										System.currentTimeMillis(), 100);
-								ArrayList<CbObservation> recents = new ArrayList<CbObservation>();
-								while (localCursor.moveToNext()) {
-									// just need observation value, time, and
-									// location
-									CbObservation obs = new CbObservation();
-									obs.setObservationValue(localCursor
-											.getDouble(7));
-									obs.setTime(localCursor.getLong(9));
-									Location location = new Location("network");
-									location.setLatitude(localCursor
-											.getDouble(1));
-									location.setLongitude(localCursor
-											.getDouble(2));
-									obs.setLocation(location);
-									recents.add(obs);
-								}
-								String tendencyChange = CbScience
-										.changeInTrend(recents);
-								db.close();
-
-								if (tendencyChange.contains(",")
-										&& (!tendencyChange.toLowerCase()
-												.contains("unknown"))) {
-									String[] tendencies = tendencyChange
-											.split(",");
-									if (!tendencies[0].equals(tendencies[1])) {
-										System.out.println("Trend change! "
-												+ tendencyChange);
-
-										// String tendency =
-										// CbScience.findApproximateTendency(recents);
-										// System.out.println("CbService CbScience submit-time tendency "
-										// + tendency + " from " +
-										// recents.size());
-										Notification.Builder mBuilder = new Notification.Builder(
-												service)
-												.setSmallIcon(
-														android.R.drawable.ic_dialog_info)
-												.setContentTitle("pressureNET")
-												.setContentText(
-														"Trend change: "
-																+ tendencyChange);
-										// Creates an explicit intent for an
-										// Activity in your app
-										Intent resultIntent = new Intent();
-
-										// The stack builder object will contain
-										// an artificial back stack for the
-										// started Activity.
-										// This ensures that navigating backward
-										// from the Activity leads out of
-										// your application to the Home screen.
-										TaskStackBuilder stackBuilder = TaskStackBuilder
-												.create(service);
-										// Adds the back stack for the Intent
-										// (but not the Intent itself)
-										// stackBuilder.addParentStack(CbService.class);
-										// Adds the Intent that starts the
-										// Activity to the top of the stack
-										stackBuilder
-												.addNextIntent(resultIntent);
-										PendingIntent resultPendingIntent = stackBuilder
-												.getPendingIntent(
-														0,
-														PendingIntent.FLAG_UPDATE_CURRENT);
-										mBuilder.setContentIntent(resultPendingIntent);
-										NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-										// mId allows you to update the
-										// notification later on.
-										mNotificationManager.notify(
-												NOTIFICATION_ID,
-												mBuilder.build());
-										lastPressureChangeAlert = rightNow;
-									} else {
-										System.out.println("trends equal "
-												+ tendencyChange);
+	
+							// If notifications are enabled,
+							if (settingsHandler.isSendNotifications()) {
+								// check for pressure local trend changes and notify
+								// the client
+	
+								// ensure this only happens every once in a while
+								long rightNow = System.currentTimeMillis();
+								long threeHours = 1000 * 60 * 60 * 3;
+								if (rightNow - lastPressureChangeAlert > (threeHours)) {
+									long timeLength = 1000 * 60 * 60 * 6;
+									db.open();
+									Cursor localCursor = db.runLocalAPICall(-90,
+											90, -180, 180,
+											System.currentTimeMillis()
+													- (timeLength),
+											System.currentTimeMillis(), 100);
+									ArrayList<CbObservation> recents = new ArrayList<CbObservation>();
+									while (localCursor.moveToNext()) {
+										// just need observation value, time, and
+										// location
+										CbObservation obs = new CbObservation();
+										obs.setObservationValue(localCursor
+												.getDouble(7));
+										obs.setTime(localCursor.getLong(9));
+										Location location = new Location("network");
+										location.setLatitude(localCursor
+												.getDouble(1));
+										location.setLongitude(localCursor
+												.getDouble(2));
+										obs.setLocation(location);
+										recents.add(obs);
 									}
+									String tendencyChange = CbScience
+											.changeInTrend(recents);
+									db.close();
+	
+									if (tendencyChange.contains(",")
+											&& (!tendencyChange.toLowerCase()
+													.contains("unknown"))) {
+										String[] tendencies = tendencyChange
+												.split(",");
+										if (!tendencies[0].equals(tendencies[1])) {
+											System.out.println("Trend change! "
+													+ tendencyChange);
+	
+											// String tendency =
+											// CbScience.findApproximateTendency(recents);
+											// System.out.println("CbService CbScience submit-time tendency "
+											// + tendency + " from " +
+											// recents.size());
+											Notification.Builder mBuilder = new Notification.Builder(
+													service)
+													.setSmallIcon(
+															android.R.drawable.ic_dialog_info)
+													.setContentTitle("pressureNET")
+													.setContentText(
+															"Trend change: "
+																	+ tendencyChange);
+											// Creates an explicit intent for an
+											// Activity in your app
+											Intent resultIntent = new Intent();
+	
+											// The stack builder object will contain
+											// an artificial back stack for the
+											// started Activity.
+											// This ensures that navigating backward
+											// from the Activity leads out of
+											// your application to the Home screen.
+											TaskStackBuilder stackBuilder = TaskStackBuilder
+													.create(service);
+											// Adds the back stack for the Intent
+											// (but not the Intent itself)
+											// stackBuilder.addParentStack(CbService.class);
+											// Adds the Intent that starts the
+											// Activity to the top of the stack
+											stackBuilder
+													.addNextIntent(resultIntent);
+											PendingIntent resultPendingIntent = stackBuilder
+													.getPendingIntent(
+															0,
+															PendingIntent.FLAG_UPDATE_CURRENT);
+											mBuilder.setContentIntent(resultPendingIntent);
+											NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+											// mId allows you to update the
+											// notification later on.
+											mNotificationManager.notify(
+													NOTIFICATION_ID,
+													mBuilder.build());
+											lastPressureChangeAlert = rightNow;
+										} else {
+											System.out.println("trends equal "
+													+ tendencyChange);
+										}
+									}
+	
+								} else {
+									// wait
 								}
-
-							} else {
-								// wait
 							}
+						} catch (Exception e) {
+							e.printStackTrace();
+	
 						}
-					} catch (Exception e) {
-						e.printStackTrace();
-
 					}
 				}
 			} else {
@@ -502,6 +514,30 @@ public class CbService extends Service  {
 		super.onCreate();
 	}
 
+	/** 
+	 * Check charge state for preferences.
+	 * TODO: In future, adjust our collection and submission frequency 
+	 * based on battery level.
+	 */
+	public boolean isCharging() {
+		// Check battery and charging status
+		IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+		Intent batteryStatus = getApplicationContext().registerReceiver(null, ifilter);
+
+		// Are we charging / charged?
+		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+		boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+		                     status == BatteryManager.BATTERY_STATUS_FULL;
+
+		// How are we charging?
+		/*
+		int chargePlug = batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
+		boolean usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB;
+		boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
+		 */
+		return isCharging;
+	}
+	
 	/**
 	 * Start running background data collection methods.
 	 * 
@@ -520,10 +556,10 @@ public class CbService extends Service  {
 				}
 			}
 		}
-			
+		
+		
 		// Check the intent for Settings initialization
 		dataCollector = new CbDataCollector(getID(), getApplicationContext());
-
 		if(runningCount==0) {
 
 			log("starting service code, run count 0");
