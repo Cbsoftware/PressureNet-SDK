@@ -312,21 +312,22 @@ public class CbService extends Service  {
 										// just need observation value, time, and
 										// location
 										CbObservation obs = new CbObservation();
-										obs.setObservationValue(localCursor
-												.getDouble(7));
-										obs.setTime(localCursor.getLong(9));
+										obs.setObservationValue(localCursor.getDouble(8));
+										obs.setTime(localCursor.getLong(10));
 										Location location = new Location("network");
 										location.setLatitude(localCursor
 												.getDouble(1));
 										location.setLongitude(localCursor
 												.getDouble(2));
+										
 										obs.setLocation(location);
 										recents.add(obs);
 									}
 									String tendencyChange = CbScience
 											.changeInTrend(recents);
 									db.close();
-	
+									
+									System.out.println("cbservice trend changes: " + tendencyChange);
 									if (tendencyChange.contains(",")
 											&& (!tendencyChange.toLowerCase()
 													.contains("unknown"))) {

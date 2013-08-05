@@ -28,6 +28,7 @@ public class CbScience {
 		} else if (recents.size() < 3 ) {
 			return "";
 		}
+		System.out.println("change in trend recents size " + recents.size());
 		
 		// split up the lists.
 		Collections.sort(recents, new TimeComparator());
@@ -35,7 +36,6 @@ public class CbScience {
 		List<CbObservation> secondHalf = recents.subList(recents.size() / 2, recents.size() - 1);
 		String firstTendency = CbScience.findApproximateTendency(firstHalf);
 		String secondTendency = CbScience.findApproximateTendency(secondHalf);
-		
 		return firstTendency + "," + secondTendency;
 	}
 	
@@ -60,14 +60,14 @@ public class CbScience {
 			return "Unknown distance";
 		}
 
-		int decision = guessedButGoodDecision(recents);
+		double decision = guessedButGoodDecision(recents);
 
-
-		if (decision == 1) {
+		System.out.println("decision  " + decision);
+		if (decision > .01) {
 			return "Rising";
-		} else if (decision == -1) {
+		} else if (decision <= -.01) {
 			return "Falling";
-		} else if (decision == 0) {
+		} else if ((decision >=-.01 ) && (decision <=.01)) {
 			return "Steady";
 		} else {
 			return "Unknown decision " + decision;
@@ -110,29 +110,31 @@ public class CbScience {
 		}
 	}
 
-	private static int slopeOfBestFit(List<CbObservation> recents) {
-		double time[] = new double[recents.size()];
+	public static double slopeOfBestFit(List<CbObservation> recents) {
+		long time[] = new long[recents.size()];
 		double pressure[] = new double[recents.size()];
 		int x = 0;
 		long sumTime = 0L;
-		long sumPressure = 0L;
+		double sumPressure = 0L;
 		for (CbObservation obs : recents) {
-			time[x] = obs.getTime();
-			sumTime += time[x];
-			sumTime += time[x] * time[x];
-			sumPressure += pressure[x];
+			time[x] = obs.getTime() / (1000 * 3600);
+			sumTime = sumTime + time[x];
+			//sumTime += time[x] * time[x];
 			pressure[x] = obs.getObservationValue();
+			sumPressure = sumPressure + pressure[x];
 			x++;
 		}
-		double timeBar = sumTime / x;
+		long timeBar = sumTime / x;
 		double pressureBar = sumPressure / x;
-		double ttBar = 0.0;
+		double ttBar = 0.0; 
 		double tpBar = 0.0;
 		for (int y = 0; y < x; y++) {
 			ttBar += (time[y] - timeBar) * (time[y] - timeBar);
 			tpBar += (time[y] - timeBar) * (pressure[y] - pressureBar);
 		}
 		double beta1 = tpBar / ttBar;
+		return beta1;
+		/*
 		if (beta1 < -0.1) {
 			return -1;
 		} else if (beta1 > 0.1) {
@@ -142,31 +144,21 @@ public class CbScience {
 		} else {
 			return 0;
 		}
+		*/
 	}
 
 	// Take a good guess about the recent meteorological trends
 	// (TODO: There's too much sorting going on here. Should use min and max)
-	private static int guessedButGoodDecision(List<CbObservation> recents) {
+	public static double guessedButGoodDecision(List<CbObservation> recents) {
 		// Sort by pressure
 		Collections.sort(recents, new SensorValueComparator());
 		double minPressure = recents.get(0).getObservationValue();
 		double maxPressure = recents.get(recents.size() - 1)
 				.getObservationValue();
-
 		// Sort by time
 		Collections.sort(recents, new TimeComparator());
-		double minTime = recents.get(0).getTime();
-		double maxTime = recents.get(recents.size() - 1).getTime();
-		// Start time at 0
-		for (CbObservation obs : recents) {
-			// we'd like to compare delta pressure and delta time
-			// preferably in millibars and hours.
-			obs.setTime((long)(obs.getTime() - minTime) / (1000 * 3600));
-			obs.setObservationValue(obs.getObservationValue() - minPressure);
-		}
-		int slope = slopeOfBestFit(recents);
-
-		return slope;
+		
+		return slopeOfBestFit(recents);
 	}
 
 
