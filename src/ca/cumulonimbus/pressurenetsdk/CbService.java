@@ -9,11 +9,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -58,9 +54,7 @@ public class CbService extends Service  {
 	String serverURL = "https://pressurenet.cumulonimbus.ca/";
 
 	private int runningCount = 0;
-	
-	private static final int NOTIFICATION_ID = 12345;
-	
+		
 	public static String ACTION_SEND_MEASUREMENT = "SendMeasurement";
 
 	// Service Interaction API Messages
@@ -109,6 +103,7 @@ public class CbService extends Service  {
 	public static final int MSG_GET_API_RECENTS_FOR_GRAPH = 36;
 	public static final int MSG_API_RECENTS_FOR_GRAPH = 37;
 	
+	
 	long lastAPICall = System.currentTimeMillis();
 
 	private CbObservation collectedObservation;
@@ -120,6 +115,8 @@ public class CbService extends Service  {
 	ArrayList<CbObservation> offlineBuffer = new ArrayList<CbObservation>();
 
 	private long lastPressureChangeAlert = 0;
+	
+	Message lastMessage;
 	
 	/**
 	 * Find all the data for an observation.
@@ -224,7 +221,6 @@ public class CbService extends Service  {
 				}
 			} 
 		}
-		
 	}
 	
 	/**
@@ -337,49 +333,19 @@ public class CbService extends Service  {
 											System.out.println("Trend change! "
 													+ tendencyChange);
 	
-											// String tendency =
-											// CbScience.findApproximateTendency(recents);
-											// System.out.println("CbService CbScience submit-time tendency "
-											// + tendency + " from " +
-											// recents.size());
-											Notification.Builder mBuilder = new Notification.Builder(
-													service)
-													.setSmallIcon(
-															android.R.drawable.ic_dialog_info)
-													.setContentTitle("pressureNET")
-													.setContentText(
-															"Trend change: "
-																	+ tendencyChange);
-											// Creates an explicit intent for an
-											// Activity in your app
-											Intent resultIntent = new Intent();
-	
-											// The stack builder object will contain
-											// an artificial back stack for the
-											// started Activity.
-											// This ensures that navigating backward
-											// from the Activity leads out of
-											// your application to the Home screen.
-											TaskStackBuilder stackBuilder = TaskStackBuilder
-													.create(service);
-											// Adds the back stack for the Intent
-											// (but not the Intent itself)
-											// stackBuilder.addParentStack(CbService.class);
-											// Adds the Intent that starts the
-											// Activity to the top of the stack
-											stackBuilder
-													.addNextIntent(resultIntent);
-											PendingIntent resultPendingIntent = stackBuilder
-													.getPendingIntent(
-															0,
-															PendingIntent.FLAG_UPDATE_CURRENT);
-											mBuilder.setContentIntent(resultPendingIntent);
-											NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-											// mId allows you to update the
-											// notification later on.
-											mNotificationManager.notify(
-													NOTIFICATION_ID,
-													mBuilder.build());
+											
+											// TODO: send message to deliver
+											// Android notification of tendency change
+											try {
+												if(lastMessage != null) {
+													if(lastMessage.replyTo!=null) {
+														lastMessage.replyTo.send(Message.obtain(null,
+																MSG_CHANGE_NOTIFICATION, tendencyChange));
+													}
+												}
+											} catch(Exception e) {
+												
+											}
 											lastPressureChangeAlert = rightNow;
 										} else {
 											System.out.println("trends equal "
@@ -691,8 +657,10 @@ public class CbService extends Service  {
 	 * Handler of incoming messages from clients.
 	 */
 	class IncomingHandler extends Handler {
+		
 		@Override
 		public void handleMessage(Message msg) {
+			lastMessage = msg;
 			switch (msg.what) {
 			case MSG_STOP:
 				log("message. bound service says stop");
@@ -731,8 +699,8 @@ public class CbService extends Service  {
 				}
 				break;
 			case MSG_START_AUTOSUBMIT:
-				log("start autosubmit");
-				startWithDatabase();
+				//log("start autosubmit");
+				//startWithDatabase();
 				break;
 			case MSG_STOP_AUTOSUBMIT:
 				log("stop autosubmit");
