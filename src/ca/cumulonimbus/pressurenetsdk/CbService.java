@@ -589,7 +589,7 @@ public class CbService extends Service  {
 
 			settingsHandler.setSendNotifications(preferenceSendNotifications);
 			
-			boolean useGPS = sharedPreferences.getBoolean("use_gps", false);
+			boolean useGPS = sharedPreferences.getBoolean("use_gps", true);
 			boolean onlyWhenCharging = sharedPreferences.getBoolean("only_when_charging", false);
 			System.out.println("starting with intent gps " + useGPS);
 			settingsHandler.setUseGPS(useGPS);
