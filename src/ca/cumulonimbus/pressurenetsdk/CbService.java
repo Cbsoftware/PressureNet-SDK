@@ -27,6 +27,7 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
+import android.widget.Toast;
 
 /**
  * Represent developer-facing pressureNET API Background task; manage and run
@@ -236,13 +237,16 @@ public class CbService extends Service  {
 
 			boolean okayToGo = true;
 			
+			// retrieve updated settings
+			settingsHandler = settingsHandler.getSettings();
+			
 			// Check if we're supposed to be charging and if we are.
 			// Bail if appropriate
 			if(settingsHandler.isOnlyWhenCharging()) {
 				if(!isCharging()) {
 					okayToGo = false;
-				}
-			}
+				} 
+			} 
 
 							
 			if (okayToGo && settingsHandler.isCollectingData()) {
