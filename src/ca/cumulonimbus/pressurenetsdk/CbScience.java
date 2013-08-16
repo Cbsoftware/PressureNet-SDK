@@ -74,6 +74,11 @@ public class CbScience {
 		}
 	}
 	
+	/**
+	 * Determine if a list of locations are all close by
+	 * @param recents
+	 * @return
+	 */
 	private static boolean locationsAreClose(List<CbObservation> recents) {
 		double minLat = 90;
 		double maxLat = -90;
@@ -110,6 +115,11 @@ public class CbScience {
 		}
 	}
 
+	/**
+	 * Calculate the slope of a line of best fit
+	 * @param recents
+	 * @return
+	 */
 	public static double slopeOfBestFit(List<CbObservation> recents) {
 		long time[] = new long[recents.size()];
 		double pressure[] = new double[recents.size()];
@@ -134,22 +144,17 @@ public class CbScience {
 		}
 		double beta1 = tpBar / ttBar;
 		return beta1;
-		/*
-		if (beta1 < -0.1) {
-			return -1;
-		} else if (beta1 > 0.1) {
-			return 1;
-		} else if (beta1 >= -0.1 && beta1 <= 0.1) {
-			return 0;
-		} else {
-			return 0;
-		}
-		*/
 	}
 
-	// Take a good guess about the recent meteorological trends
-	// (TODO: There's too much sorting going on here. Should use min and max)
+	/**
+	 *  Take a good guess about the recent trends
+	 *  to see if they appear meteorological  
+	 *   
+	 * @param recents
+	 * @return
+	 */
 	public static double guessedButGoodDecision(List<CbObservation> recents) {
+		// (TODO: There's too much sorting going on here. Should use min and max)
 		// Sort by pressure
 		Collections.sort(recents, new SensorValueComparator());
 		double minPressure = recents.get(0).getObservationValue();
@@ -162,6 +167,11 @@ public class CbScience {
 	}
 
 
+	/**
+	 * Compare two current conditions' time vales
+	 * @author jacob
+	 *
+	 */
 	public static class ConditionTimeComparator implements Comparator<CbCurrentCondition> {
 		@Override
 		public int compare(CbCurrentCondition o1, CbCurrentCondition o2) {
@@ -173,8 +183,11 @@ public class CbScience {
 		}
 	}
 	
-
-	
+	/**
+	 * Compare to observation's time values
+	 * @author jacob
+	 *
+	 */
 	public static class TimeComparator implements Comparator<CbObservation> {
 		@Override
 		public int compare(CbObservation o1, CbObservation o2) {
@@ -186,6 +199,11 @@ public class CbScience {
 		}
 	}
 
+	/**
+	 * Compare to observation's sensor values
+	 * @author jacob
+	 *
+	 */
 	public static class SensorValueComparator implements
 			Comparator<CbObservation> {
 		@Override

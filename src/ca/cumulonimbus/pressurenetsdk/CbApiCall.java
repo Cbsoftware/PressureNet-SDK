@@ -2,6 +2,11 @@ package ca.cumulonimbus.pressurenetsdk;
 
 import java.util.ArrayList;
 
+/**
+ * Describe a call to the pressureNET Live API
+ * @author jacob
+ *
+ */
 public class CbApiCall {
 
 	private boolean global = false;

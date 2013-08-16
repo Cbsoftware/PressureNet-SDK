@@ -60,7 +60,10 @@ public class CbDataCollector implements SensorEventListener{
 		return recentObservations;
 	}
 
-	
+	/**
+	 * Access the database to fetch recent, locally-recorded observations 
+	 * @return
+	 */
     public ArrayList<CbObservation> getRecentDatabaseObservations() {
     	ArrayList<CbObservation> recentDbList = new ArrayList<CbObservation>();
     	CbDb db = new CbDb(context);
@@ -96,6 +99,12 @@ public class CbDataCollector implements SensorEventListener{
 		this.recentObservations = recentObservations;
 	}
 
+	/**
+	 * Start collecting sensor data. 
+	 * 
+	 * @param m
+	 * @return
+	 */
 	public int startCollectingData(Messenger m) {
 		this.msgr = m;
     	streaming = true;
@@ -121,6 +130,9 @@ public class CbDataCollector implements SensorEventListener{
     	}
     }
     
+	/**
+	 * Stop collecting sensor data
+	 */
     public void stopCollectingData() {
     	sm = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 		sm.unregisterListener(this);

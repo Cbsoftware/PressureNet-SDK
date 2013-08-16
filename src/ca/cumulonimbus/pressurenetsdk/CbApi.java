@@ -90,8 +90,6 @@ public class CbApi {
 		Messenger replyToApp = null;
 		private CbApiCall apiCall;
 		
-		
-		
 		public CbApiCall getApiCall() {
 			return apiCall;
 		}

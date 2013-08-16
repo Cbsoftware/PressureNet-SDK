@@ -27,7 +27,7 @@ import android.os.AsyncTask;
 
 
 /**
- * Securely send collected data to servers
+ * Securely send collected data to servers.
  * 
  * @author jacob
  *
@@ -131,7 +131,9 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		//System.out.println(message);
 	}
 
-    // Used to write a log to SD card. Not used unless logging enabled.
+    /**
+     * Prepare to write a log to SD card. Not used unless logging enabled.
+     */
     public void setUpFiles() {
     	try {
 	    	File homeDirectory = context.getExternalFilesDir(null);
@@ -152,8 +154,11 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		super.onPostExecute(result);
 	}
 	
-	// Log data to SD card for debug purposes.
-	// To enable logging, ensure the Manifest allows writing to SD card.
+	/**
+	 * Log data to SD card for debug purposes.
+	 * To enable logging, ensure the Manifest allows writing to SD card.
+	 * @param text
+	 */
 	public void logToFile(String text) {
 		try {
 			OutputStream output = new FileOutputStream(mAppDir + "/log.txt", true);

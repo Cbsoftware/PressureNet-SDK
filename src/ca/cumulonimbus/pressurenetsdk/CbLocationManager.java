@@ -39,6 +39,10 @@ public class CbLocationManager {
     
     private Location currentBestLocation;
 	
+    /**
+     * Construct our location manager using network and gps managers, preferences
+     * @param ctx
+     */
 	public CbLocationManager(Context ctx) {
 		context = ctx;
 		setUpFiles();
@@ -67,10 +71,18 @@ public class CbLocationManager {
     	}
 	}
 	
+	/**
+	 * Give the current best location 
+	 * @return
+	 */
 	public Location getCurrentBestLocation() {
 		return currentBestLocation;
 	}
 	
+	/**
+	 * Stop all location listeners
+	 * @return
+	 */
 	public boolean stopGettingLocations() {
 		try {
 			if(locationListener!=null) {
@@ -90,7 +102,10 @@ public class CbLocationManager {
 		}
 	}
 	
-	// Get the user's location from the location service
+	/**
+	 * Get the user's location from the location service
+	 * @return
+	 */
     public boolean startGettingLocations() {
     	
     	// Define a listener that responds to location updates
@@ -182,7 +197,9 @@ public class CbLocationManager {
 	}
 	
 
-    // Used to write a log to SD card. Not used unless logging enabled.
+    /**
+     *  Prepare to write a log to SD card. Not used unless logging enabled.
+     */
     public void setUpFiles() {
     	try {
 	    	File homeDirectory = context.getExternalFilesDir(null);
@@ -194,8 +211,11 @@ public class CbLocationManager {
     	}
     }
    
-	// Log data to SD card for debug purposes.
-	// To enable logging, ensure the Manifest allows writing to SD card.
+	/**
+	 * Log data to SD card for debug purposes.
+	 * To enable logging, ensure the Manifest allows writing to SD card.
+	 * @param text
+	 */
 	public void logToFile(String text) {
 		try {
 			OutputStream output = new FileOutputStream(mAppDir + "/log.txt", true);
