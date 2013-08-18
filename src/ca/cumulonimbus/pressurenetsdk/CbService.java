@@ -946,8 +946,17 @@ public class CbService extends Service  {
 				break;
 			case MSG_SEND_CURRENT_CONDITION:
 				CbCurrentCondition condition = (CbCurrentCondition) msg.obj;
-				condition.setSharing_policy(settingsHandler.getShareLevel());
-				sendCbCurrentCondition(condition);
+				if(settingsHandler == null ) {
+					settingsHandler = new CbSettingsHandler(getApplicationContext()); 
+					settingsHandler.setServerURL(serverURL);
+					settingsHandler.setAppID("ca.cumulonimbus.barometernetwork");
+				} 
+				try {
+					condition.setSharing_policy(settingsHandler.getShareLevel());
+					sendCbCurrentCondition(condition);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				break;
 			case MSG_SEND_OBSERVATION:
 				System.out.println("sending single observation, request from app");
@@ -1075,8 +1084,10 @@ public class CbService extends Service  {
 
 	public void startDataStream(Messenger m) {
 		log("cbService starting stream " + (m == null));
-		dataCollector.startCollectingData(m);
-		new StreamObservation().execute(m);
+		if(dataCollector!=null) {
+			dataCollector.startCollectingData(m);
+			new StreamObservation().execute(m);
+		}
 	}
 
 	public void stopDataStream() {
