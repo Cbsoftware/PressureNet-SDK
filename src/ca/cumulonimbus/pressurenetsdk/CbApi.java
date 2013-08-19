@@ -70,7 +70,7 @@ public class CbApi {
 	 */
 	private boolean saveAPIResults(ArrayList<CbWeather> results, CbApiCall api) {
 		db.open();
-		System.out.println("saving api results...");
+		//System.out.println("saving api results...");
 
 		if(results.size()> 0) {
 			db.addWeatherArrayList(results, api);
@@ -145,13 +145,12 @@ public class CbApi {
 
 				serverURL = serverURL + paramString;
 				apiCall.setCallURL(serverURL);
-				System.out.println("cbservice api sending " + serverURL);
+				//System.out.println("cbservice api sending " + serverURL);
 				HttpGet get = new HttpGet(serverURL);
 				// Execute the GET call and obtain the response
 				HttpResponse getResponse = client.execute(get);
 				HttpEntity responseEntity = getResponse.getEntity();
-				System.out.println("response "
-						+ responseEntity.getContentLength());
+				//System.out.println("response " + responseEntity.getContentLength());
 
 				BufferedReader r = new BufferedReader(new InputStreamReader(
 						responseEntity.getContent()));
@@ -165,7 +164,7 @@ public class CbApi {
 					responseText = total.toString();
 				}
 			} catch (Exception e) {
-				System.out.println("api error");
+				//System.out.println("api error");
 				e.printStackTrace();
 			}
 			return responseText;
@@ -191,8 +190,7 @@ public class CbApi {
 
 			@Override
 			protected void onPostExecute(String result) {
-				System.out.println("saved " + callResults.size()
-						+ " api call results");
+				//System.out.println("saved " + callResults.size() + " api call results");
 				caller.notifyAPIResult(replyToApp, callResults.size());	       
 			
 				super.onPostExecute(result);
@@ -212,7 +210,7 @@ public class CbApi {
 	 */
 	private ArrayList<CbWeather> processJSONResult(String resultJSON, CbApiCall apiCall) {
 		ArrayList<CbWeather> obsFromJSON = new ArrayList<CbWeather>();
-		System.out.println("processing json result for " + apiCall.getApiName() + " call type " + apiCall.getCallType());
+		//System.out.println("processing json result for " + apiCall.getApiName() + " call type " + apiCall.getCallType());
 		try {
 			JSONArray jsonArray = new JSONArray(resultJSON);
 			for (int i = 0; i < jsonArray.length(); i++) {

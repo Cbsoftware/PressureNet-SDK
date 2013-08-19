@@ -53,7 +53,7 @@ public class CbLocationManager {
     		settings = new CbSettingsHandler(context);
     		settings = settings.getSettings();
     		
-    		System.out.println("cblocationmanager allowed gps? " + settings.isUseGPS());
+    		//System.out.println("cblocationmanager allowed gps? " + settings.isUseGPS());
     		Location lastKnownNetwork = networkLocationManager.getLastKnownLocation("network");
     
     		if(settings.isUseGPS()) {
@@ -231,7 +231,7 @@ public class CbLocationManager {
 	
     public void log(String message) {
     	//logToFile(message);
-    	///System.out.println(message);
+    	/////System.out.println(message);
     }
 	public int getMinDistance() {
 		return minDistance;

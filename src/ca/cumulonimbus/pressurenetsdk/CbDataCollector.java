@@ -149,7 +149,7 @@ public class CbDataCollector implements SensorEventListener{
 		pressureObservation.setObservationUnit("mbar");
 		pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
 		pressureObservation.setSharing(settings.getShareLevel());
-		System.out.println("share level " + settings.getShareLevel() + " " + userID);
+		//System.out.println("share level " + settings.getShareLevel() + " " + userID);
 		return pressureObservation;
 	}
 	
@@ -170,7 +170,7 @@ public class CbDataCollector implements SensorEventListener{
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		if(event.sensor.getType() == Sensor.TYPE_PRESSURE) {
-			System.out.println("new pressure reading " + event.values[0]);
+			//System.out.println("new pressure reading " + event.values[0]);
 			recentPressureReading = event.values[0];
 			lastPressureTime = System.currentTimeMillis();
 		} else if(event.sensor.getType() == TYPE_RELATIVE_HUMIDITY) {
@@ -190,7 +190,7 @@ public class CbDataCollector implements SensorEventListener{
 			CbDb db = new CbDb(context);
 			db.open();
 			long result = db.addObservation(observation );
-			//System.out.println("streaming db add, result count " + result);
+			////System.out.println("streaming db add, result count " + result);
 			db.close();
 			
 			if(msgr!=null) {

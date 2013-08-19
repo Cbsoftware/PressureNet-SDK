@@ -37,7 +37,7 @@ public class CbSettingsHandler {
 	 * Add or update application settings
 	 */
 	public void saveSettings() {
-		System.out.println("Save settings");
+		//System.out.println("Save settings");
 		try {
 			db = new CbDb(context);
 			db.open();
@@ -66,7 +66,7 @@ public class CbSettingsHandler {
 				this.onlyWhenCharging = (settings.getInt(4) == 1) ? true: false;
 				this.useGPS = (settings.getInt(9) == 1) ? true : false;
 			}
-			System.out.println("get settings gps " + this.useGPS);
+			//System.out.println("get settings gps " + this.useGPS);
 			db.close();
 			return this;
 		} catch(Exception e) {

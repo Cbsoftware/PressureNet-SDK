@@ -62,7 +62,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
-		System.out.println("cb send do in bg");
+		//System.out.println("cb send do in bg");
 		DefaultHttpClient client = new DefaultHttpClient();
 		try {
 			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
@@ -83,7 +83,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 				}
 			} 
 			String serverURL = settings.getServerURL();
-			System.out.println("settings url " + serverURL);
+			//System.out.println("settings url " + serverURL);
 			if(isCbOb) {
 				// cb observation
 				serverURL += "add/";
@@ -95,7 +95,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			HttpPost httppost = new HttpPost(serverURL);
 			httppost.setEntity(new UrlEncodedFormEntity(nvps));
 			
-			System.out.println("executing post URL " + serverURL);
+			//System.out.println("executing post URL " + serverURL);
 			
 			HttpResponse resp = client.execute(httppost);
 			HttpEntity responseEntity = resp.getEntity();
@@ -114,7 +114,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			///	dataCollector.stopCollectingData();
 				
 			}
-			System.out.println("addresp " + addResp);
+			//System.out.println("addresp " + addResp);
 			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();
@@ -128,7 +128,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	
 	public void log(String message) {
 		//logToFile(message);
-		//System.out.println(message);
+		////System.out.println(message);
 	}
 
     /**
@@ -147,7 +147,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected void onPostExecute(String result) {
-		System.out.println("data sender post execute " + result);
+		//System.out.println("data sender post execute " + result);
 		if(locationManager!=null) {
 			locationManager.stopGettingLocations();
 		}

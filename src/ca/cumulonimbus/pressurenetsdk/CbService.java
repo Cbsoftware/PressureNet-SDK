@@ -199,9 +199,7 @@ public class CbService extends Service  {
 
 								// also check and send the offline buffer
 								if (offlineBuffer.size() > 0) {
-									System.out.println("sending "
-											+ offlineBuffer.size()
-											+ " offline buffered obs");
+									//System.out.println("sending " + offlineBuffer.size() + " offline buffered obs");
 									for (CbObservation singleOffline : offlineBuffer) {
 										sendCbObservation(singleObservation);
 									}
@@ -274,9 +272,7 @@ public class CbService extends Service  {
 	
 									// also check and send the offline buffer
 									if (offlineBuffer.size() > 0) {
-										System.out.println("sending "
-												+ offlineBuffer.size()
-												+ " offline buffered obs");
+										//System.out.println("sending " + offlineBuffer.size() + " offline buffered obs");
 										for (CbObservation singleOffline : offlineBuffer) {
 											sendCbObservation(singleObservation);
 										}
@@ -327,15 +323,14 @@ public class CbService extends Service  {
 											.changeInTrend(recents);
 									db.close();
 									
-									System.out.println("cbservice trend changes: " + tendencyChange);
+									//System.out.println("cbservice trend changes: " + tendencyChange);
 									if (tendencyChange.contains(",")
 											&& (!tendencyChange.toLowerCase()
 													.contains("unknown"))) {
 										String[] tendencies = tendencyChange
 												.split(",");
 										if (!tendencies[0].equals(tendencies[1])) {
-											System.out.println("Trend change! "
-													+ tendencyChange);
+											//System.out.println("Trend change! " + tendencyChange);
 	
 											
 											// TODO: send message to deliver
@@ -352,8 +347,7 @@ public class CbService extends Service  {
 											}
 											lastPressureChangeAlert = rightNow;
 										} else {
-											System.out.println("trends equal "
-													+ tendencyChange);
+											//System.out.println("trends equal " + tendencyChange);
 										}
 									}
 	
@@ -521,7 +515,7 @@ public class CbService extends Service  {
 			if(intent.getAction() != null ) {
 				if(intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
 					// send just a single measurement
-					System.out.println("sending single observation, request from intent");
+					//System.out.println("sending single observation, request from intent");
 					sendSingleObs();
 					return 0;
 				}
@@ -595,7 +589,7 @@ public class CbService extends Service  {
 			
 			boolean useGPS = sharedPreferences.getBoolean("use_gps", true);
 			boolean onlyWhenCharging = sharedPreferences.getBoolean("only_when_charging", false);
-			System.out.println("starting with intent gps " + useGPS);
+			//System.out.println("starting with intent gps " + useGPS);
 			settingsHandler.setUseGPS(useGPS);
 			settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
 
@@ -640,8 +634,8 @@ public class CbService extends Service  {
 				int useGPS = allSettings.getInt(9);
 				boolean boolCharging = (onlyWhenCharging == 1) ? true : false;
 				boolean boolGPS = (useGPS == 1) ? true : false;
-				System.out.println("only when charging raw " + onlyWhenCharging + " gps " + useGPS);
-				System.out.println("only when charging processed " + boolCharging + " gps " + boolGPS);
+				//System.out.println("only when charging raw " + onlyWhenCharging + " gps " + useGPS);
+				//System.out.println("only when charging processed " + boolCharging + " gps " + boolGPS);
 				settingsHandler.setOnlyWhenCharging(boolCharging);
 				settingsHandler.setUseGPS(boolGPS);
 				settingsHandler.saveSettings();
@@ -735,7 +729,7 @@ public class CbService extends Service  {
 				recentMsg = msg;
 				CbApiCall apiCall = (CbApiCall) msg.obj;
 				if (apiCall == null) {
-					System.out.println("apicall null, bailing");
+					//System.out.println("apicall null, bailing");
 					break;
 				}
 				// run API call
@@ -959,7 +953,7 @@ public class CbService extends Service  {
 				}
 				break;
 			case MSG_SEND_OBSERVATION:
-				System.out.println("sending single observation, request from app");
+				//System.out.println("sending single observation, request from app");
 				sendSingleObs();
 				break;
 			case MSG_COUNT_LOCAL_OBS:
@@ -1003,7 +997,7 @@ public class CbService extends Service  {
 	 * @return
 	 */
 	public void deleteOldData() {
-		System.out.println("deleting old data");
+		//System.out.println("deleting old data");
 		db.open();
 		db.deleteOldCacheData();
 		db.close();
@@ -1012,7 +1006,7 @@ public class CbService extends Service  {
 	public boolean notifyAPIResult(Messenger reply, int count) {
 		try {
 			if (reply == null) {
-				System.out.println("cannot notify, reply is null");
+				//System.out.println("cannot notify, reply is null");
 			} else {
 				reply.send(Message.obtain(null, MSG_API_RESULT_COUNT, count, 0));
 			}
@@ -1163,7 +1157,7 @@ public class CbService extends Service  {
 
 	public void log(String message) {
 		// logToFile(message);
-		System.out.println(message);
+		//System.out.println(message);
 	}
 
 	public CbDataCollector getDataCollector() {

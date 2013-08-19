@@ -28,7 +28,7 @@ public class CbScience {
 		} else if (recents.size() < 3 ) {
 			return "";
 		}
-		System.out.println("change in trend recents size " + recents.size());
+		//System.out.println("change in trend recents size " + recents.size());
 		
 		// split up the lists.
 		Collections.sort(recents, new TimeComparator());
@@ -62,7 +62,7 @@ public class CbScience {
 
 		double decision = guessedButGoodDecision(recents);
 
-		System.out.println("decision  " + decision);
+		//System.out.println("decision  " + decision);
 		if (decision > .01) {
 			return "Rising";
 		} else if (decision <= -.01) {
@@ -106,7 +106,7 @@ public class CbScience {
 		Location.distanceBetween(minLat, minLon, maxLat, maxLon, results);
 		float distanceMeters = results[0];
 		
-		System.out.println(distanceMeters + "; Locations' proximity for change notification: " + minLat + " to " + maxLat + ", " + minLon + " to " + minLon);
+		//System.out.println(distanceMeters + "; Locations' proximity for change notification: " + minLat + " to " + maxLat + ", " + minLon + " to " + minLon);
 
 		if(distanceMeters < 2000) {
 			return true;
