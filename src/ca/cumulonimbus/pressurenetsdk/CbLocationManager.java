@@ -88,18 +88,22 @@ public class CbLocationManager {
 			if(locationListener!=null) {
 				if(networkLocationManager!=null) {
 					networkLocationManager.removeUpdates(locationListener);
-				}
-				if(gpsLocationManager!=null) {
-					gpsLocationManager.removeUpdates(locationListener);				
+					networkLocationManager = null;
 				}
 			}
-			networkLocationManager = null;
-	        gpsLocationManager = null;
-	        return true;
 		} catch(Exception e) {
 			e.printStackTrace();
-			return false;
 		}
+
+		try {
+			if(gpsLocationManager!=null) {
+				gpsLocationManager.removeUpdates(locationListener);
+				gpsLocationManager = null;
+			}
+		} catch(Exception e ) {
+			e.printStackTrace();
+		}
+		return true;
 	}
 	
 	/**
