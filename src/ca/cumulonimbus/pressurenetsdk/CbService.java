@@ -340,25 +340,15 @@ public class CbService extends Service  {
 												if(lastMessenger!= null) {
 													lastMessenger.send(Message.obtain(null,
 																MSG_CHANGE_NOTIFICATION, tendencyChange));
-													System.out
-																.println("sent change notif");
 												} else {
-													System.out.println("readingsender didn't send notif, no lastMessenger");
+													//System.out.println("readingsender didn't send notif, no lastMessenger");
 												}
 											} catch(Exception e) {
 												e.printStackTrace();
 											}
 											lastPressureChangeAlert = rightNow;
 										} else {
-											System.out.println("tendency equal deliver anyway " + tendencyChange);
-											// deliver anyway
-											if(lastMessenger != null) {
-													lastMessenger.send(Message.obtain(null,
-															MSG_CHANGE_NOTIFICATION, tendencyChange));
-													//System.out.println("sent change notif");
-											} else {
-												//System.out.println("didn't send, no lastMessenger");
-											}
+											// System.out.println("tendency equal, not delivering");
 										}
 									}
 	
