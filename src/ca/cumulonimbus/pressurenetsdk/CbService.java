@@ -117,7 +117,7 @@ public class CbService extends Service  {
 
 	private long lastPressureChangeAlert = 0;
 	
-	Message lastMessage;
+	Messenger lastMessenger;
 	
 	/**
 	 * Find all the data for an observation.
@@ -288,6 +288,7 @@ public class CbService extends Service  {
 							}
 	
 							// If notifications are enabled,
+							//System.out.println("is send notif " + settingsHandler.isSendNotifications());
 							if (settingsHandler.isSendNotifications()) {
 								// check for pressure local trend changes and notify
 								// the client
@@ -302,7 +303,7 @@ public class CbService extends Service  {
 											90, -180, 180,
 											System.currentTimeMillis()
 													- (timeLength),
-											System.currentTimeMillis(), 100);
+											System.currentTimeMillis(), 1000);
 									ArrayList<CbObservation> recents = new ArrayList<CbObservation>();
 									while (localCursor.moveToNext()) {
 										// just need observation value, time, and
@@ -323,7 +324,7 @@ public class CbService extends Service  {
 											.changeInTrend(recents);
 									db.close();
 									
-									//System.out.println("cbservice trend changes: " + tendencyChange);
+									//System.out.println("cbservice tendency changes: " + tendencyChange);
 									if (tendencyChange.contains(",")
 											&& (!tendencyChange.toLowerCase()
 													.contains("unknown"))) {
@@ -336,23 +337,34 @@ public class CbService extends Service  {
 											// TODO: send message to deliver
 											// Android notification of tendency change
 											try {
-												if(lastMessage != null) {
-													if(lastMessage.replyTo!=null) {
-														lastMessage.replyTo.send(Message.obtain(null,
+												if(lastMessenger!= null) {
+													lastMessenger.send(Message.obtain(null,
 																MSG_CHANGE_NOTIFICATION, tendencyChange));
-													}
+													System.out
+																.println("sent change notif");
+												} else {
+													System.out.println("readingsender didn't send notif, no lastMessenger");
 												}
 											} catch(Exception e) {
-												
+												e.printStackTrace();
 											}
 											lastPressureChangeAlert = rightNow;
 										} else {
-											//System.out.println("trends equal " + tendencyChange);
+											System.out.println("tendency equal deliver anyway " + tendencyChange);
+											// deliver anyway
+											if(lastMessenger != null) {
+													lastMessenger.send(Message.obtain(null,
+															MSG_CHANGE_NOTIFICATION, tendencyChange));
+													//System.out.println("sent change notif");
+											} else {
+												//System.out.println("didn't send, no lastMessenger");
+											}
 										}
 									}
 	
 								} else {
 									// wait
+									//System.out.println("tendency; hasn't been 3h, min wait time yet");
 								}
 							}
 						} catch (Exception e) {
@@ -658,7 +670,6 @@ public class CbService extends Service  {
 		
 		@Override
 		public void handleMessage(Message msg) {
-			lastMessage = msg;
 			switch (msg.what) {
 			case MSG_STOP:
 				log("message. bound service says stop");
@@ -978,6 +989,13 @@ public class CbService extends Service  {
 									(int) countCacheOnly, 0));
 				} catch (RemoteException re) {
 					re.printStackTrace();
+				}
+				break;
+			case MSG_CHANGE_NOTIFICATION:
+				if(msg.replyTo != null) {
+					lastMessenger = msg.replyTo;
+				} else {
+					// ..
 				}
 				break;
 			default:
