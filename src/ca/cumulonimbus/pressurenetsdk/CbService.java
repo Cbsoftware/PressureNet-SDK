@@ -288,16 +288,16 @@ public class CbService extends Service  {
 							}
 	
 							// If notifications are enabled,
-							//System.out.println("is send notif " + settingsHandler.isSendNotifications());
+							log("is send notif " + settingsHandler.isSendNotifications());
 							if (settingsHandler.isSendNotifications()) {
 								// check for pressure local trend changes and notify
 								// the client
 	
 								// ensure this only happens every once in a while
 								long rightNow = System.currentTimeMillis();
-								long threeHours = 1000 * 60 * 60 * 3;
-								if (rightNow - lastPressureChangeAlert > (threeHours)) {
-									long timeLength = 1000 * 60 * 60 * 6;
+								long sixHours = 1000 * 60 * 60 * 6;
+								if (rightNow - lastPressureChangeAlert > (sixHours)) {
+									long timeLength = 1000 * 60 * 60 * 3;
 									db.open();
 									Cursor localCursor = db.runLocalAPICall(-90,
 											90, -180, 180,
@@ -324,14 +324,14 @@ public class CbService extends Service  {
 											.changeInTrend(recents);
 									db.close();
 									
-									//System.out.println("cbservice tendency changes: " + tendencyChange);
+									log("cbservice tendency changes: " + tendencyChange);
 									if (tendencyChange.contains(",")
 											&& (!tendencyChange.toLowerCase()
 													.contains("unknown"))) {
 										String[] tendencies = tendencyChange
 												.split(",");
 										if (!tendencies[0].equals(tendencies[1])) {
-											//System.out.println("Trend change! " + tendencyChange);
+											log("Trend change! " + tendencyChange);
 	
 											
 											// TODO: send message to deliver
@@ -341,20 +341,31 @@ public class CbService extends Service  {
 													lastMessenger.send(Message.obtain(null,
 																MSG_CHANGE_NOTIFICATION, tendencyChange));
 												} else {
-													//System.out.println("readingsender didn't send notif, no lastMessenger");
+													log("readingsender didn't send notif, no lastMessenger");
 												}
 											} catch(Exception e) {
 												e.printStackTrace();
 											}
 											lastPressureChangeAlert = rightNow;
 										} else {
-											// System.out.println("tendency equal, not delivering");
+											log("tendency equal");
+											try {
+												if(lastMessenger!= null) {
+													lastMessenger.send(Message.obtain(null,
+																MSG_CHANGE_NOTIFICATION, tendencyChange));
+												} else {
+													log("readingsender didn't send notif, no lastMessenger");
+												}
+											} catch(Exception e) {
+												e.printStackTrace();
+											}
+											lastPressureChangeAlert = rightNow;
 										}
 									}
 	
 								} else {
 									// wait
-									//System.out.println("tendency; hasn't been 3h, min wait time yet");
+									log("tendency; hasn't been 1m, min wait time yet");
 								}
 							}
 						} catch (Exception e) {
@@ -595,6 +606,8 @@ public class CbService extends Service  {
 			settingsHandler.setUseGPS(useGPS);
 			settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
 
+			System.out.println("cbservice startwithintent " + settingsHandler);
+			
 			// Seems like new settings. Try adding to the db.
 			settingsHandler.saveSettings();
 
@@ -634,13 +647,19 @@ public class CbService extends Service  {
 				// booleans
 				int onlyWhenCharging = allSettings.getInt(4);
 				int useGPS = allSettings.getInt(9);
-				boolean boolCharging = (onlyWhenCharging == 1) ? true : false;
-				boolean boolGPS = (useGPS == 1) ? true : false;
+				int sendNotifications = allSettings.getInt(8);
+				boolean boolCharging = (onlyWhenCharging > 0);
+				boolean boolGPS = (useGPS > 0);
+				boolean boolSendNotifications = (sendNotifications > 0);
 				//System.out.println("only when charging raw " + onlyWhenCharging + " gps " + useGPS);
 				//System.out.println("only when charging processed " + boolCharging + " gps " + boolGPS);
+				settingsHandler.setSendNotifications(boolSendNotifications);
 				settingsHandler.setOnlyWhenCharging(boolCharging);
 				settingsHandler.setUseGPS(boolGPS);
 				settingsHandler.saveSettings();
+				
+				System.out.println("cbservice startwithdb, " + settingsHandler);
+				
 				startAutoSubmit();
 				// but just once
 				break;
@@ -723,6 +742,7 @@ public class CbService extends Service  {
 			case MSG_SET_SETTINGS:
 				log("set settings");
 				CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
+				System.out.println("cbservice received new settings, " + newSettings);
 				newSettings.saveSettings();
 				break;
 			case MSG_GET_LOCAL_RECENTS:
@@ -1165,7 +1185,7 @@ public class CbService extends Service  {
 
 	public void log(String message) {
 		// logToFile(message);
-		//System.out.println(message);
+		System.out.println(message);
 	}
 
 	public CbDataCollector getDataCollector() {
