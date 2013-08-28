@@ -349,23 +349,13 @@ public class CbService extends Service  {
 											lastPressureChangeAlert = rightNow;
 										} else {
 											log("tendency equal");
-											try {
-												if(lastMessenger!= null) {
-													lastMessenger.send(Message.obtain(null,
-																MSG_CHANGE_NOTIFICATION, tendencyChange));
-												} else {
-													log("readingsender didn't send notif, no lastMessenger");
-												}
-											} catch(Exception e) {
-												e.printStackTrace();
-											}
-											lastPressureChangeAlert = rightNow;
+										
 										}
 									}
 	
 								} else {
 									// wait
-									log("tendency; hasn't been 1m, min wait time yet");
+									log("tendency; hasn't been 6h, min wait time yet");
 								}
 							}
 						} catch (Exception e) {
