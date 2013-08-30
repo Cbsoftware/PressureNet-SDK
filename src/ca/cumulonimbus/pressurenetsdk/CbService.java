@@ -199,14 +199,14 @@ public class CbService extends Service  {
 
 								// also check and send the offline buffer
 								if (offlineBuffer.size() > 0) {
-									//System.out.println("sending " + offlineBuffer.size() + " offline buffered obs");
+									log("sending " + offlineBuffer.size() + " offline buffered obs");
 									for (CbObservation singleOffline : offlineBuffer) {
 										sendCbObservation(singleObservation);
 									}
 									offlineBuffer.clear();
 								}
 							} else {
-								log("didn't send");
+								log("didn't send, not sharing data; i.e., offline");
 								// / offline buffer variable
 								// TODO: put this in the DB to survive longer
 								offlineBuffer.add(singleObservation);
@@ -272,7 +272,7 @@ public class CbService extends Service  {
 	
 									// also check and send the offline buffer
 									if (offlineBuffer.size() > 0) {
-										//System.out.println("sending " + offlineBuffer.size() + " offline buffered obs");
+										log("sending " + offlineBuffer.size() + " offline buffered obs");
 										for (CbObservation singleOffline : offlineBuffer) {
 											sendCbObservation(singleObservation);
 										}
@@ -518,7 +518,7 @@ public class CbService extends Service  {
 			if(intent.getAction() != null ) {
 				if(intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
 					// send just a single measurement
-					//System.out.println("sending single observation, request from intent");
+					log("sending single observation, request from intent");
 					sendSingleObs();
 					return 0;
 				}
@@ -592,11 +592,10 @@ public class CbService extends Service  {
 			
 			boolean useGPS = sharedPreferences.getBoolean("use_gps", true);
 			boolean onlyWhenCharging = sharedPreferences.getBoolean("only_when_charging", false);
-			//System.out.println("starting with intent gps " + useGPS);
 			settingsHandler.setUseGPS(useGPS);
 			settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
 
-			System.out.println("cbservice startwithintent " + settingsHandler);
+			log("cbservice startwithintent " + settingsHandler);
 			
 			// Seems like new settings. Try adding to the db.
 			settingsHandler.saveSettings();
@@ -641,14 +640,13 @@ public class CbService extends Service  {
 				boolean boolCharging = (onlyWhenCharging > 0);
 				boolean boolGPS = (useGPS > 0);
 				boolean boolSendNotifications = (sendNotifications > 0);
-				//System.out.println("only when charging raw " + onlyWhenCharging + " gps " + useGPS);
-				//System.out.println("only when charging processed " + boolCharging + " gps " + boolGPS);
+				log("only when charging processed " + boolCharging + " gps " + boolGPS);
 				settingsHandler.setSendNotifications(boolSendNotifications);
 				settingsHandler.setOnlyWhenCharging(boolCharging);
 				settingsHandler.setUseGPS(boolGPS);
 				settingsHandler.saveSettings();
 				
-				System.out.println("cbservice startwithdb, " + settingsHandler);
+				log("cbservice startwithdb, " + settingsHandler);
 				
 				startAutoSubmit();
 				// but just once
@@ -740,7 +738,7 @@ public class CbService extends Service  {
 				recentMsg = msg;
 				CbApiCall apiCall = (CbApiCall) msg.obj;
 				if (apiCall == null) {
-					//System.out.println("apicall null, bailing");
+					//log("apicall null, bailing");
 					break;
 				}
 				// run API call
@@ -964,7 +962,7 @@ public class CbService extends Service  {
 				}
 				break;
 			case MSG_SEND_OBSERVATION:
-				//System.out.println("sending single observation, request from app");
+				log("sending single observation, request from app");
 				sendSingleObs();
 				break;
 			case MSG_COUNT_LOCAL_OBS:
@@ -1015,7 +1013,7 @@ public class CbService extends Service  {
 	 * @return
 	 */
 	public void deleteOldData() {
-		//System.out.println("deleting old data");
+		log("deleting old data");
 		db.open();
 		db.deleteOldCacheData();
 		db.close();
@@ -1024,7 +1022,7 @@ public class CbService extends Service  {
 	public boolean notifyAPIResult(Messenger reply, int count) {
 		try {
 			if (reply == null) {
-				//System.out.println("cannot notify, reply is null");
+				log("cannot notify, reply is null");
 			} else {
 				reply.send(Message.obtain(null, MSG_API_RESULT_COUNT, count, 0));
 			}
@@ -1174,7 +1172,7 @@ public class CbService extends Service  {
 	}
 
 	public void log(String message) {
-		// logToFile(message);
+		logToFile(message);
 		System.out.println(message);
 	}
 

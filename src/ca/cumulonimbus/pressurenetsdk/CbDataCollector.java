@@ -1,6 +1,12 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -25,6 +31,8 @@ public class CbDataCollector implements SensorEventListener{
 	private String userID = "";
 	private SensorManager sm;
 	private Context context;
+	
+	private String mAppDir = "";
 	
 	// TODO: Keep a list of recent readings rather than single values
 	private double recentPressureReading = 0.0;
@@ -149,7 +157,7 @@ public class CbDataCollector implements SensorEventListener{
 		pressureObservation.setObservationUnit("mbar");
 		pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
 		pressureObservation.setSharing(settings.getShareLevel());
-		//System.out.println("share level " + settings.getShareLevel() + " " + userID);
+		log("share level " + settings.getShareLevel() + " " + userID);
 		return pressureObservation;
 	}
 	
@@ -158,6 +166,7 @@ public class CbDataCollector implements SensorEventListener{
 		this.context = ctx;
 		settings = new CbSettingsHandler(ctx);
 		settings = settings.getSettings();
+		setUpFiles();
 	}
 
 	@Override
@@ -170,7 +179,7 @@ public class CbDataCollector implements SensorEventListener{
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		if(event.sensor.getType() == Sensor.TYPE_PRESSURE) {
-			//System.out.println("new pressure reading " + event.values[0]);
+			log("new pressure reading " + event.values[0]);
 			recentPressureReading = event.values[0];
 			lastPressureTime = System.currentTimeMillis();
 		} else if(event.sensor.getType() == TYPE_RELATIVE_HUMIDITY) {
@@ -190,7 +199,7 @@ public class CbDataCollector implements SensorEventListener{
 			CbDb db = new CbDb(context);
 			db.open();
 			long result = db.addObservation(observation );
-			////System.out.println("streaming db add, result count " + result);
+			log("streaming db add, result count " + result);
 			db.close();
 			
 			if(msgr!=null) {
@@ -206,5 +215,48 @@ public class CbDataCollector implements SensorEventListener{
 		} else {
 			stopCollectingData();
 		}
+	}
+	
+	/** 
+	 * Log data to SD card for debug purposes.
+	 * To enable logging, ensure the Manifest allows writing to SD card.
+	 * 
+	 * @param text
+	 */
+	private void logToFile(String text) {
+		try {
+			OutputStream output = new FileOutputStream(mAppDir + "/log.txt",
+					true);
+			String logString = (new Date()).toString() + ": " + text + "\n";
+			output.write(logString.getBytes());
+			output.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Prepare to write a log to SD card. Not used unless logging enabled.
+	 */
+	private void setUpFiles() {
+		try {
+			File homeDirectory = context.getExternalFilesDir(null);
+			if (homeDirectory != null) {
+				mAppDir = homeDirectory.getAbsolutePath();
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Log
+	 */
+	public void log(String message) {
+		System.out.println(message);
+		logToFile(message);
 	}
 }
