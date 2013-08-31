@@ -173,7 +173,6 @@ public class CbService extends Service  {
 		@Override
 		public void run() {
 			log("collecting and submitting single " + settingsHandler.getServerURL());
-			long base = SystemClock.uptimeMillis();
 
 			dataCollector.startCollectingData(null);
 			CbObservation singleObservation = new CbObservation();
@@ -229,14 +228,17 @@ public class CbService extends Service  {
 	private class ReadingSender implements Runnable {
 
 		public void run() {
+			// retrieve updated settings
+			settingsHandler = settingsHandler.getSettings();
+						
 			log("collecting and submitting " + settingsHandler.getServerURL());
+			
 			int dataCollecting = dataCollector.startCollectingData(null);
 			long base = SystemClock.uptimeMillis();
 
 			boolean okayToGo = true;
 			
-			// retrieve updated settings
-			settingsHandler = settingsHandler.getSettings();
+			
 			
 			// Check if we're supposed to be charging and if we are.
 			// Bail if appropriate
@@ -363,11 +365,14 @@ public class CbService extends Service  {
 	
 						}
 					}
+				} else {
+					log("singleobservation is null, not sending");
 				}
 			} else {
 				log("tried collecting, reading zero");
 			}
-			mHandler.postAtTime(this,
+			sender = this;
+			mHandler.postAtTime(sender,
 					base + (settingsHandler.getDataCollectionFrequency()));
 		}
 	}
@@ -566,7 +571,7 @@ public class CbService extends Service  {
 		} else if (timeAgo.equals("1 hour")) {
 			return 1000 * 60 * 60;
 		}
-		return 1000 * 60 * 5;
+		return 1000 * 60 * 10;
 	}
 
 	public void startWithIntent(Intent intent) {
