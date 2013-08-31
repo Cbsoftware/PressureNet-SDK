@@ -467,6 +467,7 @@ public class CbService extends Service  {
 	public void startAutoSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
 
+		mHandler.removeCallbacks(sender);
 		sender = new ReadingSender();
 		mHandler.post(sender);
 	}
