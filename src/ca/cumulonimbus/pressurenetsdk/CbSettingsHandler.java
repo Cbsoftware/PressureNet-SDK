@@ -42,7 +42,8 @@ public class CbSettingsHandler {
 			   "sendNotifications " + sendNotifications + "\n" +
 			   "shareLevel " + shareLevel + "\n" +
 			   "useGPS " + useGPS + "\n" + 
-				"isCollectingData " + collectingData + "\n";}
+			   "isCollectingData " + collectingData + "\n" + 
+			   "isSharingData " + sharingData + "\n";}
 
 	/**
 	 * Add or update application settings
@@ -64,7 +65,7 @@ public class CbSettingsHandler {
 	}
 	
 	public CbSettingsHandler getSettings() {
-		System.out.println("get settings; returning method gives just share* only* useG* send* dataColl* appID isColl*");
+		System.out.println("get settings; returning method gives just share* only* useG* send* dataColl* appID isColl* sharingD*");
 		String appID = "ca.cumulonimbus.barometernetwork";
 		try {
 			db = new CbDb(context);
@@ -80,8 +81,10 @@ public class CbSettingsHandler {
 				this.dataCollectionFrequency = settings.getLong(2);
 				this.appID = settings.getString(1);
 				this.collectingData = (settings.getInt(5) > 0 ) ? true : false;
+				this.sharingData = (settings.getInt(6) > 0 ) ? true : false;
 			}
 			db.close();
+			System.out.println(this);
 			return this;
 		} catch(Exception e) {
 			e.printStackTrace();

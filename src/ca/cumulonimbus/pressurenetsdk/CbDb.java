@@ -106,9 +106,9 @@ public class CbDb {
 			+ " real not null, " + KEY_SHARING + " text not null, " + KEY_TIME
 			+ " real not null, " + KEY_TIMEZONE + " real not null, "
 			+ KEY_USERID + " text not null, " + KEY_SENSOR_NAME
-			+ " text not null, " + KEY_SENSOR_TYPE + " real not null, "
-			+ KEY_SENSOR_VENDOR + " text not null, " + KEY_SENSOR_RESOLUTION
-			+ " real not null, " + KEY_SENSOR_VERSION + " real not null,"
+			+ " text , " + KEY_SENSOR_TYPE + " real , "
+			+ KEY_SENSOR_VENDOR + " text , " + KEY_SENSOR_RESOLUTION
+			+ " real , " + KEY_SENSOR_VERSION + " real ,"
 			+ KEY_OBSERVATION_TREND + " text," + "UNIQUE (" + KEY_LATITUDE
 			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + ", " + KEY_USERID + ","
 			+ KEY_OBSERVATION_VALUE + ") ON CONFLICT REPLACE)";
@@ -163,7 +163,7 @@ public class CbDb {
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 39;
+	private static final int DATABASE_VERSION = 40;
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -717,6 +717,7 @@ public class CbDb {
 		initialValues.put(KEY_TIME, observation.getTime());
 		initialValues.put(KEY_TIMEZONE, observation.getTimeZoneOffset());
 		initialValues.put(KEY_USERID, observation.getUser_id());
+		/*
 		initialValues.put(KEY_SENSOR_NAME, observation.getSensor().getName());
 		initialValues.put(KEY_SENSOR_TYPE, observation.getSensor().getType());
 		initialValues.put(KEY_SENSOR_VENDOR, observation.getSensor()
@@ -725,6 +726,7 @@ public class CbDb {
 				.getResolution());
 		initialValues.put(KEY_SENSOR_VERSION, observation.getSensor()
 				.getVersion());
+		*/
 		initialValues.put(KEY_OBSERVATION_TREND, observation.getTrend());
 		return mDB.insert(OBSERVATIONS_TABLE, null, initialValues);
 	}

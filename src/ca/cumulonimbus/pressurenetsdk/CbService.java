@@ -142,10 +142,14 @@ public class CbService extends Service  {
 			// stop listening for locations
 			LocationStopper stop = new LocationStopper();
 			mHandler.postDelayed(stop, 1000 * 10);
+
+			log("returning pressure obs: " + pressureObservation.getObservationValue());
 			
 			return pressureObservation;
 
 		} catch (Exception e) {
+			log("cbservice CAUSING ALL ISSUES");
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -230,25 +234,25 @@ public class CbService extends Service  {
 		public void run() {
 			// retrieve updated settings
 			settingsHandler = settingsHandler.getSettings();
+			
+			dataCollector.startCollectingData(null);
 						
+			sender = this;
+			long base = SystemClock.uptimeMillis();
+			mHandler.postAtTime(sender,
+					base + (settingsHandler.getDataCollectionFrequency()));
+			
 			log("collecting and submitting " + settingsHandler.getServerURL());
 			
-			int dataCollecting = dataCollector.startCollectingData(null);
-			long base = SystemClock.uptimeMillis();
-
 			boolean okayToGo = true;
-			
-			
-			
 			// Check if we're supposed to be charging and if we are.
 			// Bail if appropriate
 			if(settingsHandler.isOnlyWhenCharging()) {
 				if(!isCharging()) {
 					okayToGo = false;
 				} 
-			} 
-
-							
+			}
+			
 			if (okayToGo && settingsHandler.isCollectingData()) {
 				// Collect
 				CbObservation singleObservation = new CbObservation();
@@ -287,6 +291,8 @@ public class CbService extends Service  {
 									offlineBuffer.add(singleObservation);
 	
 								}
+							} else {
+								log("cbservice not sharing data, didn't send");
 							}
 	
 							// If notifications are enabled,
@@ -369,11 +375,8 @@ public class CbService extends Service  {
 					log("singleobservation is null, not sending");
 				}
 			} else {
-				log("tried collecting, reading zero");
+				log("cbservice is not collecting data.");
 			}
-			sender = this;
-			mHandler.postAtTime(sender,
-					base + (settingsHandler.getDataCollectionFrequency()));
 		}
 	}
 
@@ -466,8 +469,6 @@ public class CbService extends Service  {
 	 */
 	public void startAutoSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
-
-		mHandler.removeCallbacks(sender);
 		sender = new ReadingSender();
 		mHandler.post(sender);
 	}
@@ -600,7 +601,9 @@ public class CbService extends Service  {
 			boolean onlyWhenCharging = sharedPreferences.getBoolean("only_when_charging", false);
 			settingsHandler.setUseGPS(useGPS);
 			settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
-
+			settingsHandler.setSharingData(preferenceShareData);
+			settingsHandler.setShareLevel(preferenceShareLevel);
+			
 			log("cbservice startwithintent " + settingsHandler);
 			
 			// Seems like new settings. Try adding to the db.
@@ -643,13 +646,16 @@ public class CbService extends Service  {
 				int onlyWhenCharging = allSettings.getInt(4);
 				int useGPS = allSettings.getInt(9);
 				int sendNotifications = allSettings.getInt(8);
+				int sharingData = allSettings.getInt(6);
 				boolean boolCharging = (onlyWhenCharging > 0);
 				boolean boolGPS = (useGPS > 0);
 				boolean boolSendNotifications = (sendNotifications > 0);
+				boolean boolSharingData = (sharingData > 0);
 				log("only when charging processed " + boolCharging + " gps " + boolGPS);
 				settingsHandler.setSendNotifications(boolSendNotifications);
 				settingsHandler.setOnlyWhenCharging(boolCharging);
 				settingsHandler.setUseGPS(boolGPS);
+				settingsHandler.setSharingData(boolSharingData);
 				settingsHandler.saveSettings();
 				
 				log("cbservice startwithdb, " + settingsHandler);

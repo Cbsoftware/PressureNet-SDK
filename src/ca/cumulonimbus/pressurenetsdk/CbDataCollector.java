@@ -155,7 +155,7 @@ public class CbDataCollector implements SensorEventListener{
 		pressureObservation.setObservationType("pressure");
 		pressureObservation.setObservationValue(recentPressureReading);
 		pressureObservation.setObservationUnit("mbar");
-		pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
+		//pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
 		pressureObservation.setSharing(settings.getShareLevel());
 		log("share level " + settings.getShareLevel() + " " + userID);
 		return pressureObservation;
@@ -212,8 +212,6 @@ public class CbDataCollector implements SensorEventListener{
 			}
 			
 			
-		} else {
-			stopCollectingData();
 		}
 	}
 	
