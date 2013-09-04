@@ -54,8 +54,6 @@ public class CbService extends Service  {
 
 	String serverURL = "https://pressurenet.cumulonimbus.ca/";
 
-	private int runningCount = 0;
-		
 	public static String ACTION_SEND_MEASUREMENT = "SendMeasurement";
 
 	// Service Interaction API Messages
@@ -535,21 +533,15 @@ public class CbService extends Service  {
 		
 		// Check the intent for Settings initialization
 		dataCollector = new CbDataCollector(getID(), getApplicationContext());
-		if(runningCount==0) {
+		log("starting service code, run count 0");
+		if (intent != null) {
 
-			log("starting service code, run count 0");
-			if (intent != null) {
+			startWithIntent(intent);
 
-				startWithIntent(intent);
-	
-				return START_STICKY;
-			} else {
-				log("INTENT NULL; checking db");
-				startWithDatabase();
-			}
-			runningCount++;
+			return START_STICKY;
 		} else {
-			log("not starting, run count " + runningCount);
+			log("INTENT NULL; checking db");
+			startWithDatabase();
 		}
 		super.onStartCommand(intent, flags, startId);
 		return START_STICKY;
