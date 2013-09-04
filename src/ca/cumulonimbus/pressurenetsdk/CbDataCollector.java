@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 import android.content.Context;
@@ -151,6 +152,7 @@ public class CbDataCollector implements SensorEventListener{
 	public CbObservation getPressureObservation() {
 		CbObservation pressureObservation = new CbObservation();
 		pressureObservation.setTime(System.currentTimeMillis());
+		pressureObservation.setTimeZoneOffset(Calendar.getInstance().getTimeZone().getRawOffset());
 		pressureObservation.setUser_id(userID);
 		pressureObservation.setObservationType("pressure");
 		pressureObservation.setObservationValue(recentPressureReading);
