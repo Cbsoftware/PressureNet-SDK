@@ -14,16 +14,18 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.json.JSONArray;
-import org.json.JSONTokener;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 
 
 /**
@@ -43,8 +45,11 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	
 	private CbDataCollector dataCollector;
 	
+	private Messenger messenger = null;
+	
 	private Context context;
 	private String mAppDir;
+	private boolean userSent;
 	
 	public CbDataSender(Context ctx) {
 		this.context = ctx;
@@ -54,12 +59,48 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	public CbSettingsHandler getSettings() {
 		return settings;
 	}
-	public void setSettings(CbSettingsHandler settings, CbLocationManager locationManager, CbDataCollector dataCollector) {
+	public void setSettings(CbSettingsHandler settings, CbLocationManager locationManager, CbDataCollector dataCollector, Messenger notifyMessenger, boolean fromUser) {
 		this.settings = settings;
 		this.locationManager = locationManager;
 		this.dataCollector = dataCollector;
+		this.messenger = notifyMessenger;
+		this.userSent = fromUser;
 	}
 
+	 private void returnResult(String result) {
+	    	boolean success = true;
+	    	String errorMessage = "";
+	    	try {
+	    		JSONObject jsonResult = new JSONObject(result);
+	    		if(jsonResult.has("success")) {
+	    			success = jsonResult.getBoolean("success");
+	    		}
+	    		if(jsonResult.has("errors")) {
+	    			errorMessage = jsonResult.getString("errors");
+	    		}
+	    		// notify
+	    		if(messenger!=null ) {
+	    			// TODO: currently, only sending result if user initiated the data submission
+	    			// fix this and send results every time, process it app-side better
+	    			try {
+	    				if(userSent) {
+	    	    			log("cbdatasender notifying result of data submission");
+		    				messenger.send(Message.obtain(null,
+									CbService.MSG_DATA_RESULT, errorMessage));
+	    				} else {
+	    					log("cbdatasender not notifying result");
+	    				}
+	    			} catch(RemoteException re) {
+	    				re.printStackTrace();
+	    			}
+	    		} else {
+	    			log("cbdatasender messenger null, not notifying of result");
+	    		}
+	    	} catch(JSONException jsone) {
+	    		
+	    	}
+	    }
+	
 	@Override
 	protected String doInBackground(String... params) {
 		log("cb send do in bg");
@@ -114,6 +155,8 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			}
 			log("addresp " + addResp);
 			
+			returnResult(addResp);
+			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();
 		} catch(IOException ioe) {
@@ -143,6 +186,8 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
     	}
     }
 
+   
+    
 	@Override
 	protected void onPostExecute(String result) {
 		if(locationManager!=null) {

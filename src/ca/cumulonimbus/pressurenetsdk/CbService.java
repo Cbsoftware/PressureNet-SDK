@@ -101,7 +101,8 @@ public class CbService extends Service  {
 	// Graphing
 	public static final int MSG_GET_API_RECENTS_FOR_GRAPH = 36;
 	public static final int MSG_API_RECENTS_FOR_GRAPH = 37;
-	
+	// Success / Failure notification for data submission
+	public static final int MSG_DATA_RESULT = 38;
 	
 	long lastAPICall = System.currentTimeMillis();
 
@@ -115,7 +116,9 @@ public class CbService extends Service  {
 
 	private long lastPressureChangeAlert = 0;
 	
-	Messenger lastMessenger;
+	private Messenger lastMessenger;
+	
+	private boolean fromUser = false;
 	
 	/**
 	 * Find all the data for an observation.
@@ -196,8 +199,10 @@ public class CbService extends Service  {
 								singleObservation
 										.setClientKey(getApplicationContext()
 												.getPackageName());
+								fromUser = true;
 								sendCbObservation(singleObservation);
-
+								fromUser = false;
+								
 								// also check and send the offline buffer
 								if (offlineBuffer.size() > 0) {
 									log("sending " + offlineBuffer.size() + " offline buffered obs");
@@ -418,7 +423,7 @@ public class CbService extends Service  {
 	public boolean sendCbObservation(CbObservation observation) {
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settingsHandler, locationManager, dataCollector);
+			sender.setSettings(settingsHandler, locationManager, dataCollector, lastMessenger, fromUser);
 			sender.execute(observation.getObservationAsParams());
 			return true;
 		} catch (Exception e) {
@@ -436,8 +441,9 @@ public class CbService extends Service  {
 
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settingsHandler, locationManager, dataCollector);
+			sender.setSettings(settingsHandler, locationManager, dataCollector, null, true);
 			sender.execute(account.getAccountAsParams());
+			fromUser = false;
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -454,8 +460,10 @@ public class CbService extends Service  {
 		log("sending cbcurrent condition");
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settingsHandler, locationManager, dataCollector);
+			fromUser = true;
+			sender.setSettings(settingsHandler, locationManager, dataCollector, lastMessenger, fromUser);
 			sender.execute(condition.getCurrentConditionAsParams());
+			fromUser = false;
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -1007,6 +1015,11 @@ public class CbService extends Service  {
 	}
 
 	public void sendSingleObs() {
+		if(settingsHandler != null) {
+			if(settingsHandler.getServerURL()==null ) {
+				settingsHandler.getSettings();
+			}
+		}
 		SingleReadingSender singleSender = new SingleReadingSender();
 		mHandler.post(singleSender);
 	}
