@@ -9,7 +9,10 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -23,11 +26,11 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
-import android.widget.Toast;
 
 /**
  * Represent developer-facing pressureNET API Background task; manage and run
@@ -119,6 +122,8 @@ public class CbService extends Service  {
 	private Messenger lastMessenger;
 	
 	private boolean fromUser = false;
+	
+	Alarm alarm = new Alarm();
 	
 	/**
 	 * Find all the data for an observation.
@@ -239,11 +244,6 @@ public class CbService extends Service  {
 			settingsHandler = settingsHandler.getSettings();
 			
 			dataCollector.startCollectingData(null);
-						
-			sender = this;
-			long base = SystemClock.uptimeMillis();
-			mHandler.postAtTime(sender,
-					base + (settingsHandler.getDataCollectionFrequency()));
 			
 			log("collecting and submitting " + settingsHandler.getServerURL());
 			
@@ -475,10 +475,12 @@ public class CbService extends Service  {
 	 */
 	public void startAutoSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
-		sender = new ReadingSender();
-		mHandler.post(sender);
+		
+		alarm.setAlarm(getApplicationContext(), settingsHandler.getDataCollectionFrequency());
 	}
 
+	
+	
 	@Override
 	public void onDestroy() {
 		log("on destroy");
@@ -546,13 +548,13 @@ public class CbService extends Service  {
 
 			startWithIntent(intent);
 
-			return START_STICKY;
+			return START_NOT_STICKY;
 		} else {
 			log("INTENT NULL; checking db");
 			startWithDatabase();
 		}
 		super.onStartCommand(intent, flags, startId);
-		return START_STICKY;
+		return START_NOT_STICKY;
 	}
 
 	/**
