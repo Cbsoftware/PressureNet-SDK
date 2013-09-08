@@ -537,6 +537,13 @@ public class CbService extends Service  {
 					sendSingleObs();
 					return 0;
 				}
+			} else {
+				if(intent.getBooleanExtra("alarm", false)) {
+					log("cbservice from alarm. sending obs");
+					ReadingSender reading = new ReadingSender();
+					mHandler.post(reading);
+					return 0;
+				}
 			}
 		}
 		

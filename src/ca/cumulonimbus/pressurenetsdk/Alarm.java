@@ -18,7 +18,8 @@ public class Alarm extends BroadcastReceiver {
 				PowerManager.PARTIAL_WAKE_LOCK, "");
 		wl.acquire();
 
-		Intent serviceIntent = new Intent(CbService.ACTION_SEND_MEASUREMENT);
+		Intent serviceIntent = new Intent(context, CbService.class);
+		serviceIntent.putExtra("alarm", true);
 		context.startService(serviceIntent);
 		
 		wl.release();
