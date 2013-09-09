@@ -8,7 +8,10 @@ import android.content.Intent;
 import android.os.PowerManager;
 import android.os.SystemClock;
 
-public class Alarm extends BroadcastReceiver {
+public class CbAlarm extends BroadcastReceiver {
+	
+	private boolean repeating = false;
+	
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		System.out.println("cbservice alarm onreceive, send action_send_measurement");
@@ -25,6 +28,11 @@ public class Alarm extends BroadcastReceiver {
 		wl.release();
 	}
 
+	public void restartAlarm(Context context, long time) {
+		cancelAlarm(context);
+		setAlarm(context, time);
+	}
+	
 	public void setAlarm(Context context, long time) {
 		AlarmManager am = (AlarmManager) context
 				.getSystemService(Context.ALARM_SERVICE);
@@ -33,14 +41,27 @@ public class Alarm extends BroadcastReceiver {
 		am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(),
 				time, pi); // Millisec * Second * Minute
 		System.out.println("cbservice setting alarm  starting now, repeating " + time);
+		repeating = true;
 	}
 	
 	public void cancelAlarm(Context context) {
-		Intent intent = new Intent(context, Alarm.class);
+		System.out.println("cbservice cancelling alarm");
+		Intent intent = new Intent("ca.cumulonimbus.pressurenetsdk.START_ALARM");
 		PendingIntent sender = PendingIntent
 				.getBroadcast(context, 0, intent, 0);
 		AlarmManager alarmManager = (AlarmManager) context
 				.getSystemService(Context.ALARM_SERVICE);
 		alarmManager.cancel(sender);
+		repeating = false;
 	}
+
+	public boolean isRepeating() {
+		return repeating;
+	}
+
+	public void setRepeating(boolean repeating) {
+		this.repeating = repeating;
+	}
+	
+	
 }

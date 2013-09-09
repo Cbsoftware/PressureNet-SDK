@@ -9,10 +9,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -26,9 +23,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.PowerManager;
 import android.os.RemoteException;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 
@@ -123,7 +118,7 @@ public class CbService extends Service  {
 	
 	private boolean fromUser = false;
 	
-	Alarm alarm = new Alarm();
+	CbAlarm alarm = new CbAlarm();
 	
 	/**
 	 * Find all the data for an observation.
@@ -411,7 +406,8 @@ public class CbService extends Service  {
 		if (dataCollector != null) {
 			dataCollector.stopCollectingData();
 		}
-		mHandler.removeCallbacks(sender);
+		log("cbservice stop autosubmit");
+		// alarm.cancelAlarm(getApplicationContext());
 	}
 
 	/**
@@ -473,18 +469,20 @@ public class CbService extends Service  {
 	/**
 	 * Start the periodic data collection.
 	 */
-	public void startAutoSubmit() {
+	public void startSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
-		
-		alarm.setAlarm(getApplicationContext(), settingsHandler.getDataCollectionFrequency());
+		if(!alarm.isRepeating()) {
+			log("cbservice alarm not repeating, starting alarm");	
+			alarm.setAlarm(getApplicationContext(), settingsHandler.getDataCollectionFrequency());
+		} else {
+			log("cbservice startsubmit, alarm is already repeating. restarting.");
+			alarm.restartAlarm(getApplicationContext(), settingsHandler.getDataCollectionFrequency());
+		}
 	}
-
-	
 	
 	@Override
 	public void onDestroy() {
 		log("on destroy");
-		stopAutoSubmit();
 		super.onDestroy();
 	}
 
@@ -535,25 +533,22 @@ public class CbService extends Service  {
 					// send just a single measurement
 					log("sending single observation, request from intent");
 					sendSingleObs();
-					return 0;
+					return START_NOT_STICKY;
 				}
-			} else {
-				if(intent.getBooleanExtra("alarm", false)) {
-					log("cbservice from alarm. sending obs");
-					ReadingSender reading = new ReadingSender();
-					mHandler.post(reading);
-					return 0;
-				}
-			}
+			} else if(intent.getBooleanExtra("alarm", false)) {
+				// This runs when the service is started from the alarm.
+				// Submit a data point
+				startWithIntent(intent, true);
+				return START_NOT_STICKY;
+			} 
 		}
 		
 		
 		// Check the intent for Settings initialization
 		dataCollector = new CbDataCollector(getID(), getApplicationContext());
-		log("starting service code, run count 0");
 		if (intent != null) {
-
-			startWithIntent(intent);
+			log("starting service with intent");
+			startWithIntent(intent, false);
 
 			return START_NOT_STICKY;
 		} else {
@@ -585,7 +580,7 @@ public class CbService extends Service  {
 		return 1000 * 60 * 10;
 	}
 
-	public void startWithIntent(Intent intent) {
+	public void startWithIntent(Intent intent, boolean fromAlarm) {
 		try {
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
 			settingsHandler.setServerURL(serverURL);
@@ -617,19 +612,14 @@ public class CbService extends Service  {
 			
 			// Seems like new settings. Try adding to the db.
 			settingsHandler.saveSettings();
-
-			// are we creating a new user?
-			if (intent.hasExtra("add_account")) {
-				log("adding new user");
-				CbAccount account = new CbAccount();
-				account.setEmail(intent.getStringExtra("email"));
-				account.setTimeRegistered(intent.getLongExtra("time", 0));
-				account.setUserID(intent.getStringExtra("userID"));
-				sendCbAccount(account);
+			ReadingSender reading = new ReadingSender();
+			mHandler.post(reading);
+			
+			// We arrived here from the user (i.e., not the alarm)
+			// start/(update?) the alarm
+			if(!fromAlarm) {
+				startSubmit();
 			}
-
-			// Start a new thread and return
-			startAutoSubmit();
 		} catch (Exception e) {
 			for (StackTraceElement ste : e.getStackTrace()) {
 				log(ste.getMethodName() + ste.getLineNumber());
@@ -668,9 +658,10 @@ public class CbService extends Service  {
 				settingsHandler.saveSettings();
 				
 				log("cbservice startwithdb, " + settingsHandler);
+				ReadingSender reading = new ReadingSender();
+				mHandler.post(reading);
 				
-				startAutoSubmit();
-				// but just once
+				startSubmit();
 				break;
 			}
 			db.close();
@@ -691,7 +682,7 @@ public class CbService extends Service  {
 			switch (msg.what) {
 			case MSG_STOP:
 				log("message. bound service says stop");
-				stopAutoSubmit();
+				//stopAutoSubmit();
 				break;
 			case MSG_GET_BEST_LOCATION:
 				log("message. bound service requesting location");
