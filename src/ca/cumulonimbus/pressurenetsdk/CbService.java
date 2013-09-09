@@ -142,14 +142,13 @@ public class CbService extends Service  {
 
 			// stop listening for locations
 			LocationStopper stop = new LocationStopper();
-			mHandler.postDelayed(stop, 1000 * 10);
+			mHandler.postDelayed(stop, 1000 * 3);
 
 			log("returning pressure obs: " + pressureObservation.getObservationValue());
 			
 			return pressureObservation;
 
 		} catch (Exception e) {
-			log("cbservice CAUSING ALL ISSUES");
 			e.printStackTrace();
 			return null;
 		}
@@ -160,9 +159,10 @@ public class CbService extends Service  {
 		@Override
 		public void run() {
 			try {
+				System.out.println("locationmanager stop getting locations");
 				locationManager.stopGettingLocations();
 			} catch(Exception e) {
-				
+				e.printStackTrace();
 			}
 		}
 		
@@ -483,6 +483,7 @@ public class CbService extends Service  {
 	@Override
 	public void onDestroy() {
 		log("on destroy");
+		stopAutoSubmit();
 		super.onDestroy();
 	}
 
@@ -538,6 +539,8 @@ public class CbService extends Service  {
 			} else if(intent.getBooleanExtra("alarm", false)) {
 				// This runs when the service is started from the alarm.
 				// Submit a data point
+				dataCollector = new CbDataCollector(getID(), getApplicationContext());
+				dataCollector.startCollectingData(null);
 				startWithIntent(intent, true);
 				return START_NOT_STICKY;
 			} 
@@ -555,6 +558,9 @@ public class CbService extends Service  {
 			log("INTENT NULL; checking db");
 			startWithDatabase();
 		}
+		LocationStopper stop = new LocationStopper();
+		mHandler.postDelayed(stop, 1000 * 3);
+		
 		super.onStartCommand(intent, flags, startId);
 		return START_NOT_STICKY;
 	}

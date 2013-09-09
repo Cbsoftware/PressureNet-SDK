@@ -12,6 +12,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 /**
  * 
  * Implement location strategy for GPS, Network location
@@ -38,6 +39,8 @@ public class CbLocationManager {
     private String mAppDir;
     
     private Location currentBestLocation;
+    
+    private Handler mHandler = new Handler();
 	
     /**
      * Construct our location manager using network and gps managers, preferences
@@ -84,25 +87,33 @@ public class CbLocationManager {
 	 */
 	public boolean stopGettingLocations() {
 		try {
+			if(gpsLocationManager!=null) {
+				log("stopping gps locations");
+				gpsLocationManager.removeUpdates(locationListener);
+			}
+		} catch(Exception e ) {
+			e.printStackTrace();
+		}
+		try {
 			if(locationListener!=null) {
 				if(networkLocationManager!=null) {
+					log("stopping network location");
 					networkLocationManager.removeUpdates(locationListener);
-					networkLocationManager = null;
 				}
 			}
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-
-		try {
-			if(gpsLocationManager!=null) {
-				gpsLocationManager.removeUpdates(locationListener);
-				gpsLocationManager = null;
-			}
-		} catch(Exception e ) {
-			e.printStackTrace();
-		}
 		return true;
+	}
+	
+	private class LocationStopper implements Runnable  {
+
+		@Override
+		public void run() {
+			stopGettingLocations();
+		}
+		
 	}
 	
 	/**
@@ -118,8 +129,11 @@ public class CbLocationManager {
 	    	    if (isBetterLocation(location)) {
 	    	    	log("found a better location " + location.getProvider());
 	    	    	currentBestLocation = location;
+	    	    	stopGettingLocations();
 	    	    } else {
 	    	    	log("new location, it's not any better");
+	    	    	LocationStopper stopLater = new LocationStopper();
+	    	    	mHandler.postDelayed(stopLater, 1000 * 5);
 	    	    }
     	    }
 
@@ -137,7 +151,6 @@ public class CbLocationManager {
     			gpsLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
     		}
     	} catch(Exception e) {
-    		startGettingLocations();
     		e.printStackTrace();
     		return false;
     	}
