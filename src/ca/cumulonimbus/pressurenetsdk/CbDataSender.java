@@ -43,8 +43,6 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	
 	private CbSettingsHandler settings;
 	
-	private CbDataCollector dataCollector;
-	
 	private Messenger messenger = null;
 	
 	private Context context;
@@ -59,10 +57,9 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	public CbSettingsHandler getSettings() {
 		return settings;
 	}
-	public void setSettings(CbSettingsHandler settings, CbLocationManager locationManager, CbDataCollector dataCollector, Messenger notifyMessenger, boolean fromUser) {
+	public void setSettings(CbSettingsHandler settings, CbLocationManager locationManager, Messenger notifyMessenger, boolean fromUser) {
 		this.settings = settings;
 		this.locationManager = locationManager;
-		this.dataCollector = dataCollector;
 		this.messenger = notifyMessenger;
 		this.userSent = fromUser;
 	}

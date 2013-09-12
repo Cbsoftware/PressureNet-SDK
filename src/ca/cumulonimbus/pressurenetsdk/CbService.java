@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 import android.app.Service;
@@ -15,6 +16,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
@@ -34,7 +39,7 @@ import android.provider.Settings.Secure;
  * @author jacob
  * 
  */
-public class CbService extends Service  {
+public class CbService extends Service {
 
 	private CbDataCollector dataCollector;
 	private CbLocationManager locationManager;
@@ -66,9 +71,9 @@ public class CbService extends Service  {
 	public static final int MSG_SET_SETTINGS = 8;
 	public static final int MSG_GET_SETTINGS = 9;
 	public static final int MSG_SETTINGS = 10;
-	public static final int MSG_START_DATA_STREAM = 11;
+
 	public static final int MSG_DATA_STREAM = 12;
-	public static final int MSG_STOP_DATA_STREAM = 13;
+
 	// pressureNET Live API
 	public static final int MSG_GET_LOCAL_RECENTS = 14;
 	public static final int MSG_LOCAL_RECENTS = 15;
@@ -101,11 +106,11 @@ public class CbService extends Service  {
 	public static final int MSG_API_RECENTS_FOR_GRAPH = 37;
 	// Success / Failure notification for data submission
 	public static final int MSG_DATA_RESULT = 38;
-	
+
 	long lastAPICall = System.currentTimeMillis();
 
 	private CbObservation collectedObservation;
-	
+
 	private final Handler mHandler = new Handler();
 
 	Messenger mMessenger = new Messenger(new IncomingHandler());
@@ -113,13 +118,143 @@ public class CbService extends Service  {
 	ArrayList<CbObservation> offlineBuffer = new ArrayList<CbObservation>();
 
 	private long lastPressureChangeAlert = 0;
-	
+
 	private Messenger lastMessenger;
-	
+
 	private boolean fromUser = false;
-	
+
 	CbAlarm alarm = new CbAlarm();
-	
+
+	double recentPressureReading = 0.0;
+
+	/**
+	 * Collect data from onboard sensors and store locally
+	 * 
+	 * @author jacob
+	 * 
+	 */
+	public class CbDataCollector implements SensorEventListener {
+
+		private SensorManager sm;
+		private final int TYPE_AMBIENT_TEMPERATURE = 13;
+		private final int TYPE_RELATIVE_HUMIDITY = 12;
+
+		private ArrayList<CbObservation> recentObservations = new ArrayList<CbObservation>();
+
+		public ArrayList<CbObservation> getRecentObservations() {
+			return recentObservations;
+		}
+
+		/**
+		 * Access the database to fetch recent, locally-recorded observations
+		 * 
+		 * @return
+		 */
+		public ArrayList<CbObservation> getRecentDatabaseObservations() {
+			ArrayList<CbObservation> recentDbList = new ArrayList<CbObservation>();
+			CbDb db = new CbDb(getApplicationContext());
+			db.open();
+			Cursor c = db.fetchAllObservations();
+			while (c.moveToNext()) {
+				CbObservation obs = new CbObservation();
+				Location location = new Location("network");
+				location.setLatitude(c.getDouble(1));
+				location.setLongitude(c.getDouble(2));
+				location.setAltitude(c.getDouble(3));
+				location.setAccuracy(c.getInt(4));
+				location.setProvider(c.getString(5));
+				obs.setLocation(location);
+				obs.setObservationType(c.getString(6));
+				obs.setObservationUnit(c.getString(7));
+				obs.setObservationValue(c.getDouble(8));
+				obs.setSharing(c.getString(9));
+				obs.setTime(c.getInt(10));
+				obs.setTimeZoneOffset(c.getInt(11));
+				obs.setUser_id(c.getString(12));
+
+				// TODO: Add sensor information
+
+				recentDbList.add(obs);
+			}
+
+			db.close();
+			return recentDbList;
+		}
+
+		public void setRecentObservations(
+				ArrayList<CbObservation> recentObservations) {
+			this.recentObservations = recentObservations;
+		}
+
+		/**
+		 * Start collecting sensor data.
+		 * 
+		 * @param m
+		 * @return
+		 */
+		public int startCollectingData() {
+			try {
+				sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+				Sensor pressureSensor = sm
+						.getDefaultSensor(Sensor.TYPE_PRESSURE);
+				Sensor temperatureSensor = sm
+						.getDefaultSensor(TYPE_AMBIENT_TEMPERATURE);
+				Sensor humiditySensor = sm
+						.getDefaultSensor(TYPE_RELATIVE_HUMIDITY);
+
+				if (pressureSensor != null) {
+					sm.registerListener(this, pressureSensor,
+							SensorManager.SENSOR_DELAY_UI);
+				}
+				if (temperatureSensor != null) {
+					sm.registerListener(this, temperatureSensor,
+							SensorManager.SENSOR_DELAY_UI);
+				}
+				if (humiditySensor != null) {
+					sm.registerListener(this, humiditySensor,
+							SensorManager.SENSOR_DELAY_UI);
+				}
+				return 1;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return -1;
+			}
+		}
+
+		/**
+		 * Stop collecting sensor data
+		 */
+		public void stopCollectingData() {
+			sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+			sm.unregisterListener(this);
+		}
+
+		public CbDataCollector() {
+
+		}
+
+		@Override
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {
+			if (sensor.getType() == Sensor.TYPE_PRESSURE) {
+				// recentPressureAccuracy = accuracy;
+			}
+		}
+
+		@Override
+		public void onSensorChanged(SensorEvent event) {
+			if (event.sensor.getType() == Sensor.TYPE_PRESSURE) {
+				log("new pressure reading " + event.values[0]);
+				recentPressureReading = event.values[0];
+			} else if (event.sensor.getType() == TYPE_RELATIVE_HUMIDITY) {
+				// recentHumidityReading = event.values[0];
+			} else if (event.sensor.getType() == TYPE_AMBIENT_TEMPERATURE) {
+				// recentTemperatureReading = event.values[0];
+			}
+			stopCollectingData();
+
+		}
+	}
+
 	/**
 	 * Find all the data for an observation.
 	 * 
@@ -137,15 +272,17 @@ public class CbService extends Service  {
 			locationManager.startGettingLocations();
 
 			// Measurement values
-			pressureObservation = dataCollector.getPressureObservation();
-			pressureObservation.setLocation(locationManager.getCurrentBestLocation());
+			pressureObservation = buildPressureObservation();
+			pressureObservation.setLocation(locationManager
+					.getCurrentBestLocation());
 
 			// stop listening for locations
 			LocationStopper stop = new LocationStopper();
 			mHandler.postDelayed(stop, 1000 * 3);
 
-			log("returning pressure obs: " + pressureObservation.getObservationValue());
-			
+			log("returning pressure obs: "
+					+ pressureObservation.getObservationValue());
+
 			return pressureObservation;
 
 		} catch (Exception e) {
@@ -153,33 +290,34 @@ public class CbService extends Service  {
 			return null;
 		}
 	}
-	
-	private class LocationStopper implements Runnable  {
+
+	private class LocationStopper implements Runnable {
 
 		@Override
 		public void run() {
 			try {
 				System.out.println("locationmanager stop getting locations");
 				locationManager.stopGettingLocations();
-			} catch(Exception e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		
+
 	}
-	
+
 	/**
-	 * Send a single reading. 
-	 * TODO: This is ugly copy+paste from the original ReadingSender. Fix that.
+	 * Send a single reading. TODO: This is ugly copy+paste from the original
+	 * ReadingSender. Fix that.
 	 */
-	
+
 	public class SingleReadingSender implements Runnable {
 
 		@Override
 		public void run() {
-			log("collecting and submitting single " + settingsHandler.getServerURL());
+			log("collecting and submitting single "
+					+ settingsHandler.getServerURL());
 
-			dataCollector.startCollectingData(null);
+			dataCollector.startCollectingData();
 			CbObservation singleObservation = new CbObservation();
 			if (settingsHandler.isCollectingData()) {
 				// Collect
@@ -202,10 +340,11 @@ public class CbService extends Service  {
 								fromUser = true;
 								sendCbObservation(singleObservation);
 								fromUser = false;
-								
+
 								// also check and send the offline buffer
 								if (offlineBuffer.size() > 0) {
-									log("sending " + offlineBuffer.size() + " offline buffered obs");
+									log("sending " + offlineBuffer.size()
+											+ " offline buffered obs");
 									for (CbObservation singleOffline : offlineBuffer) {
 										sendCbObservation(singleObservation);
 									}
@@ -224,10 +363,36 @@ public class CbService extends Service  {
 
 					}
 				}
-			} 
+			}
 		}
 	}
-	
+
+	public CbObservation buildPressureObservation() {
+		CbObservation pressureObservation = new CbObservation();
+		pressureObservation.setTime(System.currentTimeMillis());
+		pressureObservation.setTimeZoneOffset(Calendar.getInstance()
+				.getTimeZone().getRawOffset());
+		pressureObservation.setUser_id(getID());
+		pressureObservation.setObservationType("pressure");
+
+		long start = System.currentTimeMillis();
+		long timeout = 500;
+		while (recentPressureReading != 0) {
+			long now = System.currentTimeMillis();
+			if (now - start > timeout) {
+				break;
+			}
+			pressureObservation.setObservationValue(recentPressureReading);
+		}
+
+		pressureObservation.setObservationUnit("mbar");
+		// pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
+		pressureObservation.setSharing(settingsHandler.getShareLevel());
+		log("cbservice buildobs, share level "
+				+ settingsHandler.getShareLevel() + " " + getID());
+		return pressureObservation;
+	}
+
 	/**
 	 * Collect and send data in a different thread. This runs itself every
 	 * "settingsHandler.getDataCollectionFrequency()" milliseconds
@@ -237,33 +402,33 @@ public class CbService extends Service  {
 		public void run() {
 			// retrieve updated settings
 			settingsHandler = settingsHandler.getSettings();
-			
-			dataCollector.startCollectingData(null);
-			
+
+			dataCollector.startCollectingData();
+
 			log("collecting and submitting " + settingsHandler.getServerURL());
-			
+
 			boolean okayToGo = true;
 			// Check if we're supposed to be charging and if we are.
 			// Bail if appropriate
-			if(settingsHandler.isOnlyWhenCharging()) {
-				if(!isCharging()) {
+			if (settingsHandler.isOnlyWhenCharging()) {
+				if (!isCharging()) {
 					okayToGo = false;
-				} 
+				}
 			}
-			
+
 			if (okayToGo && settingsHandler.isCollectingData()) {
 				// Collect
 				CbObservation singleObservation = new CbObservation();
 				singleObservation = collectNewObservation();
-				if(singleObservation != null) {
-					
+				if (singleObservation != null) {
+
 					if (singleObservation.getObservationValue() != 0.0) {
 						// Store in database
 						db.open();
 						long count = db.addObservation(singleObservation);
-	
+
 						db.close();
-	
+
 						try {
 							if (settingsHandler.isSharingData()) {
 								// Send if we're online
@@ -273,10 +438,11 @@ public class CbService extends Service  {
 											.setClientKey(getApplicationContext()
 													.getPackageName());
 									sendCbObservation(singleObservation);
-	
+
 									// also check and send the offline buffer
 									if (offlineBuffer.size() > 0) {
-										log("sending " + offlineBuffer.size() + " offline buffered obs");
+										log("sending " + offlineBuffer.size()
+												+ " offline buffered obs");
 										for (CbObservation singleOffline : offlineBuffer) {
 											sendCbObservation(singleObservation);
 										}
@@ -285,80 +451,93 @@ public class CbService extends Service  {
 								} else {
 									log("didn't send");
 									// / offline buffer variable
-									// TODO: put this in the DB to survive longer
+									// TODO: put this in the DB to survive
+									// longer
 									offlineBuffer.add(singleObservation);
-	
+
 								}
 							} else {
 								log("cbservice not sharing data, didn't send");
 							}
-	
+
 							// If notifications are enabled,
-							log("is send notif " + settingsHandler.isSendNotifications());
+							log("is send notif "
+									+ settingsHandler.isSendNotifications());
 							if (settingsHandler.isSendNotifications()) {
-								// check for pressure local trend changes and notify
+								// check for pressure local trend changes and
+								// notify
 								// the client
-	
-								// ensure this only happens every once in a while
+
+								// ensure this only happens every once in a
+								// while
 								long rightNow = System.currentTimeMillis();
 								long sixHours = 1000 * 60 * 60 * 6;
 								if (rightNow - lastPressureChangeAlert > (sixHours)) {
 									long timeLength = 1000 * 60 * 60 * 3;
 									db.open();
-									Cursor localCursor = db.runLocalAPICall(-90,
-											90, -180, 180,
+									Cursor localCursor = db.runLocalAPICall(
+											-90, 90, -180, 180,
 											System.currentTimeMillis()
 													- (timeLength),
 											System.currentTimeMillis(), 1000);
 									ArrayList<CbObservation> recents = new ArrayList<CbObservation>();
 									while (localCursor.moveToNext()) {
-										// just need observation value, time, and
+										// just need observation value, time,
+										// and
 										// location
 										CbObservation obs = new CbObservation();
-										obs.setObservationValue(localCursor.getDouble(8));
+										obs.setObservationValue(localCursor
+												.getDouble(8));
 										obs.setTime(localCursor.getLong(10));
-										Location location = new Location("network");
+										Location location = new Location(
+												"network");
 										location.setLatitude(localCursor
 												.getDouble(1));
 										location.setLongitude(localCursor
 												.getDouble(2));
-										
+
 										obs.setLocation(location);
 										recents.add(obs);
 									}
 									String tendencyChange = CbScience
 											.changeInTrend(recents);
 									db.close();
-									
-									log("cbservice tendency changes: " + tendencyChange);
+
+									log("cbservice tendency changes: "
+											+ tendencyChange);
 									if (tendencyChange.contains(",")
 											&& (!tendencyChange.toLowerCase()
 													.contains("unknown"))) {
 										String[] tendencies = tendencyChange
 												.split(",");
-										if (!tendencies[0].equals(tendencies[1])) {
-											log("Trend change! " + tendencyChange);
-	
-											
+										if (!tendencies[0]
+												.equals(tendencies[1])) {
+											log("Trend change! "
+													+ tendencyChange);
+
 											// TODO: send message to deliver
-											// Android notification of tendency change
+											// Android notification of tendency
+											// change
 											try {
-												if(lastMessenger!= null) {
-													lastMessenger.send(Message.obtain(null,
-																MSG_CHANGE_NOTIFICATION, tendencyChange));
+												if (lastMessenger != null) {
+													lastMessenger
+															.send(Message
+																	.obtain(null,
+																			MSG_CHANGE_NOTIFICATION,
+																			tendencyChange));
 												} else {
 													log("readingsender didn't send notif, no lastMessenger");
 												}
-											} catch(Exception e) {
+											} catch (Exception e) {
 												e.printStackTrace();
 											}
 											lastPressureChangeAlert = rightNow;
 										} else {
 											log("tendency equal");
-										
+
 										}
 									}
-	
+
 								} else {
 									// wait
 									log("tendency; hasn't been 6h, min wait time yet");
@@ -366,7 +545,7 @@ public class CbService extends Service  {
 							}
 						} catch (Exception e) {
 							e.printStackTrace();
-	
+
 						}
 					}
 				} else {
@@ -419,7 +598,8 @@ public class CbService extends Service  {
 	public boolean sendCbObservation(CbObservation observation) {
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settingsHandler, locationManager, dataCollector, lastMessenger, fromUser);
+			sender.setSettings(settingsHandler, locationManager,
+					lastMessenger, fromUser);
 			sender.execute(observation.getObservationAsParams());
 			return true;
 		} catch (Exception e) {
@@ -437,7 +617,8 @@ public class CbService extends Service  {
 
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
-			sender.setSettings(settingsHandler, locationManager, dataCollector, null, true);
+			sender.setSettings(settingsHandler, locationManager,
+					null, true);
 			sender.execute(account.getAccountAsParams());
 			fromUser = false;
 			return true;
@@ -457,7 +638,8 @@ public class CbService extends Service  {
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
 			fromUser = true;
-			sender.setSettings(settingsHandler, locationManager, dataCollector, lastMessenger, fromUser);
+			sender.setSettings(settingsHandler, locationManager,
+					lastMessenger, fromUser);
 			sender.execute(condition.getCurrentConditionAsParams());
 			fromUser = false;
 			return true;
@@ -471,15 +653,17 @@ public class CbService extends Service  {
 	 */
 	public void startSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
-		if(!alarm.isRepeating()) {
-			log("cbservice alarm not repeating, starting alarm");	
-			alarm.setAlarm(getApplicationContext(), settingsHandler.getDataCollectionFrequency());
+		if (!alarm.isRepeating()) {
+			log("cbservice alarm not repeating, starting alarm");
+			alarm.setAlarm(getApplicationContext(),
+					settingsHandler.getDataCollectionFrequency());
 		} else {
 			log("cbservice startsubmit, alarm is already repeating. restarting.");
-			alarm.restartAlarm(getApplicationContext(), settingsHandler.getDataCollectionFrequency());
+			alarm.restartAlarm(getApplicationContext(),
+					settingsHandler.getDataCollectionFrequency());
 		}
 	}
-	
+
 	@Override
 	public void onDestroy() {
 		log("on destroy");
@@ -496,30 +680,31 @@ public class CbService extends Service  {
 		super.onCreate();
 	}
 
-	/** 
-	 * Check charge state for preferences.
-	 * TODO: In future, adjust our collection and submission frequency 
-	 * based on battery level.
+	/**
+	 * Check charge state for preferences. TODO: In future, adjust our
+	 * collection and submission frequency based on battery level.
 	 */
 	public boolean isCharging() {
 		// Check battery and charging status
 		IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-		Intent batteryStatus = getApplicationContext().registerReceiver(null, ifilter);
+		Intent batteryStatus = getApplicationContext().registerReceiver(null,
+				ifilter);
 
 		// Are we charging / charged?
 		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-		boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-		                     status == BatteryManager.BATTERY_STATUS_FULL;
+		boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING
+				|| status == BatteryManager.BATTERY_STATUS_FULL;
 
 		// How are we charging?
 		/*
-		int chargePlug = batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
-		boolean usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB;
-		boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
+		 * int chargePlug =
+		 * batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1); boolean
+		 * usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB; boolean
+		 * acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
 		 */
 		return isCharging;
 	}
-	
+
 	/**
 	 * Start running background data collection methods.
 	 * 
@@ -527,28 +712,27 @@ public class CbService extends Service  {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cb onstartcommand");
-		
-		if(intent!= null) {
-			if(intent.getAction() != null ) {
-				if(intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
+
+		if (intent != null) {
+			if (intent.getAction() != null) {
+				if (intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
 					// send just a single measurement
 					log("sending single observation, request from intent");
 					sendSingleObs();
 					return START_NOT_STICKY;
 				}
-			} else if(intent.getBooleanExtra("alarm", false)) {
+			} else if (intent.getBooleanExtra("alarm", false)) {
 				// This runs when the service is started from the alarm.
 				// Submit a data point
-				dataCollector = new CbDataCollector(getID(), getApplicationContext());
-				dataCollector.startCollectingData(null);
+				dataCollector = new CbDataCollector();
+				dataCollector.startCollectingData();
 				startWithIntent(intent, true);
 				return START_NOT_STICKY;
-			} 
+			}
 		}
-		
-		
+
 		// Check the intent for Settings initialization
-		dataCollector = new CbDataCollector(getID(), getApplicationContext());
+		dataCollector = new CbDataCollector();
 		if (intent != null) {
 			log("starting service with intent");
 			startWithIntent(intent, false);
@@ -560,7 +744,7 @@ public class CbService extends Service  {
 		}
 		LocationStopper stop = new LocationStopper();
 		mHandler.postDelayed(stop, 1000 * 3);
-		
+
 		super.onStartCommand(intent, flags, startId);
 		return START_NOT_STICKY;
 	}
@@ -606,24 +790,25 @@ public class CbService extends Service  {
 					.setDataCollectionFrequency(stringTimeToLongHack(preferenceCollectionFrequency));
 
 			settingsHandler.setSendNotifications(preferenceSendNotifications);
-			
+
 			boolean useGPS = sharedPreferences.getBoolean("use_gps", true);
-			boolean onlyWhenCharging = sharedPreferences.getBoolean("only_when_charging", false);
+			boolean onlyWhenCharging = sharedPreferences.getBoolean(
+					"only_when_charging", false);
 			settingsHandler.setUseGPS(useGPS);
 			settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
 			settingsHandler.setSharingData(preferenceShareData);
 			settingsHandler.setShareLevel(preferenceShareLevel);
-			
+
 			log("cbservice startwithintent " + settingsHandler);
-			
+
 			// Seems like new settings. Try adding to the db.
 			settingsHandler.saveSettings();
 			ReadingSender reading = new ReadingSender();
 			mHandler.post(reading);
-			
+
 			// We arrived here from the user (i.e., not the alarm)
 			// start/(update?) the alarm
-			if(!fromAlarm) {
+			if (!fromAlarm) {
 				startSubmit();
 			}
 		} catch (Exception e) {
@@ -656,17 +841,18 @@ public class CbService extends Service  {
 				boolean boolGPS = (useGPS > 0);
 				boolean boolSendNotifications = (sendNotifications > 0);
 				boolean boolSharingData = (sharingData > 0);
-				log("only when charging processed " + boolCharging + " gps " + boolGPS);
+				log("only when charging processed " + boolCharging + " gps "
+						+ boolGPS);
 				settingsHandler.setSendNotifications(boolSendNotifications);
 				settingsHandler.setOnlyWhenCharging(boolCharging);
 				settingsHandler.setUseGPS(boolGPS);
 				settingsHandler.setSharingData(boolSharingData);
 				settingsHandler.saveSettings();
-				
+
 				log("cbservice startwithdb, " + settingsHandler);
 				ReadingSender reading = new ReadingSender();
 				mHandler.post(reading);
-				
+
 				startSubmit();
 				break;
 			}
@@ -682,13 +868,13 @@ public class CbService extends Service  {
 	 * Handler of incoming messages from clients.
 	 */
 	class IncomingHandler extends Handler {
-		
+
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case MSG_STOP:
 				log("message. bound service says stop");
-				//stopAutoSubmit();
+				// stopAutoSubmit();
 				break;
 			case MSG_GET_BEST_LOCATION:
 				log("message. bound service requesting location");
@@ -707,24 +893,12 @@ public class CbService extends Service  {
 				}
 				break;
 			case MSG_GET_BEST_PRESSURE:
-				log("message. bound service requesting pressure");
-				if (dataCollector != null) {
-					CbObservation pressure = dataCollector
-							.getPressureObservation();
-					try {
-						log("service sending best pressure");
-						msg.replyTo.send(Message.obtain(null,
-								MSG_BEST_PRESSURE, pressure));
-					} catch (RemoteException re) {
-						re.printStackTrace();
-					}
-				} else {
-					log("error: data collector null, not returning");
-				}
+				log("message. bound service requesting pressure. not responding");
+				
 				break;
 			case MSG_START_AUTOSUBMIT:
-				//log("start autosubmit");
-				//startWithDatabase();
+				// log("start autosubmit");
+				// startWithDatabase();
 				break;
 			case MSG_STOP_AUTOSUBMIT:
 				log("stop autosubmit");
@@ -739,16 +913,14 @@ public class CbService extends Service  {
 					re.printStackTrace();
 				}
 				break;
-			case MSG_START_DATA_STREAM:
-				startDataStream(msg.replyTo);
-				break;
-			case MSG_STOP_DATA_STREAM:
-				stopDataStream();
+			case MSG_DATA_STREAM:
+				// ...
 				break;
 			case MSG_SET_SETTINGS:
 				log("set settings");
 				CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
-				System.out.println("cbservice received new settings, " + newSettings);
+				System.out.println("cbservice received new settings, "
+						+ newSettings);
 				newSettings.saveSettings();
 				break;
 			case MSG_GET_LOCAL_RECENTS:
@@ -756,7 +928,7 @@ public class CbService extends Service  {
 				recentMsg = msg;
 				CbApiCall apiCall = (CbApiCall) msg.obj;
 				if (apiCall == null) {
-					//log("apicall null, bailing");
+					// log("apicall null, bailing");
 					break;
 				}
 				// run API call
@@ -804,12 +976,12 @@ public class CbService extends Service  {
 				// run API call
 				try {
 					db.open();
-	
+
 					Cursor cacheCursor = db.runAPICacheCall(
 							apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(),
 							apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(),
-							apiCacheCall.getStartTime(), apiCacheCall.getEndTime(),
-							apiCacheCall.getLimit());
+							apiCacheCall.getStartTime(),
+							apiCacheCall.getEndTime(), apiCacheCall.getLimit());
 					ArrayList<CbObservation> cacheResults = new ArrayList<CbObservation>();
 					while (cacheCursor.moveToNext()) {
 						CbObservation obs = new CbObservation();
@@ -828,22 +1000,26 @@ public class CbService extends Service  {
 					} catch (RemoteException re) {
 						re.printStackTrace();
 					}
-				} catch(Exception e) {
-					
+				} catch (Exception e) {
+
 				}
 
 				break;
 			case MSG_GET_API_RECENTS_FOR_GRAPH:
-				// TODO: Put this in a method. It's a copy+paste from GET_API_RECENTS
+				// TODO: Put this in a method. It's a copy+paste from
+				// GET_API_RECENTS
 				CbApiCall apiCacheCallGraph = (CbApiCall) msg.obj;
 				log("get api recents " + apiCacheCallGraph.toString());
 				// run API call
 				db.open();
 
 				Cursor cacheCursorGraph = db.runAPICacheCall(
-						apiCacheCallGraph.getMinLat(), apiCacheCallGraph.getMaxLat(),
-						apiCacheCallGraph.getMinLon(), apiCacheCallGraph.getMaxLon(),
-						apiCacheCallGraph.getStartTime(), apiCacheCallGraph.getEndTime(),
+						apiCacheCallGraph.getMinLat(),
+						apiCacheCallGraph.getMaxLat(),
+						apiCacheCallGraph.getMinLon(),
+						apiCacheCallGraph.getMaxLon(),
+						apiCacheCallGraph.getStartTime(),
+						apiCacheCallGraph.getEndTime(),
 						apiCacheCallGraph.getLimit());
 				ArrayList<CbObservation> cacheResultsGraph = new ArrayList<CbObservation>();
 				while (cacheCursorGraph.moveToNext()) {
@@ -858,8 +1034,8 @@ public class CbService extends Service  {
 				}
 				db.close();
 				try {
-					msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS_FOR_GRAPH,
-							cacheResultsGraph));
+					msg.replyTo.send(Message.obtain(null,
+							MSG_API_RECENTS_FOR_GRAPH, cacheResultsGraph));
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
@@ -967,13 +1143,16 @@ public class CbService extends Service  {
 				break;
 			case MSG_SEND_CURRENT_CONDITION:
 				CbCurrentCondition condition = (CbCurrentCondition) msg.obj;
-				if(settingsHandler == null ) {
-					settingsHandler = new CbSettingsHandler(getApplicationContext()); 
+				if (settingsHandler == null) {
+					settingsHandler = new CbSettingsHandler(
+							getApplicationContext());
 					settingsHandler.setServerURL(serverURL);
-					settingsHandler.setAppID("ca.cumulonimbus.barometernetwork");
-				} 
+					settingsHandler
+							.setAppID("ca.cumulonimbus.barometernetwork");
+				}
 				try {
-					condition.setSharing_policy(settingsHandler.getShareLevel());
+					condition
+							.setSharing_policy(settingsHandler.getShareLevel());
 					sendCbCurrentCondition(condition);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -1008,7 +1187,7 @@ public class CbService extends Service  {
 				}
 				break;
 			case MSG_CHANGE_NOTIFICATION:
-				if(msg.replyTo != null) {
+				if (msg.replyTo != null) {
 					lastMessenger = msg.replyTo;
 				} else {
 					// ..
@@ -1021,15 +1200,15 @@ public class CbService extends Service  {
 	}
 
 	public void sendSingleObs() {
-		if(settingsHandler != null) {
-			if(settingsHandler.getServerURL()==null ) {
+		if (settingsHandler != null) {
+			if (settingsHandler.getServerURL() == null) {
 				settingsHandler.getSettings();
 			}
 		}
 		SingleReadingSender singleSender = new SingleReadingSender();
 		mHandler.post(singleSender);
 	}
-	
+
 	/**
 	 * Remove older data from cache to keep the size reasonable
 	 * 
@@ -1064,7 +1243,7 @@ public class CbService extends Service  {
 		try {
 			long rowId = db.fetchObservationMaxID();
 			Cursor c = db.fetchObservation(rowId);
-	
+
 			while (c.moveToNext()) {
 				pressure = c.getDouble(8);
 			}
@@ -1075,58 +1254,9 @@ public class CbService extends Service  {
 			}
 			obs.setObservationValue(pressure);
 			return obs;
-		} catch(Exception e) {
+		} catch (Exception e) {
 			obs.setObservationValue(pressure);
 			return obs;
-		}
-	}
-
-	private class StreamObservation extends AsyncTask<Messenger, Void, String> {
-
-		@Override
-		protected String doInBackground(Messenger... m) {
-			try {
-				for (Messenger msgr : m) {
-					if (msgr != null) {
-						msgr.send(Message.obtain(null, MSG_DATA_STREAM,
-								recentPressureFromDatabase()));
-					} else {
-						log("messenger is null");
-					}
-				}
-			} catch (RemoteException re) {
-				re.printStackTrace();
-			}
-
-			return "--";
-		}
-
-		@Override
-		protected void onPostExecute(String result) {
-
-		}
-
-		@Override
-		protected void onPreExecute() {
-		}
-
-		@Override
-		protected void onProgressUpdate(Void... values) {
-		}
-	}
-
-	public void startDataStream(Messenger m) {
-		log("cbService starting stream " + (m == null));
-		if(dataCollector!=null) {
-			dataCollector.startCollectingData(m);
-			new StreamObservation().execute(m);
-		}
-	}
-
-	public void stopDataStream() {
-		log("cbservice stopping stream");
-		if(dataCollector!=null) {
-			dataCollector.stopCollectingData();
 		}
 	}
 
