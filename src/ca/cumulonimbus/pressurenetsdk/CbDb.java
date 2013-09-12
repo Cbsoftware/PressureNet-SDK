@@ -697,38 +697,43 @@ public class CbDb {
 	 */
 	public long addObservation(CbObservation observation) {
 		ContentValues initialValues = new ContentValues();
-		initialValues
-				.put(KEY_LATITUDE, observation.getLocation().getLatitude());
-		initialValues.put(KEY_LONGITUDE, observation.getLocation()
-				.getLongitude());
-		initialValues
-				.put(KEY_ALTITUDE, observation.getLocation().getAltitude());
-		initialValues
-				.put(KEY_ACCURACY, observation.getLocation().getAccuracy());
-		initialValues
-				.put(KEY_PROVIDER, observation.getLocation().getProvider());
-		initialValues.put(KEY_OBSERVATION_TYPE,
-				observation.getObservationType());
-		initialValues.put(KEY_OBSERVATION_UNIT,
-				observation.getObservationUnit());
-		initialValues.put(KEY_OBSERVATION_VALUE,
-				observation.getObservationValue());
-		initialValues.put(KEY_SHARING, observation.getSharing());
-		initialValues.put(KEY_TIME, observation.getTime());
-		initialValues.put(KEY_TIMEZONE, observation.getTimeZoneOffset());
-		initialValues.put(KEY_USERID, observation.getUser_id());
-		/*
-		initialValues.put(KEY_SENSOR_NAME, observation.getSensor().getName());
-		initialValues.put(KEY_SENSOR_TYPE, observation.getSensor().getType());
-		initialValues.put(KEY_SENSOR_VENDOR, observation.getSensor()
-				.getVendor());
-		initialValues.put(KEY_SENSOR_RESOLUTION, observation.getSensor()
-				.getResolution());
-		initialValues.put(KEY_SENSOR_VERSION, observation.getSensor()
-				.getVersion());
-		*/
-		initialValues.put(KEY_OBSERVATION_TREND, observation.getTrend());
-		return mDB.insert(OBSERVATIONS_TABLE, null, initialValues);
+		try {
+			initialValues
+					.put(KEY_LATITUDE, observation.getLocation().getLatitude());
+			initialValues.put(KEY_LONGITUDE, observation.getLocation()
+					.getLongitude());
+			initialValues
+					.put(KEY_ALTITUDE, observation.getLocation().getAltitude());
+			initialValues
+					.put(KEY_ACCURACY, observation.getLocation().getAccuracy());
+			initialValues
+					.put(KEY_PROVIDER, observation.getLocation().getProvider());
+			initialValues.put(KEY_OBSERVATION_TYPE,
+					observation.getObservationType());
+			initialValues.put(KEY_OBSERVATION_UNIT,
+					observation.getObservationUnit());
+			initialValues.put(KEY_OBSERVATION_VALUE,
+					observation.getObservationValue());
+			initialValues.put(KEY_SHARING, observation.getSharing());
+			initialValues.put(KEY_TIME, observation.getTime());
+			initialValues.put(KEY_TIMEZONE, observation.getTimeZoneOffset());
+			initialValues.put(KEY_USERID, observation.getUser_id());
+			/*
+			initialValues.put(KEY_SENSOR_NAME, observation.getSensor().getName());
+			initialValues.put(KEY_SENSOR_TYPE, observation.getSensor().getType());
+			initialValues.put(KEY_SENSOR_VENDOR, observation.getSensor()
+					.getVendor());
+			initialValues.put(KEY_SENSOR_RESOLUTION, observation.getSensor()
+					.getResolution());
+			initialValues.put(KEY_SENSOR_VERSION, observation.getSensor()
+					.getVersion());
+			*/
+			initialValues.put(KEY_OBSERVATION_TREND, observation.getTrend());
+			return mDB.insert(OBSERVATIONS_TABLE, null, initialValues);
+		} catch(NullPointerException npe) {
+			npe.printStackTrace();
+		}
+		return -1;
 	}
 
 	/**
