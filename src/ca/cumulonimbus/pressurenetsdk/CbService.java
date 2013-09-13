@@ -374,17 +374,8 @@ public class CbService extends Service {
 				.getTimeZone().getRawOffset());
 		pressureObservation.setUser_id(getID());
 		pressureObservation.setObservationType("pressure");
-
-		long start = System.currentTimeMillis();
-		long timeout = 500;
-		while (recentPressureReading != 0) {
-			long now = System.currentTimeMillis();
-			if (now - start > timeout) {
-				break;
-			}
-			pressureObservation.setObservationValue(recentPressureReading);
-		}
-
+		pressureObservation.setObservationValue(recentPressureReading);
+		
 		pressureObservation.setObservationUnit("mbar");
 		// pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
 		pressureObservation.setSharing(settingsHandler.getShareLevel());
