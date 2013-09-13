@@ -724,9 +724,13 @@ public class CbService extends Service {
 			} else if (intent.getBooleanExtra("alarm", false)) {
 				// This runs when the service is started from the alarm.
 				// Submit a data point
-				dataCollector = new CbDataCollector();
-				dataCollector.startCollectingData();
-				startWithIntent(intent, true);
+				if(settingsHandler.isSharingData()) {
+					dataCollector = new CbDataCollector();
+					dataCollector.startCollectingData();
+					startWithIntent(intent, true);
+				} else {
+					log("cbservice not sharing data");
+				}
 				return START_NOT_STICKY;
 			}
 		}
