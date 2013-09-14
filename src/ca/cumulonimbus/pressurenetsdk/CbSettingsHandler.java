@@ -65,7 +65,6 @@ public class CbSettingsHandler {
 	}
 	
 	public CbSettingsHandler getSettings() {
-		System.out.println("get settings; returning method gives just share* only* useG* send* dataColl* appID isColl* sharingD*");
 		String appID = "ca.cumulonimbus.barometernetwork";
 		try {
 			db = new CbDb(context);
@@ -84,7 +83,6 @@ public class CbSettingsHandler {
 				this.sharingData = (settings.getInt(6) > 0 ) ? true : false;
 			}
 			db.close();
-			System.out.println(this);
 			return this;
 		} catch(Exception e) {
 			e.printStackTrace();

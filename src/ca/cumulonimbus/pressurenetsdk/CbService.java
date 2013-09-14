@@ -296,7 +296,7 @@ public class CbService extends Service {
 		@Override
 		public void run() {
 			try {
-				System.out.println("locationmanager stop getting locations");
+				//System.out.println("locationmanager stop getting locations");
 				locationManager.stopGettingLocations();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -926,8 +926,6 @@ public class CbService extends Service {
 			case MSG_SET_SETTINGS:
 				log("set settings");
 				CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
-				System.out.println("cbservice received new settings, "
-						+ newSettings);
 				newSettings.saveSettings();
 				break;
 			case MSG_GET_LOCAL_RECENTS:
