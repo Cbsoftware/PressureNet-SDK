@@ -14,7 +14,6 @@ public class CbAlarm extends BroadcastReceiver {
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		System.out.println("cbservice alarm onreceive, send action_send_measurement");
 		PowerManager pm = (PowerManager) context
 				.getSystemService(Context.POWER_SERVICE);
 		PowerManager.WakeLock wl = pm.newWakeLock(
@@ -40,7 +39,6 @@ public class CbAlarm extends BroadcastReceiver {
 		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
 		am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(),
 				time, pi); // Millisec * Second * Minute
-		System.out.println("cbservice setting alarm  starting now, repeating " + time);
 		repeating = true;
 	}
 	
