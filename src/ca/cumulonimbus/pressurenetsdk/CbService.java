@@ -1332,8 +1332,8 @@ public class CbService extends Service {
 	}
 
 	public void log(String message) {
-		logToFile(message);
-		System.out.println(message);
+		//logToFile(message);
+		//System.out.println(message);
 	}
 
 	public CbDataCollector getDataCollector() {
