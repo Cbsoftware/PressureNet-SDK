@@ -157,7 +157,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();
 		} catch(IOException ioe) {
-			ioe.printStackTrace();
+			//ioe.printStackTrace();
 		} catch(ArrayIndexOutOfBoundsException aioobe) {
 			aioobe.printStackTrace();
 		}
@@ -179,7 +179,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	    		mAppDir = homeDirectory.getAbsolutePath();
 	    	}
     	} catch (Exception e) {
-    		e.printStackTrace();
+    		//e.printStackTrace();
     	}
     }
 
@@ -205,9 +205,9 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			output.write(logString.getBytes());
 			output.close();
 		} catch(FileNotFoundException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch(IOException ioe) {
-			ioe.printStackTrace();
+			//ioe.printStackTrace();
 		}
 	}
 	

@@ -106,7 +106,7 @@ public class CbApi {
 
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	}
 
@@ -190,7 +190,7 @@ public class CbApi {
 				}
 			} catch (Exception e) {
 				// System.out.println("api error");
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 			return responseText;
 		}
@@ -278,12 +278,12 @@ public class CbApi {
 						obsFromJSON.add(current);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 			}
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return obsFromJSON;
 	}
@@ -308,9 +308,9 @@ public class CbApi {
 			output.write(logString.getBytes());
 			output.close();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException ioe) {
-			ioe.printStackTrace();
+			//ioe.printStackTrace();
 		}
 	}
 

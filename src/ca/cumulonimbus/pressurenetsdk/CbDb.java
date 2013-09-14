@@ -731,7 +731,7 @@ public class CbDb {
 			initialValues.put(KEY_OBSERVATION_TREND, observation.getTrend());
 			return mDB.insert(OBSERVATIONS_TABLE, null, initialValues);
 		} catch(NullPointerException npe) {
-			npe.printStackTrace();
+			//npe.printStackTrace();
 		}
 		return -1;
 	}

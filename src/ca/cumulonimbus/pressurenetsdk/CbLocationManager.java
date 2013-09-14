@@ -69,7 +69,7 @@ public class CbLocationManager {
 				currentBestLocation = lastKnownNetwork;
 	    	} 
     	} catch(Exception e) {
-    		e.printStackTrace();
+    		//e.printStackTrace();
     	}
 	}
 	
@@ -92,7 +92,7 @@ public class CbLocationManager {
 				gpsLocationManager.removeUpdates(locationListener);
 			}
 		} catch(Exception e ) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		try {
 			if(locationListener!=null) {
@@ -102,7 +102,7 @@ public class CbLocationManager {
 				}
 			}
 		} catch(Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return true;
 	}
@@ -151,7 +151,7 @@ public class CbLocationManager {
     			gpsLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
     		}
     	} catch(Exception e) {
-    		e.printStackTrace();
+    		//e.printStackTrace();
     		return false;
     	}
     	return true;
@@ -223,7 +223,7 @@ public class CbLocationManager {
 	    		mAppDir = homeDirectory.getAbsolutePath();
 	    	}
     	} catch (Exception e) {
-    		e.printStackTrace();
+    		//e.printStackTrace();
     	}
     }
    
@@ -239,9 +239,9 @@ public class CbLocationManager {
 			output.write(logString.getBytes());
 			output.close();
 		} catch(FileNotFoundException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch(IOException ioe) {
-			ioe.printStackTrace();
+			//ioe.printStackTrace();
 		}
 	}
 	

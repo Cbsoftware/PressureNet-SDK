@@ -60,7 +60,7 @@ public class CbSettingsHandler {
 			}
 			db.close();
 		} catch(Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	}
 	
@@ -85,7 +85,7 @@ public class CbSettingsHandler {
 			db.close();
 			return this;
 		} catch(Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			return null;
 		}
 	}

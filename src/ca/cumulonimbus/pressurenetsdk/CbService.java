@@ -216,7 +216,7 @@ public class CbService extends Service {
 				}
 				return 1;
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 				return -1;
 			}
 		}
@@ -286,7 +286,7 @@ public class CbService extends Service {
 			return pressureObservation;
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			return null;
 		}
 	}
@@ -299,7 +299,7 @@ public class CbService extends Service {
 				//System.out.println("locationmanager stop getting locations");
 				locationManager.stopGettingLocations();
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 
@@ -362,7 +362,7 @@ public class CbService extends Service {
 							}
 						}
 					} catch (Exception e) {
-						e.printStackTrace();
+						//e.printStackTrace();
 
 					}
 				}
@@ -523,7 +523,7 @@ public class CbService extends Service {
 													log("readingsender didn't send notif, no lastMessenger");
 												}
 											} catch (Exception e) {
-												e.printStackTrace();
+												//e.printStackTrace();
 											}
 											lastPressureChangeAlert = rightNow;
 										} else {
@@ -538,7 +538,7 @@ public class CbService extends Service {
 								}
 							}
 						} catch (Exception e) {
-							e.printStackTrace();
+							//e.printStackTrace();
 
 						}
 					}
@@ -1160,7 +1160,7 @@ public class CbService extends Service {
 							.setSharing_policy(settingsHandler.getShareLevel());
 					sendCbCurrentCondition(condition);
 				} catch (Exception e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 				break;
 			case MSG_SEND_OBSERVATION:
@@ -1237,7 +1237,7 @@ public class CbService extends Service {
 		} catch (RemoteException re) {
 			re.printStackTrace();
 		} catch (NullPointerException npe) {
-			npe.printStackTrace();
+			//npe.printStackTrace();
 		}
 		return false;
 	}
@@ -1296,7 +1296,7 @@ public class CbService extends Service {
 				mAppDir = homeDirectory.getAbsolutePath();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	}
 
@@ -1310,9 +1310,9 @@ public class CbService extends Service {
 			output.write(logString.getBytes());
 			output.close();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException ioe) {
-			ioe.printStackTrace();
+			//ioe.printStackTrace();
 		}
 	}
 
