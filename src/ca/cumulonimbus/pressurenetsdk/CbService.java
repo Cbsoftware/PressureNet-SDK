@@ -719,7 +719,7 @@ public class CbService extends Service {
 				// This runs when the service is started from the alarm.
 				// Submit a data point
 				if(settingsHandler == null) {
-					
+					loadSetttingsFromPreferences();
 				}
 				
 				if(settingsHandler.isSharingData()) {
