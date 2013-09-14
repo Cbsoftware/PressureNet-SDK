@@ -314,9 +314,12 @@ public class CbService extends Service {
 
 		@Override
 		public void run() {
+			if(settingsHandler == null) {
+				loadSetttingsFromPreferences();
+			}
 			log("collecting and submitting single "
 					+ settingsHandler.getServerURL());
-
+			dataCollector = new CbDataCollector();
 			dataCollector.startCollectingData();
 			CbObservation singleObservation = new CbObservation();
 			if (settingsHandler.isCollectingData()) {
@@ -715,6 +718,10 @@ public class CbService extends Service {
 			} else if (intent.getBooleanExtra("alarm", false)) {
 				// This runs when the service is started from the alarm.
 				// Submit a data point
+				if(settingsHandler == null) {
+					
+				}
+				
 				if(settingsHandler.isSharingData()) {
 					dataCollector = new CbDataCollector();
 					dataCollector.startCollectingData();
@@ -765,39 +772,44 @@ public class CbService extends Service {
 		return 1000 * 60 * 10;
 	}
 
+	public void loadSetttingsFromPreferences() {
+		log("loading settings from prefs");
+		settingsHandler = new CbSettingsHandler(getApplicationContext());
+		settingsHandler.setServerURL(serverURL);
+		settingsHandler.setAppID("ca.cumulonimbus.barometernetwork");
+
+		SharedPreferences sharedPreferences = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		String preferenceCollectionFrequency = sharedPreferences.getString(
+				"autofrequency", "10 minutes");
+		boolean preferenceShareData = sharedPreferences.getBoolean(
+				"autoupdate", true);
+		String preferenceShareLevel = sharedPreferences.getString(
+				"sharing_preference", "Us, Researchers and Forecasters");
+		boolean preferenceSendNotifications = sharedPreferences.getBoolean(
+				"send_notifications", false);
+		settingsHandler
+				.setDataCollectionFrequency(stringTimeToLongHack(preferenceCollectionFrequency));
+
+		settingsHandler.setSendNotifications(preferenceSendNotifications);
+
+		boolean useGPS = sharedPreferences.getBoolean("use_gps", true);
+		boolean onlyWhenCharging = sharedPreferences.getBoolean(
+				"only_when_charging", false);
+		settingsHandler.setUseGPS(useGPS);
+		settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
+		settingsHandler.setSharingData(preferenceShareData);
+		settingsHandler.setShareLevel(preferenceShareLevel);
+
+		// Seems like new settings. Try adding to the db.
+		settingsHandler.saveSettings();
+	}
+	
 	public void startWithIntent(Intent intent, boolean fromAlarm) {
 		try {
-			settingsHandler = new CbSettingsHandler(getApplicationContext());
-			settingsHandler.setServerURL(serverURL);
-			settingsHandler.setAppID("ca.cumulonimbus.barometernetwork");
-
-			SharedPreferences sharedPreferences = PreferenceManager
-					.getDefaultSharedPreferences(this);
-			String preferenceCollectionFrequency = sharedPreferences.getString(
-					"autofrequency", "10 minutes");
-			boolean preferenceShareData = sharedPreferences.getBoolean(
-					"autoupdate", true);
-			String preferenceShareLevel = sharedPreferences.getString(
-					"sharing_preference", "Us, Researchers and Forecasters");
-			boolean preferenceSendNotifications = sharedPreferences.getBoolean(
-					"send_notifications", false);
-			settingsHandler
-					.setDataCollectionFrequency(stringTimeToLongHack(preferenceCollectionFrequency));
-
-			settingsHandler.setSendNotifications(preferenceSendNotifications);
-
-			boolean useGPS = sharedPreferences.getBoolean("use_gps", true);
-			boolean onlyWhenCharging = sharedPreferences.getBoolean(
-					"only_when_charging", false);
-			settingsHandler.setUseGPS(useGPS);
-			settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
-			settingsHandler.setSharingData(preferenceShareData);
-			settingsHandler.setShareLevel(preferenceShareLevel);
-
+			loadSetttingsFromPreferences();
 			log("cbservice startwithintent " + settingsHandler);
-
-			// Seems like new settings. Try adding to the db.
-			settingsHandler.saveSettings();
+		
 			ReadingSender reading = new ReadingSender();
 			mHandler.post(reading);
 
