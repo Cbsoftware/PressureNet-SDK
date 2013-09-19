@@ -84,6 +84,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	    	    			log("cbdatasender notifying result of data submission");
 		    				messenger.send(Message.obtain(null,
 									CbService.MSG_DATA_RESULT, errorMessage));
+		    				userSent = false;
 	    				} else {
 	    					log("cbdatasender not notifying result");
 	    				}
