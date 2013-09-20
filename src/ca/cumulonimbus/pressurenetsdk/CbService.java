@@ -171,9 +171,6 @@ public class CbService extends Service {
 				obs.setTime(c.getInt(10));
 				obs.setTimeZoneOffset(c.getInt(11));
 				obs.setUser_id(c.getString(12));
-
-				// TODO: Add sensor information
-
 				recentDbList.add(obs);
 			}
 
@@ -306,10 +303,9 @@ public class CbService extends Service {
 	}
 
 	/**
-	 * Send a single reading. TODO: This is ugly copy+paste from the original
+	 * Send a single reading. TODO: Combine with ReadingSender for less code duplication.
 	 * ReadingSender. Fix that.
 	 */
-
 	public class SingleReadingSender implements Runnable {
 
 		@Override
@@ -509,9 +505,6 @@ public class CbService extends Service {
 											log("Trend change! "
 													+ tendencyChange);
 
-											// TODO: send message to deliver
-											// Android notification of tendency
-											// change
 											try {
 												if (lastMessenger != null) {
 													lastMessenger
@@ -675,8 +668,8 @@ public class CbService extends Service {
 	}
 
 	/**
-	 * Check charge state for preferences. TODO: In future, adjust our
-	 * collection and submission frequency based on battery level.
+	 * Check charge state for preferences.
+	 * 
 	 */
 	public boolean isCharging() {
 		// Check battery and charging status
@@ -688,14 +681,6 @@ public class CbService extends Service {
 		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
 		boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING
 				|| status == BatteryManager.BATTERY_STATUS_FULL;
-
-		// How are we charging?
-		/*
-		 * int chargePlug =
-		 * batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1); boolean
-		 * usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB; boolean
-		 * acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
-		 */
 		return isCharging;
 	}
 
@@ -961,9 +946,6 @@ public class CbService extends Service {
 					obs.setTimeZoneOffset(cursor.getInt(11));
 					obs.setUser_id(cursor.getString(12));
 					obs.setTrend(cursor.getString(18));
-
-					// TODO: Add sensor information
-
 					results.add(obs);
 				}
 				db.close();
@@ -1079,7 +1061,7 @@ public class CbService extends Service {
 				}
 				break;
 			case MSG_REMOVE_FROM_PRESSURENET:
-				// TODO: Implement
+				// TODO: Implement a secure system to remove user data
 				break;
 			case MSG_CLEAR_API_CACHE:
 				db.open();

@@ -355,7 +355,7 @@ public class CbDb {
 	}
 
 	/**
-	 * Get a single application's settings by row id TODO: Add more settings
+	 * Get a single application's settings by row id
 	 * 
 	 * @param rowId
 	 * @return
@@ -397,7 +397,7 @@ public class CbDb {
 	}
 
 	/**
-	 * Fetch every application setting. TODO: Add the other settings
+	 * Fetch every application setting.
 	 * 
 	 * @return
 	 */

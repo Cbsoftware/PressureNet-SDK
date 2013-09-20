@@ -65,39 +65,39 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	}
 
 	 private void returnResult(String result) {
-	    	boolean success = true;
-	    	String errorMessage = "";
-	    	try {
-	    		JSONObject jsonResult = new JSONObject(result);
-	    		if(jsonResult.has("success")) {
-	    			success = jsonResult.getBoolean("success");
-	    		}
-	    		if(jsonResult.has("errors")) {
-	    			errorMessage = jsonResult.getString("errors");
-	    		}
-	    		// notify
-	    		if(messenger!=null ) {
-	    			// TODO: currently, only sending result if user initiated the data submission
-	    			// fix this and send results every time, process it app-side better
-	    			try {
-	    				if(userSent) {
-	    	    			log("cbdatasender notifying result of data submission");
-		    				messenger.send(Message.obtain(null,
-									CbService.MSG_DATA_RESULT, errorMessage));
-		    				userSent = false;
-	    				} else {
-	    					log("cbdatasender not notifying result");
-	    				}
-	    			} catch(RemoteException re) {
-	    				re.printStackTrace();
-	    			}
-	    		} else {
-	    			log("cbdatasender messenger null, not notifying of result");
-	    		}
-	    	} catch(JSONException jsone) {
-	    		
-	    	}
-	    }
+    	boolean success = true;
+    	String errorMessage = "";
+    	try {
+    		JSONObject jsonResult = new JSONObject(result);
+    		if(jsonResult.has("success")) {
+    			success = jsonResult.getBoolean("success");
+    		}
+    		if(jsonResult.has("errors")) {
+    			errorMessage = jsonResult.getString("errors");
+    		}
+    		// notify
+    		if(messenger!=null ) {
+    			// TODO: currently, only sending result if user initiated the data submission
+    			// fix this and send results every time, process it app-side better
+    			try {
+    				if(userSent) {
+    	    			log("cbdatasender notifying result of data submission");
+	    				messenger.send(Message.obtain(null,
+								CbService.MSG_DATA_RESULT, errorMessage));
+	    				userSent = false;
+    				} else {
+    					log("cbdatasender not notifying result");
+    				}
+    			} catch(RemoteException re) {
+    				re.printStackTrace();
+    			}
+    		} else {
+    			log("cbdatasender messenger null, not notifying of result");
+    		}
+    	} catch(JSONException jsone) {
+    		
+    	}
+	}
 	
 	@Override
 	protected String doInBackground(String... params) {
