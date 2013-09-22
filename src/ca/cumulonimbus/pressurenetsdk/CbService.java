@@ -126,6 +126,8 @@ public class CbService extends Service {
 	CbAlarm alarm = new CbAlarm();
 
 	double recentPressureReading = 0.0;
+	
+	private long lastSubmit = 0;
 
 	/**
 	 * Collect data from onboard sensors and store locally
@@ -390,6 +392,12 @@ public class CbService extends Service {
 	private class ReadingSender implements Runnable {
 
 		public void run() {
+			long now = System.currentTimeMillis();
+			if(now - lastSubmit < 2000) {
+				System.out.println("too soon, bailing");
+				return;
+			}
+			
 			// retrieve updated settings
 			settingsHandler = settingsHandler.getSettings();
 
@@ -423,6 +431,7 @@ public class CbService extends Service {
 							if (settingsHandler.isSharingData()) {
 								// Send if we're online
 								if (isNetworkAvailable()) {
+									lastSubmit = System.currentTimeMillis();
 									log("online and sending");
 									singleObservation
 											.setClientKey(getApplicationContext()
