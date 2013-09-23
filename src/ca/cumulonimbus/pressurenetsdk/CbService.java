@@ -55,7 +55,7 @@ public class CbService extends Service {
 
 	Message recentMsg;
 
-	String serverURL = "https://pressurenet.cumulonimbus.ca/";
+	String serverURL = CbConfiguration.SERVER_URL;
 
 	public static String ACTION_SEND_MEASUREMENT = "SendMeasurement";
 
@@ -336,8 +336,7 @@ public class CbService extends Service {
 							if (isNetworkAvailable()) {
 								log("online and sending single");
 								singleObservation
-										.setClientKey(getApplicationContext()
-												.getPackageName());
+										.setClientKey(CbConfiguration.API_KEY);
 								fromUser = true;
 								sendCbObservation(singleObservation);
 								fromUser = false;
@@ -434,8 +433,7 @@ public class CbService extends Service {
 									lastSubmit = System.currentTimeMillis();
 									log("online and sending");
 									singleObservation
-											.setClientKey(getApplicationContext()
-													.getPackageName());
+											.setClientKey(CbConfiguration.API_KEY);
 									sendCbObservation(singleObservation);
 
 									// also check and send the offline buffer
