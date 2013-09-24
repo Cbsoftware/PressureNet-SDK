@@ -551,6 +551,12 @@ public class CbService extends Service {
 		}
 	}
 
+	/**
+	 * Check for network connection, return true
+	 * if we're online.
+	 * 
+	 * @return
+	 */
 	public boolean isNetworkAvailable() {
 		log("is net available?");
 		ConnectivityManager cm = (ConnectivityManager) this
@@ -760,6 +766,10 @@ public class CbService extends Service {
 			return 1000 * 60 * 30;
 		} else if (timeAgo.equals("1 hour")) {
 			return 1000 * 60 * 60;
+		} else if(timeAgo.equals("6 hours")) {
+			return 1000 * 60 * 60 * 6;
+		} else if(timeAgo.equals("12 hours")) {
+			return 1000 * 60 * 60 * 12;
 		}
 		return 1000 * 60 * 10;
 	}
