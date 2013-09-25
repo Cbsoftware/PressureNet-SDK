@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -379,11 +380,31 @@ public class CbService extends Service {
 		pressureObservation.setObservationUnit("mbar");
 		// pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
 		pressureObservation.setSharing(settingsHandler.getShareLevel());
+		
+		pressureObservation.setVersionNumber(getSDKVersion());
+		
 		log("cbservice buildobs, share level "
 				+ settingsHandler.getShareLevel() + " " + getID());
 		return pressureObservation;
 	}
 
+	/**
+	 * Return the version number of the SDK sending this reading
+	 * @return
+	 */
+	public String getSDKVersion() {
+		String version = "-1.0";
+		try {
+			version = getPackageManager()
+					.getPackageInfo("ca.cumulonimbus.pressurenetsdk", 0).versionName;
+		} catch (NameNotFoundException nnfe) {
+			// TODO: this is not an okay return value
+			// (Don't send error messages as version numbers)
+			version = nnfe.getMessage(); 
+		}
+		return version;
+	}
+	
 	/**
 	 * Collect and send data in a different thread. This runs itself every
 	 * "settingsHandler.getDataCollectionFrequency()" milliseconds
