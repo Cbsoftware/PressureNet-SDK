@@ -368,6 +368,11 @@ public class CbService extends Service {
 		}
 	}
 
+	/**
+	 *  Put together all the information that defines
+	 *  an observation and store it in a single object.
+	 * @return
+	 */
 	public CbObservation buildPressureObservation() {
 		CbObservation pressureObservation = new CbObservation();
 		pressureObservation.setTime(System.currentTimeMillis());
@@ -1350,8 +1355,10 @@ public class CbService extends Service {
 	}
 
 	public void log(String message) {
-		//logToFile(message);
-		//System.out.println(message);
+		if(CbConfiguration.DEBUG_MODE) {
+			logToFile(message);
+			System.out.println(message);
+		}
 	}
 
 	public CbDataCollector getDataCollector() {

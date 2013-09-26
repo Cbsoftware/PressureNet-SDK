@@ -166,10 +166,12 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	}
 	
 	public void log(String message) {
-		//logToFile(message);
-		//System.out.println(message);
+		if(CbConfiguration.DEBUG_MODE) {
+			logToFile(message);
+			System.out.println(message);
+		}
 	}
-
+	
     /**
      * Prepare to write a log to SD card. Not used unless logging enabled.
      */
