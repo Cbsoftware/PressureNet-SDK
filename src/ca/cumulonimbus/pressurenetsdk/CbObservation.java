@@ -58,7 +58,7 @@ public class CbObservation extends CbWeather {
 				"reading," + observationValue, "sharing," + sharing,
 				"daterecorded," + time, "tzoffset," + timeZoneOffset,
 				"user_id," + user_id, "client_key," + clientKey,
-				"reading_accuracy," + 0.0 +
+				"reading_accuracy," + 0.0,
 				"version_number," + versionNumber
 		};
 		return params;
