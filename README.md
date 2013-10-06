@@ -8,7 +8,11 @@ This SDK is intended for data collection. We have also built a pressureNET API f
 Installation
 --------------
 
-To include this SDK in your Android project, in Eclipse open the Project Properties of the target app. In the Java Build Path page, under the Source tab, use the Link Source feature to include the 'src' directory of this library.
+Include this SDK in your Android project:
+
+1. In Eclipse, open the Project Properties of your existing application. 
+2. Open the Java Build Path page, then the Source tab. 
+3. Use the Link Source feature to include the 'src' directory of this library. Rename the new folder to something like 'srk-cbsdk'.
 
 Usage
 --------
@@ -16,6 +20,17 @@ All interaction with the pressureNET SDK will be done through the CbService clas
 
     Intent intent  = new Intent(getApplicationContext(), CbService.class);
     startService(intent);
+
+Add the service to your AndroidManifest.xml file inside the <application> tags:
+
+    <service
+        android:name="ca.cumulonimbus.pressurenetsdk.CbService"
+        android:enabled="true" >
+        <intent-filter>
+        <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT" />
+            </intent-filter>
+    </service>
+
 
 Communication
 --------------------
