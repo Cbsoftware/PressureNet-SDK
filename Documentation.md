@@ -1,33 +1,23 @@
 pressureNET SDK Documentation
 ==============
 
-The pressureNET SDK is an Android library project that enables simple atmosphere sensor data collection and transmission to researchers. Please see README.md for an overview. This document details how to use the pressureNET SDK using a sample Android project which you can find [here](github link).
+The [pressureNET SDK](https://github.com/Cbsoftware/pressureNET-SDK) is an Android library project that enables simple atmosphere sensor data collection and transmission to researchers. Please see README.md for an overview. This document details how to use the pressureNET SDK using our [Example Android project](https://github.com/Cbsoftware/pressureNET-SDK-Example).
 
 Installation
 ========
 
-This documentation assumes that you are using the Google-provided ADT or a standard Eclipse installation with ADT plugin. 
+This documentation assumes that you are using Eclipse with the Android Development Tools plugin (the Google-provided ADT or a standard Eclipse installation with ADT plugin will work fine). 
 
 1. Download the most recent stable SDK source code from GitHub using
-
-   git clone https://github.com/Cbsoftware/pressureNET-SDÏK
-
+   git clone https://github.com/Cbsoftware/pressureNET-SDK
 You may also choose to download our Example project, which this documentation uses for inline code examples and descriptions. You can get it with:
-
    git clone https://github.com/Cbsoftware/pressureNET-SDK-Example
-
 2. In Eclipse, use the Import feature (File -> Import) to import the SDK project. 
-
 [screenshot]
-
 3. Link the Source of the SDK to your existing Android project by right-clicking on your project and selecting Properties. In the Properties dialog, on the left select Java Build Path and then click Link Source on the right.
-
 [screenshot]
-
 4. In the Link Source dialog, browse to the pressureNET-SDK/src directory and select it. Give it a name other than ‘src’ so as not to conflict with your existing projects.
-
 [screenshot]
-
 5. Congratulations! The pressureNET SDK is now imported into Eclipse and connected to your Android app. Before continuing on to the Usage section to learn how to use the SDK, ensure that everything builds fine - there should be no errors.
 
 Usage
