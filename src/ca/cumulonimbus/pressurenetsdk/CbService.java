@@ -804,7 +804,7 @@ public class CbService extends Service {
 		log("loading settings from prefs");
 		settingsHandler = new CbSettingsHandler(getApplicationContext());
 		settingsHandler.setServerURL(serverURL);
-		settingsHandler.setAppID("ca.cumulonimbus.barometernetwork");
+		settingsHandler.setAppID(getApplication().getPackageName());
 
 		SharedPreferences sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(this);
@@ -959,6 +959,7 @@ public class CbService extends Service {
 				log("set settings");
 				CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
 				newSettings.saveSettings();
+				settingsHandler = newSettings;
 				break;
 			case MSG_GET_LOCAL_RECENTS:
 				log("get local recents");
