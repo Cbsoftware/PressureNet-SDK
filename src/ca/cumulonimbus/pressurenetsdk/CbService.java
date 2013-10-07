@@ -1183,7 +1183,7 @@ public class CbService extends Service {
 							getApplicationContext());
 					settingsHandler.setServerURL(serverURL);
 					settingsHandler
-							.setAppID("ca.cumulonimbus.barometernetwork");
+							.setAppID(getApplication().getPackageName());
 				}
 				try {
 					condition

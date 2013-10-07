@@ -65,7 +65,7 @@ public class CbSettingsHandler {
 	}
 	
 	public CbSettingsHandler getSettings() {
-		String appID = "ca.cumulonimbus.barometernetwork";
+		String appID = context.getPackageName();
 		try {
 			db = new CbDb(context);
 			db.open();
