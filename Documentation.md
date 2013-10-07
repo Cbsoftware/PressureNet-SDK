@@ -1,0 +1,124 @@
+pressureNET SDK Documentation
+==============
+
+The pressureNET SDK is an Android library project that enables simple atmosphere sensor data collection and transmission to researchers. Please see README.md for an overview. This document details how to use the pressureNET SDK using a sample Android project which you can find [here](github link).
+
+Installation
+========
+
+This documentation assumes that you are using the Google-provided ADT or a standard Eclipse installation with ADT plugin. 
+
+1. Download the most recent stable SDK source code from GitHub using
+
+   git clone https://github.com/Cbsoftware/pressureNET-SDÏK
+
+You may also choose to download our Example project, which this documentation uses for inline code examples and descriptions. You can get it with:
+
+   git clone https://github.com/Cbsoftware/pressureNET-SDK-Example
+
+2. In Eclipse, use the Import feature (File -> Import) to import the SDK project. 
+
+[screenshot]
+
+3. Link the Source of the SDK to your existing Android project by right-clicking on your project and selecting Properties. In the Properties dialog, on the left select Java Build Path and then click Link Source on the right.
+
+[screenshot]
+
+4. In the Link Source dialog, browse to the pressureNET-SDK/src directory and select it. Give it a name other than ‘src’ so as not to conflict with your existing projects.
+
+[screenshot]
+
+5. Congratulations! The pressureNET SDK is now imported into Eclipse and connected to your Android app. Before continuing on to the Usage section to learn how to use the SDK, ensure that everything builds fine - there should be no errors.
+
+Usage
+=====
+
+You must reference the CbService class in your project’s AndroidManifest.xml in order to use it. Inside the <application> element, add a reference like this:
+
+    <service
+        android:name="ca.cumulonimbus.pressurenetsdk.CbService"
+        android:enabled="true" >
+            <intent-filter>
+                <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT" />
+            </intent-filter>
+    </service>
+    <receiver
+        android:name="ca.cumulonimbus.pressurenetsdk.CbAlarm"
+        android:process=":remote" >
+        <intent-filter>
+            <action android:name="ca.cumulonimbus.pressurenetsdk.START_ALARM" />
+        </intent-filter>
+    </receiver> 
+
+The <service> tag identifies our service to the Android OS, and the <receiver> lets pressureNET receive the alarm signals it sends in the background, enabling auto-submit. 
+
+Then, to start the service, use the following code to create an Intent and start the Service.
+
+    Intent intent  = new Intent(getApplicationContext(), CbService.class);
+    startService(intent);
+
+Features of the SDK include the ability to view and change settings, start and stop the service, access saved data, access the live data set and other useful methods. Simple examples are shown here, with sample source code in the [SDK Example app](github.com/CbSoftware/pressureNET-SDK-Example).
+
+Starting and Stopping
+----------------------------
+
+Starting CbService
+
+To initialize the service and have it start with updated settings, create an Intent and start the service with a call to Android’s startService method. 
+
+	Intent serviceIntent;
+	private void startCbService() {
+		try {
+			serviceIntent = new Intent(this, CbService.class);
+			startService(serviceIntent);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+Stopping CbService
+
+	private void stopCbService() {
+		try {
+			stopService(serviceIntent);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+Communication
+===========
+
+
+Bind to the service:
+
+    bindService(new Intent(getApplicationContext(), CbService.class), mConnection, Context.BIND_AUTO_CREATE);
+
+This can take time, so wait until your ServiceConnection object tells you it's bound (see the [Example source code](https://github.com/Cbsoftware/pressureNET-SDK-Example/blob/master/src/ca/cumulonimbus/pressurenetsdkexample/MainActivity.java) for clarity on this).
+
+Then to request the stored reading, build a simple CbApiCall and send it with message CbService.MSG_GET_LOCAL_RECENTS:
+	
+    CbApiCall apiCall = buildApiCall(); // Set a latitude and longitude range, along with a time range.
+    Message msg = Message.obtain(null, CbService.MSG_GET_LOCAL_RECENTS, apiCall );
+    try {
+        msg.replyTo = mMessenger;
+        mService.send(msg);
+    } catch (RemoteException e) {
+        System.out.println("Remote exception: " + e.getMessage());
+    }
+    
+To read the result, build an IncomingHandler that looks something like this: 
+
+    class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case CbService.MSG_LOCAL_RECENTS:
+                ArrayList<CbObservation> obsList = (ArrayList<CbObservation>) msg.obj;
+                // Do something with the ArryaList!
+				break;
+            default:
+                super.handleMessage(msg);
+            }
+        }
+    }
