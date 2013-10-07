@@ -16,7 +16,10 @@ Include this SDK in your Android project:
 
 Usage
 --------
-All interaction with the pressureNET SDK will be done through the CbService class. The only necessary step is to start the service by creating an Intent and calling startService:
+
+Simple steps to get started with the SDK are presented here. Full documentation is in the docs/ folder. We also provide a [full Example project](https://github.com/Cbsoftware/pressureNET-SDK-Example) that uses the SDK and simplified code to help you get started.
+
+All interaction with the pressureNET SDK will be done through the CbService class. Start the service by creating an Intent and calling startService:
 
     Intent intent  = new Intent(getApplicationContext(), CbService.class);
     startService(intent);
