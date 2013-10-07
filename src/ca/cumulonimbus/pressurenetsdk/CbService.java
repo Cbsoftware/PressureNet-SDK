@@ -909,7 +909,11 @@ public class CbService extends Service {
 			switch (msg.what) {
 			case MSG_STOP:
 				log("message. bound service says stop");
-				// stopAutoSubmit();
+				try {
+					alarm.cancelAlarm(getApplicationContext());
+				} catch(Exception e) {
+					
+				}
 				break;
 			case MSG_GET_BEST_LOCATION:
 				log("message. bound service requesting location");

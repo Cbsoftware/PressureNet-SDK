@@ -26,16 +26,25 @@ Add the service to your AndroidManifest.xml file inside the <application> tags:
     <service
         android:name="ca.cumulonimbus.pressurenetsdk.CbService"
         android:enabled="true" >
-        <intent-filter>
-        <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT" />
+            <intent-filter>
+                <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT" />
             </intent-filter>
     </service>
 
+The final element required is to add the following <receiver> tag, which can go right below the <service> tag:
+
+    <receiver
+        android:name="ca.cumulonimbus.pressurenetsdk.CbAlarm"
+        android:process=":remote" >
+        <intent-filter>
+            <action android:name="ca.cumulonimbus.pressurenetsdk.START_ALARM" />
+        </intent-filter>
+    </receiver> 
 
 Communication
 --------------------
 
-Communication between an app and the CbService is done with Messages. Here’s an example of asking the SDK for the total number of stored observations and then capturing the answer:
+Communication between an app and the CbService is done with Messages. Here's an example of asking the SDK for the total number of stored observations and then capturing the answer:
 
 
 About
