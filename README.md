@@ -47,7 +47,40 @@ The final element required is to add the following <receiver> tag, which can go 
 Communication
 --------------------
 
-Communication between an app and the CbService is done with Messages. Here's an example of asking the SDK for the total number of stored observations and then capturing the answer:
+Communication between an app and the CbService is done  by binding to the Service and passing Messages. Here's an example of asking the SDK for the total number of stored observations and then capturing the answer:
+
+Bind to the service:
+
+    bindService(new Intent(getApplicationContext(), CbService.class), mConnection, Context.BIND_AUTO_CREATE);
+
+This can take time, so wait until your ServiceConnection object tells you it's bound (see the [Example source code](https://github.com/Cbsoftware/pressureNET-SDK-Example/blob/master/src/ca/cumulonimbus/pressurenetsdkexample/MainActivity.java) for clarity on this).
+
+Then to request the stored reading, build a simple CbApiCall and send it with message CbService.MSG_GET_LOCAL_RECENTS:
+	
+    CbApiCall apiCall = buildApiCall(); // Set a latitude and longitude range, along with a time range.
+    Message msg = Message.obtain(null, CbService.MSG_GET_LOCAL_RECENTS, apiCall );
+    try {
+        msg.replyTo = mMessenger;
+        mService.send(msg);
+    } catch (RemoteException e) {
+        System.out.println("Remote exception: " + e.getMessage());
+    }
+    
+To read the result, build an IncomingHandler that looks something like this: 
+
+    class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case CbService.MSG_LOCAL_RECENTS:
+                ArrayList<CbObservation> obsList = (ArrayList<CbObservation>) msg.obj;
+                // Do something with the ArryaList!
+				break;
+            default:
+                super.handleMessage(msg);
+            }
+        }
+    }
 
 
 About
