@@ -64,7 +64,7 @@ Starting and Stopping
 
 Starting CbService
 
-To initialize the service and have it start with updated settings, create an Intent and start the service with a call to Android’s startService method. 
+To initialize the service and have it start with updated settings, create an Intent and start the service with a call to Android’s startService method. This will also initiate the Service and allow it to begin collecting and submitting data, if the settings allow.
 
 	Intent serviceIntent;
 	private void startCbService() {
@@ -89,14 +89,15 @@ Stopping CbService
 Communication
 ===========
 
+While pressureNET will run in the background with just the above commands, it's likely that you'll want to communicate with it to change settings, behaviour, and to query the data it has collected. Once your app is bound to the service, you can send Messages and objects to it and listen for responses.
 
-Bind to the service:
+First, bind to the service:
 
     bindService(new Intent(getApplicationContext(), CbService.class), mConnection, Context.BIND_AUTO_CREATE);
 
 This can take time, so wait until your ServiceConnection object tells you it's bound (see the [Example source code](https://github.com/Cbsoftware/pressureNET-SDK-Example/blob/master/src/ca/cumulonimbus/pressurenetsdkexample/MainActivity.java) for clarity on this).
 
-Then to request the stored reading, build a simple CbApiCall and send it with message CbService.MSG_GET_LOCAL_RECENTS:
+Now your app and the SDK can communicate. As an example, let's ask for the list of measurements the SDK has recorded. To request the stored readings, build a simple CbApiCall object and send it with message CbService.MSG_GET_LOCAL_RECENTS:
 	
     CbApiCall apiCall = buildApiCall(); // Set a latitude and longitude range, along with a time range.
     Message msg = Message.obtain(null, CbService.MSG_GET_LOCAL_RECENTS, apiCall );
@@ -122,3 +123,12 @@ To read the result, build an IncomingHandler that looks something like this:
             }
         }
     }
+    
+A full list of available communication messages follows.
+
+Settings
+========
+
+The pressureNET SDK offers a few settings that allow you to customize its behavior. To receive the current settings, send a CbService.MSG_GET_SETTINGS message. You will receive a CbSettingsHandler object back, which you can then read and modify, before saving the Settings with MSG_SET_SETTINGS. The available settings are documented here.
+
+
