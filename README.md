@@ -44,7 +44,7 @@ The final element required is to add the following <receiver> tag, which can go 
         </intent-filter>
     </receiver> 
 
-And that's it! By adding those elements to your manifest and calling startService, the pressureNET SDK will run in the background and send data. For more control, such as changing the settings, and for querying the stored data, please see the full documentation.
+And that's it! By adding those elements to your manifest and calling startService, the pressureNET SDK will run in the background and send data. For more control, your app can communicate with the SDK.
 
 Communication
 --------------------
