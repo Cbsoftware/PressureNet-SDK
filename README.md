@@ -55,4 +55,4 @@ Communication between your app and the CbService is done by binding to the Servi
 About
 --------
 
-This SDK is developed by [Cumulonimbus](http://cumulonimbus.ca) as part of the pressureNET project. Our primary goal is to improve short-term, local weather forecasting by dramatically increasing the data inputs available to weather models. We built this SDK so you can help this effort by contributing data! Please email us with any questions: software@cumulonimbus.ca
+This SDK is developed by [Cumulonimbus](http://cumulonimbus.ca) as part of the [pressureNET](https://github.com/Cbsoftware/pressureNET) project. Our primary goal is to improve weather forecasting by dramatically increasing the data inputs available to weather models. We built this SDK so you can help this effort by contributing data! Please email us with any questions: software@cumulonimbus.ca
