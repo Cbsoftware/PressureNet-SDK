@@ -36,6 +36,7 @@ public class CbSettingsHandler {
 	@Override
 	public String toString() {
 		return "Settings: \n" +
+				"serverURL " + serverURL + "\n" + 
 			   "appID " + appID + "\n" + 
 			   "dataCollectionFrequency " + dataCollectionFrequency + "\n" +
 			   "apponlyWhenCharging " + onlyWhenCharging + "\n" +
@@ -70,8 +71,8 @@ public class CbSettingsHandler {
 			db.open();
 
 			Cursor settings = db.fetchSettingByApp(context.getPackageName());
-			while(settings.moveToNext()) {
-				// TODO: fix and fill out all fields
+			
+			if(settings.moveToFirst()) {
 				this.appID = settings.getString(1);
 				this.dataCollectionFrequency = settings.getLong(2);
 				this.serverURL = CbConfiguration.SERVER_URL;
@@ -83,6 +84,8 @@ public class CbSettingsHandler {
 				this.shareLevel = settings.getString(9);
 			}
 			db.close();
+			System.out.println("getting settings for app " + context.getPackageName() );
+			System.out.println(this);
 			return this;
 		} catch(Exception e) {
 			//e.printStackTrace();
@@ -91,6 +94,8 @@ public class CbSettingsHandler {
 	}
 	
 	public CbSettingsHandler(Context ctx) {
+		this.appID = ctx.getPackageName();
+		this.serverURL = CbConfiguration.SERVER_URL;
 		this.context = ctx;
 	}
 	

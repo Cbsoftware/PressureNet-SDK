@@ -314,6 +314,7 @@ public class CbService extends Service {
 		@Override
 		public void run() {
 			if(settingsHandler == null) {
+				log("single reading sender, loading settings from prefs");
 				loadSetttingsFromPreferences();
 			}
 			log("collecting and submitting single "
@@ -419,13 +420,19 @@ public class CbService extends Service {
 		public void run() {
 			long now = System.currentTimeMillis();
 			if(now - lastSubmit < 2000) {
-				System.out.println("too soon, bailing");
+				log("too soon, bailing");
 				return;
 			}
 			
 			// retrieve updated settings
-			settingsHandler = settingsHandler.getSettings();
+			if(settingsHandler == null) {
+				settingsHandler = new CbSettingsHandler(getApplicationContext());
+				settingsHandler = settingsHandler.getSettings();
+			} else {
+				settingsHandler = settingsHandler.getSettings();
+			}
 
+			
 			dataCollector.startCollectingData();
 
 			log("collecting and submitting " + settingsHandler.getServerURL());
@@ -624,6 +631,13 @@ public class CbService extends Service {
 	public boolean sendCbObservation(CbObservation observation) {
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
+			settingsHandler = settingsHandler.getSettings();
+			if(settingsHandler.getServerURL().equals("")) {
+				log("settings are empty; defaults");
+				//loadSetttingsFromPreferences();
+				// settingsHandler = settingsHandler.getSettings();
+			}
+			log("sendCbObservation with settings " + settingsHandler);
 			sender.setSettings(settingsHandler, locationManager,
 					lastMessenger, fromUser);
 			sender.execute(observation.getObservationAsParams());
@@ -701,7 +715,8 @@ public class CbService extends Service {
 	public void onCreate() {
 		setUpFiles();
 		log("cb on create");
-
+		settingsHandler = new CbSettingsHandler(getApplicationContext());
+		settingsHandler.getSettings();
 		db = new CbDb(getApplicationContext());
 		super.onCreate();
 	}
@@ -757,22 +772,20 @@ public class CbService extends Service {
 				} else {
 					log("cbservice not sharing data");
 				}
+				
+				LocationStopper stop = new LocationStopper();
+				mHandler.postDelayed(stop, 1000 * 3);
 				return START_NOT_STICKY;
 			} else {
 				// Check the database
 				
 				log("starting service with db");
-				if(settingsHandler == null) {
-					settingsHandler = new CbSettingsHandler(getApplicationContext());
-					settingsHandler.getSettings();
-				}
 				startWithDatabase();
 				return START_NOT_STICKY;
 			}
 		}
-
-		LocationStopper stop = new LocationStopper();
-		mHandler.postDelayed(stop, 1000 * 3);
+		
+	
 
 		super.onStartCommand(intent, flags, startId);
 		return START_NOT_STICKY;
@@ -831,7 +844,7 @@ public class CbService extends Service {
 		settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
 		settingsHandler.setSharingData(preferenceShareData);
 		settingsHandler.setShareLevel(preferenceShareLevel);
-
+		
 		// Seems like new settings. Try adding to the db.
 		settingsHandler.saveSettings();
 	}
@@ -859,20 +872,18 @@ public class CbService extends Service {
 			db.open();
 			// Check the database for Settings initialization
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
-			// db.clearDb();
-			Cursor allSettings = db.fetchAllSettings();
+			Cursor allSettings = db.fetchSettingByApp(getPackageName());
 			log("cb intent null; checking db, size " + allSettings.getCount());
-			while (allSettings.moveToNext()) {
+			if (allSettings.moveToFirst()) {
 				settingsHandler.setAppID(allSettings.getString(1));
 				settingsHandler.setDataCollectionFrequency(allSettings
 						.getLong(2));
 				settingsHandler.setServerURL(serverURL);
-				settingsHandler.setShareLevel(allSettings.getString(7));
-				// booleans
-				int onlyWhenCharging = allSettings.getInt(4);
-				int useGPS = allSettings.getInt(9);
-				int sendNotifications = allSettings.getInt(8);
-				int sharingData = allSettings.getInt(6);
+				int sendNotifications = allSettings.getInt(4);
+				int useGPS = allSettings.getInt(5);
+				int onlyWhenCharging = allSettings.getInt(6);
+				int sharingData = allSettings.getInt(7);
+				settingsHandler.setShareLevel(allSettings.getString(9));
 				boolean boolCharging = (onlyWhenCharging > 0);
 				boolean boolGPS = (useGPS > 0);
 				boolean boolSendNotifications = (sendNotifications > 0);
@@ -884,14 +895,14 @@ public class CbService extends Service {
 				settingsHandler.setUseGPS(boolGPS);
 				settingsHandler.setSharingData(boolSharingData);
 				settingsHandler.saveSettings();
-
-				log("cbservice startwithdb, " + settingsHandler);
-				ReadingSender reading = new ReadingSender();
-				mHandler.post(reading);
-
-				startSubmit();
-				break;
+				
 			}
+			
+			log("cbservice startwithdb, " + settingsHandler);
+			ReadingSender reading = new ReadingSender();
+			mHandler.post(reading);
+
+			startSubmit();
 			db.close();
 		} catch (Exception e) {
 			for (StackTraceElement ste : e.getStackTrace()) {
