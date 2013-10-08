@@ -4,7 +4,7 @@ pressureNET SDK Documentation
 The [pressureNET SDK](https://github.com/Cbsoftware/pressureNET-SDK) is an Android library project that enables simple atmosphere sensor data collection and transmission to researchers. Please see README.md for an overview. This document details how to use the pressureNET SDK using our [Example Android project](https://github.com/Cbsoftware/pressureNET-SDK-Example).
 
 Installation
-========
+------------
 
 This documentation assumes that you are using Eclipse with the Android Development Tools plugin (the Google-provided ADT or a standard Eclipse installation with ADT plugin will work fine). 
 
@@ -21,9 +21,9 @@ You may also choose to download our Example project, which this documentation us
 5. Congratulations! The pressureNET SDK is now imported into Eclipse and connected to your Android app. Before continuing on to the Usage section to learn how to use the SDK, ensure that everything builds fine - there should be no errors.
 
 Usage
-=====
+-----
 
-You must reference the CbService class in your project’s AndroidManifest.xml in order to use it. Inside the <application> element, add a reference like this:
+You must reference the CbService class in your project's AndroidManifest.xml in order to use it. Inside the <application> element, add a reference like this:
 
     <service
         android:name="ca.cumulonimbus.pressurenetsdk.CbService"
@@ -52,7 +52,7 @@ Features of the SDK include the ability to view and change settings, start and s
 Starting and Stopping
 ----------------------------
 
-Starting CbService
+Starting CbService:
 
 To initialize the service and have it start with updated settings, create an Intent and start the service with a call to Android’s startService method. This will also initiate the Service and allow it to begin collecting and submitting data, if the settings allow.
 
@@ -77,7 +77,7 @@ Stopping CbService
 	}
 
 Communication
-===========
+-------------
 
 While pressureNET will run in the background with just the above commands, it's likely that you'll want to communicate with it to change settings, behaviour, and to query the data it has collected. Once your app is bound to the service, you can send Messages and objects to it and listen for responses.
 
@@ -117,8 +117,14 @@ To read the result, build an IncomingHandler that looks something like this:
 A full list of available communication messages follows.
 
 Settings
-========
+--------
 
 The pressureNET SDK offers a few settings that allow you to customize its behavior. To receive the current settings, send a CbService.MSG_GET_SETTINGS message. You will receive a CbSettingsHandler object back, which you can then read and modify, before saving the Settings with MSG_SET_SETTINGS. The available settings are documented here.
 
+- Data Collection Frequency
+- Toggle auto-submit
+- Sharing preference
+- Notification toggle
+- GPS toggle
+- Only-when-charging toggle
 
