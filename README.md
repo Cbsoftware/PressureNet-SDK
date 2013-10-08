@@ -49,10 +49,10 @@ And that's it! By adding those elements to your manifest and calling startServic
 Communication
 --------------------
 
-Communication between an app and the CbService is done by binding to the Service and passing Messages. For full documentation, please see the docs/ folder, which contains a full description of available communication messages as well as Javadoc.
+Communication between your app and the CbService is done by binding to the Service and passing Messages. For full documentation, please see Documentation.md and the docs/ folder, which contain descriptions of available communication messages as well as Javadoc comments.
 
 
 About
 --------
 
-This SDK is developed by [Cumulonimbus](http://cumulonimbus.ca) as part of the pressureNET project. Our primary goal is to improve short-term, local weather forecasting by dramatically increasing the data inputs available to weather models.
+This SDK is developed by [Cumulonimbus](http://cumulonimbus.ca) as part of the pressureNET project. Our primary goal is to improve short-term, local weather forecasting by dramatically increasing the data inputs available to weather models. We built this SDK so you can help this effort by contributing data! Please email us with any questions: software@cumulonimbus.ca
