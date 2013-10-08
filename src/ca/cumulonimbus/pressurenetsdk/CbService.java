@@ -730,7 +730,7 @@ public class CbService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cb onstartcommand");
-
+		dataCollector = new CbDataCollector();
 		if (intent != null) {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
@@ -742,9 +742,7 @@ public class CbService extends Service {
 			} else if (intent.getBooleanExtra("alarm", false)) {
 				// This runs when the service is started from the alarm.
 				// Submit a data point
-				if(settingsHandler == null) {
-					loadSetttingsFromPreferences();
-				}
+				log("cbservice alarm firing, sending data");
 				
 				if(settingsHandler.isSharingData()) {
 					dataCollector = new CbDataCollector();
@@ -754,20 +752,19 @@ public class CbService extends Service {
 					log("cbservice not sharing data");
 				}
 				return START_NOT_STICKY;
+			} else {
+				// Check the database
+				
+				log("starting service with db");
+				if(settingsHandler == null) {
+					settingsHandler = new CbSettingsHandler(getApplicationContext());
+					settingsHandler.getSettings();
+				}
+				startWithDatabase();
+				return START_NOT_STICKY;
 			}
 		}
 
-		// Check the intent for Settings initialization
-		dataCollector = new CbDataCollector();
-		if (intent != null) {
-			log("starting service with intent");
-			startWithIntent(intent, false);
-
-			return START_NOT_STICKY;
-		} else {
-			log("INTENT NULL; checking db");
-			startWithDatabase();
-		}
 		LocationStopper stop = new LocationStopper();
 		mHandler.postDelayed(stop, 1000 * 3);
 
@@ -835,16 +832,14 @@ public class CbService extends Service {
 	
 	public void startWithIntent(Intent intent, boolean fromAlarm) {
 		try {
-			loadSetttingsFromPreferences();
-			log("cbservice startwithintent " + settingsHandler);
-		
-			ReadingSender reading = new ReadingSender();
-			mHandler.post(reading);
-
-			// We arrived here from the user (i.e., not the alarm)
-			// start/(update?) the alarm
 			if (!fromAlarm) {
+				// We arrived here from the user (i.e., not the alarm)
+				// start/(update?) the alarm
 				startSubmit();
+			} else {
+				// alarm. Go!
+				ReadingSender reading = new ReadingSender();
+				mHandler.post(reading);
 			}
 		} catch (Exception e) {
 			for (StackTraceElement ste : e.getStackTrace()) {
@@ -945,6 +940,7 @@ public class CbService extends Service {
 				break;
 			case MSG_GET_SETTINGS:
 				log("get settings");
+				settingsHandler.getSettings();
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_SETTINGS,
 							settingsHandler));
@@ -957,9 +953,8 @@ public class CbService extends Service {
 				break;
 			case MSG_SET_SETTINGS:
 				log("set settings");
-				CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
-				newSettings.saveSettings();
-				settingsHandler = newSettings;
+				settingsHandler = (CbSettingsHandler) msg.obj;
+				settingsHandler.saveSettings();
 				break;
 			case MSG_GET_LOCAL_RECENTS:
 				log("get local recents");
