@@ -743,6 +743,12 @@ public class CbService extends Service {
 				// This runs when the service is started from the alarm.
 				// Submit a data point
 				log("cbservice alarm firing, sending data");
+				if(settingsHandler == null) {
+					settingsHandler = new CbSettingsHandler(getApplicationContext());
+					settingsHandler.getSettings();
+				} else {
+					settingsHandler.getSettings();
+				}
 				
 				if(settingsHandler.isSharingData()) {
 					dataCollector = new CbDataCollector();
@@ -940,7 +946,12 @@ public class CbService extends Service {
 				break;
 			case MSG_GET_SETTINGS:
 				log("get settings");
-				settingsHandler.getSettings();
+				if(settingsHandler != null) {
+					settingsHandler.getSettings();
+				} else {
+					settingsHandler = new CbSettingsHandler(getApplicationContext());
+					settingsHandler.getSettings();
+				}
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_SETTINGS,
 							settingsHandler));
