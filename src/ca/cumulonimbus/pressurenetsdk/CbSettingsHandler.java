@@ -36,6 +36,7 @@ public class CbSettingsHandler {
 	@Override
 	public String toString() {
 		return "Settings: \n" +
+				"serverURL " + serverURL + "\n" + 
 			   "appID " + appID + "\n" + 
 			   "dataCollectionFrequency " + dataCollectionFrequency + "\n" +
 			   "apponlyWhenCharging " + onlyWhenCharging + "\n" +
@@ -52,7 +53,7 @@ public class CbSettingsHandler {
 		try {
 			db = new CbDb(context);
 			db.open();
-			Cursor existing = db.fetchSettingByApp(appID);
+			Cursor existing = db.fetchAllSettings();
 			if (existing.getCount() < 1) {
 				db.addSetting(appID, dataCollectionFrequency, serverURL, onlyWhenCharging, collectingData, sharingData, shareLevel, sendNotifications, useGPS);
 			} else {
@@ -65,24 +66,26 @@ public class CbSettingsHandler {
 	}
 	
 	public CbSettingsHandler getSettings() {
-		String appID = "ca.cumulonimbus.barometernetwork";
 		try {
 			db = new CbDb(context);
 			db.open();
 
-			Cursor settings = db.fetchAllSettings();
-			while(settings.moveToNext()) {
-				// TODO: fix and fill out all fields
-				this.shareLevel = settings.getString(7);
-				this.onlyWhenCharging = settings.getInt(4) > 0;
-				this.useGPS = settings.getInt(9) > 0 ;
-				this.sendNotifications = settings.getInt(8) > 0;
-				this.dataCollectionFrequency = settings.getLong(2);
+			Cursor settings = db.fetchSettingByApp(context.getPackageName());
+			
+			if(settings.moveToFirst()) {
 				this.appID = settings.getString(1);
-				this.collectingData = (settings.getInt(5) > 0 ) ? true : false;
-				this.sharingData = (settings.getInt(6) > 0 ) ? true : false;
+				this.dataCollectionFrequency = settings.getLong(2);
+				this.serverURL = CbConfiguration.SERVER_URL;
+				this.sendNotifications = settings.getInt(4) > 0;
+				this.useGPS = settings.getInt(5) > 0 ;
+				this.onlyWhenCharging = settings.getInt(6) > 0;
+				this.sharingData = (settings.getInt(7) > 0 ) ? true : false;
+				this.collectingData = (settings.getInt(8) > 0 ) ? true : false;
+				this.shareLevel = settings.getString(9);
 			}
 			db.close();
+			System.out.println("getting settings for app " + context.getPackageName() );
+			System.out.println(this);
 			return this;
 		} catch(Exception e) {
 			//e.printStackTrace();
@@ -91,6 +94,8 @@ public class CbSettingsHandler {
 	}
 	
 	public CbSettingsHandler(Context ctx) {
+		this.appID = ctx.getPackageName();
+		this.serverURL = CbConfiguration.SERVER_URL;
 		this.context = ctx;
 	}
 	

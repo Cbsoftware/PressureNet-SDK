@@ -30,7 +30,8 @@ public class CbObservation extends CbWeather {
 	private Date jDate;
 	private String trend = "";
 
-
+	private String versionNumber = "";
+	
 	@Override
 	public String toString() {
 		return "latitude," + location.getLatitude() + "\n" + "longitude,"
@@ -42,7 +43,8 @@ public class CbObservation extends CbWeather {
 				+ observationUnit + "\n" + "observation_value,"
 				+ observationValue + "\n" + "sharing," + sharing + "\n"
 				+ "time," + time + "\n" + "timezone," + timeZoneOffset + "\n"
-				+ "user_id," + user_id + "\n";
+				+ "user_id," + user_id + "\n" 
+				+ "version_number," + versionNumber + "\n";
 	}
 
 	public String[] getObservationAsParams() {
@@ -56,9 +58,18 @@ public class CbObservation extends CbWeather {
 				"reading," + observationValue, "sharing," + sharing,
 				"daterecorded," + time, "tzoffset," + timeZoneOffset,
 				"user_id," + user_id, "client_key," + clientKey,
-				"reading_accuracy," + 0.0
+				"reading_accuracy," + 0.0,
+				"version_number," + versionNumber
 		};
 		return params;
+	}
+	
+	public String getVersionNumber() {
+		return versionNumber;
+	}
+
+	public void setVersionNumber(String versionNumber) {
+		this.versionNumber = versionNumber;
 	}
 
 	public String getClientKey() {

@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -313,6 +314,7 @@ public class CbService extends Service {
 		@Override
 		public void run() {
 			if(settingsHandler == null) {
+				log("single reading sender, loading settings from prefs");
 				loadSetttingsFromPreferences();
 			}
 			log("collecting and submitting single "
@@ -367,6 +369,11 @@ public class CbService extends Service {
 		}
 	}
 
+	/**
+	 *  Put together all the information that defines
+	 *  an observation and store it in a single object.
+	 * @return
+	 */
 	public CbObservation buildPressureObservation() {
 		CbObservation pressureObservation = new CbObservation();
 		pressureObservation.setTime(System.currentTimeMillis());
@@ -379,11 +386,31 @@ public class CbService extends Service {
 		pressureObservation.setObservationUnit("mbar");
 		// pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
 		pressureObservation.setSharing(settingsHandler.getShareLevel());
+		
+		pressureObservation.setVersionNumber(getSDKVersion());
+		
 		log("cbservice buildobs, share level "
 				+ settingsHandler.getShareLevel() + " " + getID());
 		return pressureObservation;
 	}
 
+	/**
+	 * Return the version number of the SDK sending this reading
+	 * @return
+	 */
+	public String getSDKVersion() {
+		String version = "-1.0";
+		try {
+			version = getPackageManager()
+					.getPackageInfo("ca.cumulonimbus.pressurenetsdk", 0).versionName;
+		} catch (NameNotFoundException nnfe) {
+			// TODO: this is not an okay return value
+			// (Don't send error messages as version numbers)
+			version = nnfe.getMessage(); 
+		}
+		return version;
+	}
+	
 	/**
 	 * Collect and send data in a different thread. This runs itself every
 	 * "settingsHandler.getDataCollectionFrequency()" milliseconds
@@ -393,13 +420,19 @@ public class CbService extends Service {
 		public void run() {
 			long now = System.currentTimeMillis();
 			if(now - lastSubmit < 2000) {
-				System.out.println("too soon, bailing");
+				log("too soon, bailing");
 				return;
 			}
 			
 			// retrieve updated settings
-			settingsHandler = settingsHandler.getSettings();
+			if(settingsHandler == null) {
+				settingsHandler = new CbSettingsHandler(getApplicationContext());
+				settingsHandler = settingsHandler.getSettings();
+			} else {
+				settingsHandler = settingsHandler.getSettings();
+			}
 
+			
 			dataCollector.startCollectingData();
 
 			log("collecting and submitting " + settingsHandler.getServerURL());
@@ -598,6 +631,13 @@ public class CbService extends Service {
 	public boolean sendCbObservation(CbObservation observation) {
 		try {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
+			settingsHandler = settingsHandler.getSettings();
+			if(settingsHandler.getServerURL().equals("")) {
+				log("settings are empty; defaults");
+				//loadSetttingsFromPreferences();
+				// settingsHandler = settingsHandler.getSettings();
+			}
+			log("sendCbObservation with settings " + settingsHandler);
 			sender.setSettings(settingsHandler, locationManager,
 					lastMessenger, fromUser);
 			sender.execute(observation.getObservationAsParams());
@@ -675,7 +715,8 @@ public class CbService extends Service {
 	public void onCreate() {
 		setUpFiles();
 		log("cb on create");
-
+		settingsHandler = new CbSettingsHandler(getApplicationContext());
+		settingsHandler.getSettings();
 		db = new CbDb(getApplicationContext());
 		super.onCreate();
 	}
@@ -704,7 +745,7 @@ public class CbService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cb onstartcommand");
-
+		dataCollector = new CbDataCollector();
 		if (intent != null) {
 			if (intent.getAction() != null) {
 				if (intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
@@ -716,8 +757,12 @@ public class CbService extends Service {
 			} else if (intent.getBooleanExtra("alarm", false)) {
 				// This runs when the service is started from the alarm.
 				// Submit a data point
+				log("cbservice alarm firing, sending data");
 				if(settingsHandler == null) {
-					loadSetttingsFromPreferences();
+					settingsHandler = new CbSettingsHandler(getApplicationContext());
+					settingsHandler.getSettings();
+				} else {
+					settingsHandler.getSettings();
 				}
 				
 				if(settingsHandler.isSharingData()) {
@@ -727,23 +772,20 @@ public class CbService extends Service {
 				} else {
 					log("cbservice not sharing data");
 				}
+				
+				LocationStopper stop = new LocationStopper();
+				mHandler.postDelayed(stop, 1000 * 3);
+				return START_NOT_STICKY;
+			} else {
+				// Check the database
+				
+				log("starting service with db");
+				startWithDatabase();
 				return START_NOT_STICKY;
 			}
 		}
-
-		// Check the intent for Settings initialization
-		dataCollector = new CbDataCollector();
-		if (intent != null) {
-			log("starting service with intent");
-			startWithIntent(intent, false);
-
-			return START_NOT_STICKY;
-		} else {
-			log("INTENT NULL; checking db");
-			startWithDatabase();
-		}
-		LocationStopper stop = new LocationStopper();
-		mHandler.postDelayed(stop, 1000 * 3);
+		
+	
 
 		super.onStartCommand(intent, flags, startId);
 		return START_NOT_STICKY;
@@ -778,7 +820,7 @@ public class CbService extends Service {
 		log("loading settings from prefs");
 		settingsHandler = new CbSettingsHandler(getApplicationContext());
 		settingsHandler.setServerURL(serverURL);
-		settingsHandler.setAppID("ca.cumulonimbus.barometernetwork");
+		settingsHandler.setAppID(getApplication().getPackageName());
 
 		SharedPreferences sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(this);
@@ -802,23 +844,21 @@ public class CbService extends Service {
 		settingsHandler.setOnlyWhenCharging(onlyWhenCharging);
 		settingsHandler.setSharingData(preferenceShareData);
 		settingsHandler.setShareLevel(preferenceShareLevel);
-
+		
 		// Seems like new settings. Try adding to the db.
 		settingsHandler.saveSettings();
 	}
 	
 	public void startWithIntent(Intent intent, boolean fromAlarm) {
 		try {
-			loadSetttingsFromPreferences();
-			log("cbservice startwithintent " + settingsHandler);
-		
-			ReadingSender reading = new ReadingSender();
-			mHandler.post(reading);
-
-			// We arrived here from the user (i.e., not the alarm)
-			// start/(update?) the alarm
 			if (!fromAlarm) {
+				// We arrived here from the user (i.e., not the alarm)
+				// start/(update?) the alarm
 				startSubmit();
+			} else {
+				// alarm. Go!
+				ReadingSender reading = new ReadingSender();
+				mHandler.post(reading);
 			}
 		} catch (Exception e) {
 			for (StackTraceElement ste : e.getStackTrace()) {
@@ -832,20 +872,18 @@ public class CbService extends Service {
 			db.open();
 			// Check the database for Settings initialization
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
-			// db.clearDb();
-			Cursor allSettings = db.fetchAllSettings();
+			Cursor allSettings = db.fetchSettingByApp(getPackageName());
 			log("cb intent null; checking db, size " + allSettings.getCount());
-			while (allSettings.moveToNext()) {
+			if (allSettings.moveToFirst()) {
 				settingsHandler.setAppID(allSettings.getString(1));
 				settingsHandler.setDataCollectionFrequency(allSettings
 						.getLong(2));
 				settingsHandler.setServerURL(serverURL);
-				settingsHandler.setShareLevel(allSettings.getString(7));
-				// booleans
-				int onlyWhenCharging = allSettings.getInt(4);
-				int useGPS = allSettings.getInt(9);
-				int sendNotifications = allSettings.getInt(8);
-				int sharingData = allSettings.getInt(6);
+				int sendNotifications = allSettings.getInt(4);
+				int useGPS = allSettings.getInt(5);
+				int onlyWhenCharging = allSettings.getInt(6);
+				int sharingData = allSettings.getInt(7);
+				settingsHandler.setShareLevel(allSettings.getString(9));
 				boolean boolCharging = (onlyWhenCharging > 0);
 				boolean boolGPS = (useGPS > 0);
 				boolean boolSendNotifications = (sendNotifications > 0);
@@ -857,14 +895,14 @@ public class CbService extends Service {
 				settingsHandler.setUseGPS(boolGPS);
 				settingsHandler.setSharingData(boolSharingData);
 				settingsHandler.saveSettings();
-
-				log("cbservice startwithdb, " + settingsHandler);
-				ReadingSender reading = new ReadingSender();
-				mHandler.post(reading);
-
-				startSubmit();
-				break;
+				
 			}
+			
+			log("cbservice startwithdb, " + settingsHandler);
+			ReadingSender reading = new ReadingSender();
+			mHandler.post(reading);
+
+			startSubmit();
 			db.close();
 		} catch (Exception e) {
 			for (StackTraceElement ste : e.getStackTrace()) {
@@ -883,7 +921,11 @@ public class CbService extends Service {
 			switch (msg.what) {
 			case MSG_STOP:
 				log("message. bound service says stop");
-				// stopAutoSubmit();
+				try {
+					alarm.cancelAlarm(getApplicationContext());
+				} catch(Exception e) {
+					
+				}
 				break;
 			case MSG_GET_BEST_LOCATION:
 				log("message. bound service requesting location");
@@ -915,6 +957,12 @@ public class CbService extends Service {
 				break;
 			case MSG_GET_SETTINGS:
 				log("get settings");
+				if(settingsHandler != null) {
+					settingsHandler.getSettings();
+				} else {
+					settingsHandler = new CbSettingsHandler(getApplicationContext());
+					settingsHandler.getSettings();
+				}
 				try {
 					msg.replyTo.send(Message.obtain(null, MSG_SETTINGS,
 							settingsHandler));
@@ -927,8 +975,8 @@ public class CbService extends Service {
 				break;
 			case MSG_SET_SETTINGS:
 				log("set settings");
-				CbSettingsHandler newSettings = (CbSettingsHandler) msg.obj;
-				newSettings.saveSettings();
+				settingsHandler = (CbSettingsHandler) msg.obj;
+				settingsHandler.saveSettings();
 				break;
 			case MSG_GET_LOCAL_RECENTS:
 				log("get local recents");
@@ -1152,7 +1200,7 @@ public class CbService extends Service {
 							getApplicationContext());
 					settingsHandler.setServerURL(serverURL);
 					settingsHandler
-							.setAppID("ca.cumulonimbus.barometernetwork");
+							.setAppID(getApplication().getPackageName());
 				}
 				try {
 					condition
@@ -1329,8 +1377,10 @@ public class CbService extends Service {
 	}
 
 	public void log(String message) {
-		//logToFile(message);
-		//System.out.println(message);
+		if(CbConfiguration.DEBUG_MODE) {
+			logToFile(message);
+			System.out.println(message);
+		}
 	}
 
 	public CbDataCollector getDataCollector() {
