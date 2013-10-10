@@ -118,39 +118,39 @@ Settings
 
 The pressureNET SDK offers settings that allow you to customize its behavior. To receive the current settings, send a CbService.MSG_GET_SETTINGS message. You will receive a CbSettingsHandler object back, which you can then read and modify, before saving the Settings with MSG_SET_SETTINGS. The available settings are documented here. 
 
-- Data Collection Frequency
+**Data Collection Frequency**
 
 This specifies how frequently pressureNET will run in the background to collect data. The values are stored in milliseconds, and the SDK uses Android's AlarmManager to set these alarms. There is no guarantee that data will be collected on schedule, as various resources may be unavailable (such as location). When the network is not available, data is collected on schedule and stored for transmission the next time the alarm fires with an active network connection. The default value is 10 minutes (600000ms).
 
-- Toggle auto-submit
+**Toggle auto-submit**
 
 Choose whether to automatically submit data or not. This setting does not affect data collection, only data transmission. The default value is on.
 
-- Sharing preference
+**Sharing preference**
 
 Since our data includes user locations, we provide a variety of sharing options:
 
- - Nobody
-  - No data is sent from the device
- - Cumulonimbus (Us)
-  - Only Cumulonimbus will see this data; it is not available in the API
- - Us and Researchers
-  - Only Academic Researchers are allowed to access this data; it will not be returned in your API call unless we have confirmed you are a researcher.
- - Us, Researchers and Forecasters
-  - Both researchers and private forecasters are allowed to access this data
- - Public
-  -Everyone can access this data. 
+- Nobody
+ - No data is sent from the device
+- Cumulonimbus (Us)
+ - Only Cumulonimbus will see this data; it is not available in the API
+- Us and Researchers
+ - Only Academic Researchers are allowed to access this data; it will not be returned in your API call unless we have confirmed you are a researcher.
+- Us, Researchers and Forecasters
+ - Both researchers and private forecasters are allowed to access this data
+- Public
+ - Everyone can access this data. 
 
 The default value is "Us, Researchers and Forecasters"
 
-- Notification toggle
+**Notification toggle**
 
 The pressureNET SDK can send a message (CbService.MSG_CHANGE_NOTIFICATION) to your app when it detects a change in pressure trend. The default value is off.
 
-- GPS toggle
+**GPS toggle**
 
 If GPS is available and active on the device, pressureNET can use it for location purposes but it can also be ignored (to save battery, for example). The default value is on.
 
-- Only-when-charging toggle
+**Only-when-charging toggle**
 
 If this is set (default is off), pressureNET will only run when the devices is plugged in and charging / fully charged.
