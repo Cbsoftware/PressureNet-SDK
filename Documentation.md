@@ -13,11 +13,8 @@ This documentation assumes that you are using Eclipse with the Android Developme
 You may also choose to download our Example project, which this documentation uses for inline code examples and descriptions. You can get it with:
    git clone https://github.com/Cbsoftware/pressureNET-SDK-Example
 2. In Eclipse, use the Import feature (File -> Import) to import the SDK project. 
-[screenshot]
 3. Link the Source of the SDK to your existing Android project by right-clicking on your project and selecting Properties. In the Properties dialog, on the left select Java Build Path and then click Link Source on the right.
-[screenshot]
 4. In the Link Source dialog, browse to the pressureNET-SDK/src directory and select it. Give it a name other than ‘src’ so as not to conflict with your existing projects.
-[screenshot]
 5. Congratulations! The pressureNET SDK is now imported into Eclipse and connected to your Android app. Before continuing on to the Usage section to learn how to use the SDK, ensure that everything builds fine - there should be no errors.
 
 Usage
@@ -114,7 +111,7 @@ To read the result, build an IncomingHandler that looks something like this:
         }
     }
     
-A full list of available communication messages follows.
+A list of available communication messages follows.
 
 Settings
 --------
@@ -122,9 +119,38 @@ Settings
 The pressureNET SDK offers a few settings that allow you to customize its behavior. To receive the current settings, send a CbService.MSG_GET_SETTINGS message. You will receive a CbSettingsHandler object back, which you can then read and modify, before saving the Settings with MSG_SET_SETTINGS. The available settings are documented here.
 
 - Data Collection Frequency
+
+This specifies how frequently pressureNET will run in the background to collect data. The values are stored in milliseconds, and the SDK uses Android's AlarmManager to set these alarms. There is no guarantee that data will be collected on schedule, as various resources may be unavailable (such as location). When the network is not available, data is collected on schedule and stored for transmission the next time the alarm fires with an active network connection. The default value is 10 minutes (600000ms).
+
 - Toggle auto-submit
+
+Choose whether to automatically submit data or not. This setting does not affect data collection, only data transmission. The default value is on.
+
 - Sharing preference
+
+Since our data includes user locations, we provide a variety of sharing options:
+
+- Nobody
+ - No data is sent from the device
+- Cumulonimbus (Us)
+ - Only Cumulonimbus will see this data; it is not available in the API
+- Us and Researchers
+ - Only Academic Researchers are allowed to access this data; it will not be returned in your API call unless we have confirmed you are a researcher.
+- Us, Researchers and Forecasters
+ - Both researchers and private forecasters are allowed to access this data
+- Public
+ -Everyone can access this data. 
+
+The default value is "Us, Researchers and Forecasters"
+
 - Notification toggle
+
+The pressureNET SDK can send a message (CbService.MSG_CHANGE_NOTIFICATION) to your app when it detects a change in pressure trend. The default value is off.
+
 - GPS toggle
+
+If GPS is available and active on the device, pressureNET can use it for location purposes but it can also be ignored (to save battery, for example). The default value is on.
+
 - Only-when-charging toggle
 
+If this is set (default is off), pressureNET will only run when the devices is plugged in and charging / fully charged.
