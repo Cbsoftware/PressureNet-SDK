@@ -116,7 +116,7 @@ A list of available communication messages follows.
 Settings
 --------
 
-The pressureNET SDK offers a few settings that allow you to customize its behavior. To receive the current settings, send a CbService.MSG_GET_SETTINGS message. You will receive a CbSettingsHandler object back, which you can then read and modify, before saving the Settings with MSG_SET_SETTINGS. The available settings are documented here.
+The pressureNET SDK offers settings that allow you to customize its behavior. To receive the current settings, send a CbService.MSG_GET_SETTINGS message. You will receive a CbSettingsHandler object back, which you can then read and modify, before saving the Settings with MSG_SET_SETTINGS. The available settings are documented here. 
 
 - Data Collection Frequency
 
@@ -130,16 +130,16 @@ Choose whether to automatically submit data or not. This setting does not affect
 
 Since our data includes user locations, we provide a variety of sharing options:
 
-- Nobody
- - No data is sent from the device
-- Cumulonimbus (Us)
- - Only Cumulonimbus will see this data; it is not available in the API
-- Us and Researchers
- - Only Academic Researchers are allowed to access this data; it will not be returned in your API call unless we have confirmed you are a researcher.
-- Us, Researchers and Forecasters
- - Both researchers and private forecasters are allowed to access this data
-- Public
- -Everyone can access this data. 
+ - Nobody
+  - No data is sent from the device
+ - Cumulonimbus (Us)
+  - Only Cumulonimbus will see this data; it is not available in the API
+ - Us and Researchers
+  - Only Academic Researchers are allowed to access this data; it will not be returned in your API call unless we have confirmed you are a researcher.
+ - Us, Researchers and Forecasters
+  - Both researchers and private forecasters are allowed to access this data
+ - Public
+  -Everyone can access this data. 
 
 The default value is "Us, Researchers and Forecasters"
 
