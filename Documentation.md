@@ -116,7 +116,7 @@ A list of available communication messages follows.
 Settings
 --------
 
-The pressureNET SDK offers settings that allow you to customize its behavior. To receive the current settings, send a CbService.MSG_GET_SETTINGS message. You will receive a CbSettingsHandler object back, which you can then read and modify, before saving the Settings with MSG_SET_SETTINGS. The available settings are documented here. 
+The pressureNET SDK offers settings that allow you to customize its behavior. To receive the current settings, send a *CbService.MSG_GET_SETTINGS* message. You will receive a CbSettingsHandler object back, which you can then read and modify, before saving the Settings with *CbService.MSG_SET_SETTINGS*. The available settings are documented here. 
 
 **Data Collection Frequency**
 
@@ -145,7 +145,7 @@ The default value is "Us, Researchers and Forecasters"
 
 **Notification toggle**
 
-The pressureNET SDK can send a message (CbService.MSG_CHANGE_NOTIFICATION) to your app when it detects a change in pressure trend. The default value is off.
+The pressureNET SDK can send a message (*CbService.MSG_CHANGE_NOTIFICATION*) to your app when it detects a change in pressure trend. The default value is off.
 
 **GPS toggle**
 
