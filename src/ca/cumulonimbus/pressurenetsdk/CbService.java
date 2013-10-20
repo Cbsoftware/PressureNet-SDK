@@ -17,13 +17,13 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
-import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.IBinder;
@@ -432,8 +432,13 @@ public class CbService extends Service {
 				settingsHandler = settingsHandler.getSettings();
 			}
 
-			
-			dataCollector.startCollectingData();
+			if(dataCollector!=null) {
+				dataCollector.startCollectingData();	
+			} else {
+				dataCollector = new CbDataCollector();
+				dataCollector.startCollectingData();
+			}
+
 
 			log("collecting and submitting " + settingsHandler.getServerURL());
 
@@ -1050,7 +1055,7 @@ public class CbService extends Service {
 						msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
 								cacheResults));
 					} catch (RemoteException re) {
-						re.printStackTrace();
+						// re.printStackTrace();
 					}
 				} catch (Exception e) {
 
@@ -1131,21 +1136,24 @@ public class CbService extends Service {
 			case MSG_CLEAR_API_CACHE:
 				db.open();
 				db.clearAPICache();
-				db.open();
 				long countCache = db.getDataCacheCount();
 				db.close();
 				try {
 					msg.replyTo.send(Message.obtain(null,
 							MSG_COUNT_API_CACHE_TOTALS, (int) countCache, 0));
 				} catch (RemoteException re) {
-					re.printStackTrace();
+					//re.printStackTrace();
 				}
 				break;
 			case MSG_ADD_CURRENT_CONDITION:
 				CbCurrentCondition cc = (CbCurrentCondition) msg.obj;
-				db.open();
-				db.addCondition(cc);
-				db.close();
+				try {
+					db.open();
+					db.addCondition(cc);
+					db.close();
+				} catch(SQLiteDatabaseLockedException dble) {
+					// ...
+				}
 				break;
 			case MSG_GET_CURRENT_CONDITIONS:
 				recentMsg = msg;
