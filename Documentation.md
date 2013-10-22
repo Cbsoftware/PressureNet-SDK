@@ -51,7 +51,7 @@ Starting and Stopping
 
 Starting CbService:
 
-To initialize the service and have it start with updated settings, create an Intent and start the service with a call to Android’s startService method. This will also initiate the Service and allow it to begin collecting and submitting data, if the settings allow.
+To initialize the service and have it start with updated settings, create an Intent and start the service with a call to Android's startService method. This will also initiate the Service and allow it to begin collecting and submitting data, if the settings allow.
 
 	Intent serviceIntent;
 	private void startCbService() {
@@ -85,14 +85,16 @@ First, bind to the service:
 This can take time, so wait until your ServiceConnection object tells you it's bound (see the [Example source code](https://github.com/Cbsoftware/pressureNET-SDK-Example/blob/master/src/ca/cumulonimbus/pressurenetsdkexample/MainActivity.java) for clarity on this).
 
 Now your app and the SDK can communicate. As an example, let's ask for the list of measurements the SDK has recorded. To request the stored readings, build a simple CbApiCall object and send it with message CbService.MSG_GET_LOCAL_RECENTS:
-	
-    CbApiCall apiCall = buildApiCall(); // Set a latitude and longitude range, along with a time range.
-    Message msg = Message.obtain(null, CbService.MSG_GET_LOCAL_RECENTS, apiCall );
-    try {
-        msg.replyTo = mMessenger;
-        mService.send(msg);
-    } catch (RemoteException e) {
-        System.out.println("Remote exception: " + e.getMessage());
+
+    private void askForRecents() {
+        CbApiCall apiCall = buildApiCall(); // Set a latitude and longitude range, along with a time range.
+        Message msg = Message.obtain(null, CbService.MSG_GET_LOCAL_RECENTS, apiCall );
+        try {
+            msg.replyTo = mMessenger;
+            mService.send(msg);
+        } catch (RemoteException e) {
+            System.out.println("Remote exception: " + e.getMessage());
+        }
     }
     
 To read the result, build an IncomingHandler that looks something like this: 
@@ -104,14 +106,44 @@ To read the result, build an IncomingHandler that looks something like this:
             case CbService.MSG_LOCAL_RECENTS:
                 ArrayList<CbObservation> obsList = (ArrayList<CbObservation>) msg.obj;
                 // Do something with the ArryaList!
-				break;
+                break;
+            // ... Handle more cases here for different messages 
             default:
                 super.handleMessage(msg);
             }
         }
     }
     
-A list of available communication messages follows.
+A list of available communication messages follows:
+
+**Ask for best location**
+
+    private void askForBestLocation() {
+        Message msg = Message.obtain(null, CbService.MSG_GET_BEST_LOCATION, 0, 0);
+        try {
+            msg.replyTo = mMessenger;
+            mService.send(msg);
+        } catch (RemoteException e) {
+            System.out.println("Remote exception: " + e.getMessage());
+        }
+    }
+
+**Receive best location**
+
+All messages are received in your IncomingHandler, so to handle different messages just add a new case statement: 
+
+    // ...
+    case CbService.MSG_BEST_LOCATION:
+        Location bestLocation = (Location) msg.obj;
+        if (bestLocation != null) {
+            // Use the bestLocation object
+        } else {
+            log("location returned null");
+        }
+        break;
+    // ...
+
+
 
 Settings
 --------
