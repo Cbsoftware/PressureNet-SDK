@@ -114,7 +114,7 @@ To read the result, build an IncomingHandler that looks something like this:
         }
     }
     
-A list of available communication messages follows:
+A list of available communication messages, with examples, follows:
 
 **Ask for best location**
 
@@ -143,6 +143,43 @@ All messages are received in your IncomingHandler, so to handle different messag
         break;
     // ...
 
+**Ask for settings**
+
+    private void askForSettings() {
+        Message msg = Message.obtain(null, CbService.MSG_GET_SETTINGS, 0, 0);
+        try {
+            msg.replyTo = mMessenger;
+            mService.send(msg);
+        } catch (RemoteException e) {
+            System.out.println("Remote exception: " + e.getMessage());
+        }
+    }
+
+**Receive settings**
+
+    // ...
+    case CbService.MSG_SETTINGS:
+        CbSettingsHandler settings = (CbSettingsHandler) msg.obj;
+        if (settings != null) {
+            // Use the CbSettingsHandler object
+        } else {
+            log("location returned null");
+        }
+        break;
+    // ...
+
+
+**Save new settings**
+
+    private void saveSettings(CbSettingsHandler newSettings) {
+        Message msg = Message.obtain(null, CbService.MSG_SET_SETTINGS, newSettings);
+        try {
+            msg.replyTo = mMessenger;
+            mService.send(msg);
+        } catch (RemoteException e) {
+            System.out.println("Remote exception: " + e.getMessage());
+        }
+    }
 
 
 Settings
