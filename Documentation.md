@@ -20,6 +20,8 @@ You may also choose to download our Example project, which this documentation us
 Usage
 -----
 
+The pressureNET SDK sends and receives data from our servers. In order to use the SDK, please sign up for an API key and get a Cumulonimbus developer account at http://pressurenet.cumulonimbus.ca/. You'll receive an API key by email, which you can then put into CbConfiguration to send and receive data. 
+
 You must reference the CbService class in your project's AndroidManifest.xml in order to use it. Inside the <application> element, add a reference like this:
 
     <service
@@ -187,7 +189,7 @@ All messages are received in your IncomingHandler, so to handle different messag
 
 **Ask for locally recorded measurements**
 
-    private void askForRecents() {
+    private void askForLocalRecents() {
         CbApiCall apiCall = buildApiCall(); 
         Message msg = Message.obtain(null, CbService.MSG_GET_LOCAL_RECENTS, apiCall );
         try {
@@ -216,6 +218,51 @@ All messages are received in your IncomingHandler, so to handle different messag
     case CbService.MSG_LOCAL_RECENTS:
         ArrayList<CbObservation> obsList = (ArrayList<CbObservation>) msg.obj;
         break;
+
+**Make remote API call**
+
+    private void makeAPICall(CbApiCall apiCall) {
+        Message msg = Message.obtain(null, CbService.MSG_MAKE_API_CALL, apiCall );
+        try {
+            msg.replyTo = mMessenger;
+            mService.send(msg);
+        } catch (RemoteException e) {
+            System.out.println("Remote exception: " + e.getMessage());
+        }
+    }
+
+
+**Listen for API call results**
+
+The SDK will return the message MSG_API_RESULT_COUNT when the call is finished rather than returning the results directly. You can use this message to know when the call has completed and to see how many results were obtained, but there are different messages to access those results (MSG_GET_API_RECENTS and MSG_API_RECENTS; see below).
+
+     case CbService.MSG_API_RESULT_COUNT:
+        int count = msg.arg1;
+        System.out.println(count + " results returned");
+        break;
+
+**Load API call results**
+
+To load the results, send the message MSG_GET_API_RECENTS with the came CbApiCall object you used to make the initial API call.
+
+    private void askForAPIRecents() {
+        CbApiCall apiCall = buildApiCall(); 
+        Message msg = Message.obtain(null, CbService.MSG_GET_API_RECENTS, apiCall );
+        try {
+            msg.replyTo = mMessenger;
+            mService.send(msg);
+        } catch (RemoteException e) {
+            System.out.println("Remote exception: " + e.getMessage());
+        }
+    }
+
+The results will be returned via MSG_API_RECENTS:
+
+    case CbService.MSG_API_RECENTS:
+        ArrayList<CbObservation> apiRecents = (ArrayList<CbObservation>) msg.obj;
+        // Do something with apiRecents
+        break;
+
 
 Settings
 --------
