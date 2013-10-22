@@ -107,7 +107,7 @@ To read the result, build an IncomingHandler that looks something like this:
             switch (msg.what) {
             case CbService.MSG_LOCAL_RECENTS:
                 ArrayList<CbObservation> obsList = (ArrayList<CbObservation>) msg.obj;
-                // Do something with the ArryaList!
+                // Do something with the ArrayList!
                 break;
             // ... Handle more cases here for different messages 
             default:
@@ -124,6 +124,8 @@ A list of available communication messages, with examples, follows:
 
 **Ask for best location**
 
+The SDK has a series of methods to determine an accurate user location. You can quickly ask for this location: 
+
     private void askForBestLocation() {
         Message msg = Message.obtain(null, CbService.MSG_GET_BEST_LOCATION, 0, 0);
         try {
@@ -136,7 +138,7 @@ A list of available communication messages, with examples, follows:
 
 **Receive best location**
 
-All messages are received in your IncomingHandler, so to handle different messages just add a new case statement: 
+The SDK returns an Android Location object. All messages are received in your IncomingHandler, so to handle different messages just add a new case statement: 
 
     // ...
     case CbService.MSG_BEST_LOCATION:
@@ -231,7 +233,6 @@ All messages are received in your IncomingHandler, so to handle different messag
         }
     }
 
-
 **Listen for API call results**
 
 The SDK will return the message MSG_API_RESULT_COUNT when the call is finished rather than returning the results directly. You can use this message to know when the call has completed and to see how many results were obtained, but there are different messages to access those results (MSG_GET_API_RECENTS and MSG_API_RECENTS; see below).
@@ -263,6 +264,34 @@ The results will be returned via MSG_API_RECENTS:
         // Do something with apiRecents
         break;
 
+**Clear user data cache**
+
+User data is stored on the device for fast access, but you may want to clear it at some point. Note that there is not currently a supported method of retrieving the user's data from the servers, as this is returned in aggregate for users in a region, not for a specific user. Be sure that if you clear the user cache, you have retrieved the data already if you want to keep it.
+
+    private void clearLocalCache() {
+        Message msg = Message.obtain(null, CbService.MSG_CLEAR_LOCAL_CACHE, 0, 0);
+        try {
+            msg.replyTo = mMessenger;
+            mService.send(msg);
+        } catch (RemoteException e) { 
+            // ...
+        }
+    }
+
+**Clear API data cache**
+
+The SDK does not store API data for more than 12 hours, so generally this archive does not grow excessively large. However, if you do want to clear it we offer this Message:
+
+
+    private void clearLocalCache() {
+        Message msg = Message.obtain(null, CbService.MSG_CLEAR_API_CACHE, 0, 0);
+        try {
+            msg.replyTo = mMessenger;
+            mService.send(msg);
+        } catch (RemoteException e) { 
+            // ...
+        }
+    }
 
 Settings
 --------
