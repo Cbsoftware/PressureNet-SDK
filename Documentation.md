@@ -76,7 +76,7 @@ Stopping CbService
 Communication
 -------------
 
-While pressureNET will run in the background with just the above commands, it's likely that you'll want to communicate with it to change settings, behaviour, and to query the data it has collected. Once your app is bound to the service, you can send Messages and objects to it and listen for responses.
+While pressureNET will run in the background with just the above commands, it's likely that you'll want to communicate with it to change settings, behaviour, and to query the data it has collected. Once your app is bound to the service, you can send Messages and objects to it and listen for responses. 
 
 First, bind to the service:
 
@@ -113,6 +113,10 @@ To read the result, build an IncomingHandler that looks something like this:
             }
         }
     }
+
+and instantiate it like this: 
+
+    private Messenger mMessenger = new Messenger(new IncomingHandler());
     
 A list of available communication messages, with examples, follows:
 
@@ -181,6 +185,37 @@ All messages are received in your IncomingHandler, so to handle different messag
         }
     }
 
+**Ask for locally recorded measurements**
+
+   private void askForRecents() {
+        CbApiCall apiCall = buildApiCall(); 
+        Message msg = Message.obtain(null, CbService.MSG_GET_LOCAL_RECENTS, apiCall );
+        try {
+            msg.replyTo = mMessenger;
+            mService.send(msg);
+        } catch (RemoteException e) {
+            System.out.println("Remote exception: " + e.getMessage());
+        }
+    }
+
+    // Set a latitude and longitude range, along with a time range.
+    private CbApiCall buildApiCall() {
+        long timeNow = System.currentTimeMillis();
+        CbApiCall apiCall = new CbApiCall();
+        apiCall.setMinLat(-90);
+        apiCall.setMaxLat(90);
+        apiCall.setMinLon(-180);
+        apiCall.setMaxLon(180);
+        apiCall.setStartTime(timeNow - (60 * 60 * 1000); // one hour ago
+        apiCall.setEndTime(timeNow);
+        return apiCall;
+    }
+
+**Receive locally recorded measurements**
+
+    case CbService.MSG_LOCAL_RECENTS:
+        ArrayList<CbObservation> obsList = (ArrayList<CbObservation>) msg.obj;
+        break;
 
 Settings
 --------
