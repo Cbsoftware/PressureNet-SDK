@@ -187,7 +187,7 @@ All messages are received in your IncomingHandler, so to handle different messag
 
 **Ask for locally recorded measurements**
 
-   private void askForRecents() {
+    private void askForRecents() {
         CbApiCall apiCall = buildApiCall(); 
         Message msg = Message.obtain(null, CbService.MSG_GET_LOCAL_RECENTS, apiCall );
         try {
