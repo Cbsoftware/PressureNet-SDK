@@ -64,7 +64,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		this.userSent = fromUser;
 	}
 
-	 private void returnResult(String result) {
+	 private void returnResult(String result, String condition) {
     	boolean success = true;
     	String errorMessage = "";
     	try {
@@ -73,7 +73,9 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
     			success = jsonResult.getBoolean("success");
     		}
     		if(jsonResult.has("errors")) {
-    			errorMessage = jsonResult.getString("errors");
+    			if(jsonResult.getString("errors").length()> 1) {
+    				errorMessage = "error" + jsonResult.getString("errors");
+    			}
     		}
     		// notify
     		if(messenger!=null ) {
@@ -82,6 +84,9 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
     			try {
     				if(userSent) {
     	    			log("cbdatasender notifying result of data submission");
+    	    			if(condition.length()>1) {
+    	    				errorMessage = condition;
+    	    			}
 	    				messenger.send(Message.obtain(null,
 								CbService.MSG_DATA_RESULT, errorMessage));
 	    				userSent = false;
@@ -104,6 +109,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		log("cb send do in bg");
 		DefaultHttpClient client = new DefaultHttpClient();
 		try {
+			String condition = "";
 			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
 			boolean isCbOb = true; // TODO: fix hack to determine the data type sent
 			for(String singleParam : params) {
@@ -119,7 +125,8 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 				nvps.add(new BasicNameValuePair(key, value));
 				if(key.equals("general_condition")) {
 					isCbOb = false;
-				}
+					condition = value;
+				} 
 			} 
 			String serverURL = settings.getServerURL();
 			log("settings url " + serverURL);
@@ -153,7 +160,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			}
 			log("addresp " + addResp);
 			
-			returnResult(addResp);
+			returnResult(addResp, condition);
 			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();
