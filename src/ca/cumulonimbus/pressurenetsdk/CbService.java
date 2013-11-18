@@ -24,6 +24,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
+import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.IBinder;
@@ -127,6 +128,8 @@ public class CbService extends Service {
 	CbAlarm alarm = new CbAlarm();
 
 	double recentPressureReading = 0.0;
+	int recentPressureAccuracy = 0;
+	int batchReadingCount = 0;
 	
 	private long lastSubmit = 0;
 
@@ -193,6 +196,7 @@ public class CbService extends Service {
 		 * @return
 		 */
 		public int startCollectingData() {
+			batchReadingCount = 0;
 			try {
 				sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 				Sensor pressureSensor = sm
@@ -216,15 +220,16 @@ public class CbService extends Service {
 				}
 				return 1;
 			} catch (Exception e) {
-				//e.printStackTrace();
+				e.printStackTrace();
 				return -1;
 			}
 		}
-
+		
 		/**
 		 * Stop collecting sensor data
 		 */
 		public void stopCollectingData() {
+			log("cbservice stop collecting data");
 			sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 			sm.unregisterListener(this);
 		}
@@ -236,22 +241,37 @@ public class CbService extends Service {
 		@Override
 		public void onAccuracyChanged(Sensor sensor, int accuracy) {
 			if (sensor.getType() == Sensor.TYPE_PRESSURE) {
-				// recentPressureAccuracy = accuracy;
+				recentPressureAccuracy = accuracy;
+				log("cbservice accuracy changed, new barometer accuracy  " + recentPressureAccuracy);
 			}
 		}
 
 		@Override
 		public void onSensorChanged(SensorEvent event) {
 			if (event.sensor.getType() == Sensor.TYPE_PRESSURE) {
-				log("new pressure reading " + event.values[0]);
-				recentPressureReading = event.values[0];
+				if(event.values.length > 0) {
+					if(event.values[0] >= 0) {
+						log("cbservice sensor; new pressure reading " + event.values[0]);
+						recentPressureReading = event.values[0];
+					} else {
+						log("cbservice sensor; pressure reading is 0 or negative" + event.values[0]);
+					}
+				} else {
+					log("cbservice sensor; no event values");
+				}
+				
 			} else if (event.sensor.getType() == TYPE_RELATIVE_HUMIDITY) {
 				// recentHumidityReading = event.values[0];
 			} else if (event.sensor.getType() == TYPE_AMBIENT_TEMPERATURE) {
 				// recentTemperatureReading = event.values[0];
 			}
-			stopCollectingData();
-
+			batchReadingCount++;
+			if(batchReadingCount>50) {
+				log("batch readings " + batchReadingCount + ", stopping");
+				stopCollectingData();
+			} else {
+				log("batch readings " + batchReadingCount + ", not stopping");
+			}
 		}
 	}
 
@@ -1386,7 +1406,7 @@ public class CbService extends Service {
 
 	public void log(String message) {
 		if(CbConfiguration.DEBUG_MODE) {
-			logToFile(message);
+			//logToFile(message);
 			System.out.println(message);
 		}
 	}
