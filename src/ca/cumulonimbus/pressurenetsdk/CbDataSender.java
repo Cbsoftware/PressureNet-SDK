@@ -174,7 +174,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	
 	public void log(String message) {
 		if(CbConfiguration.DEBUG_MODE) {
-			logToFile(message);
+			//logToFile(message);
 			System.out.println(message);
 		}
 	}

@@ -295,7 +295,7 @@ public class CbApi {
 	public void log(String message) {
 		if(CbConfiguration.DEBUG_MODE) {
 			System.out.println(message);
-			logToFile(message);
+			//logToFile(message);
 		}
 	}
 	

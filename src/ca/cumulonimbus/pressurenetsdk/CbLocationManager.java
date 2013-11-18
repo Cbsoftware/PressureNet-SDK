@@ -247,7 +247,7 @@ public class CbLocationManager {
 	
     public void log(String message) {
     	if(CbConfiguration.DEBUG_MODE) {
-	    	logToFile(message);
+	    	//logToFile(message);
 	    	System.out.println(message);
     	}
     }
