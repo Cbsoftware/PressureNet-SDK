@@ -84,8 +84,8 @@ public class CbSettingsHandler {
 				this.shareLevel = settings.getString(9);
 			}
 			db.close();
-			System.out.println("getting settings for app " + context.getPackageName() );
-			System.out.println(this);
+			//System.out.println("getting settings for app " + context.getPackageName() );
+			//System.out.println(this);
 			return this;
 		} catch(Exception e) {
 			//e.printStackTrace();

@@ -43,7 +43,7 @@ public class CbAlarm extends BroadcastReceiver {
 	}
 	
 	public void cancelAlarm(Context context) {
-		System.out.println("cbservice cancelling alarm");
+		//System.out.println("cbservice cancelling alarm");
 		Intent intent = new Intent("ca.cumulonimbus.pressurenetsdk.START_ALARM");
 		PendingIntent sender = PendingIntent
 				.getBroadcast(context, 0, intent, 0);
