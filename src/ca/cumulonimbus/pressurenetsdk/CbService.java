@@ -195,30 +195,27 @@ public class CbService extends Service {
 		 * @param m
 		 * @return
 		 */
-		public int startCollectingData() {
+		public boolean startCollectingData() {
 			batchReadingCount = 0;
+			boolean collecting = false;
 			try {
 				sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 				Sensor pressureSensor = sm
 						.getDefaultSensor(Sensor.TYPE_PRESSURE);
-				Sensor temperatureSensor = sm
-						.getDefaultSensor(TYPE_AMBIENT_TEMPERATURE);
-				Sensor humiditySensor = sm
-						.getDefaultSensor(TYPE_RELATIVE_HUMIDITY);
-
+				
 				if (pressureSensor != null) {
-					sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI);
+					log("cbservice sensor SDK " + android.os.Build.VERSION.SDK_INT + "");
+					if(android.os.Build.VERSION.SDK_INT == 19) {
+						collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI, 100000);
+					} else {
+						collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI);
+					}
 				}
-				if (temperatureSensor != null) {
-					//sm.registerListener(this, temperatureSensor, SensorManager.SENSOR_DELAY_UI);
-				}
-				if (humiditySensor != null) {
-					//sm.registerListener(this, humiditySensor,SensorManager.SENSOR_DELAY_UI);
-				}
-				return 1;
+				return collecting;
 			} catch (Exception e) {
+				log("cbservice sensor error " + e.getMessage());
 				e.printStackTrace();
-				return -1;
+				return collecting;
 			}
 		}
 		
@@ -229,6 +226,11 @@ public class CbService extends Service {
 			log("cbservice stop collecting data");
 			// sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 			if(sm!=null) {
+				log("cbservice sensormanager not null, unregistering");
+				sm.unregisterListener(this);
+			} else {
+				log("cbservice sensormanager null, creating and then unregistering");
+				sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 				sm.unregisterListener(this);
 			}
 		}
@@ -259,11 +261,7 @@ public class CbService extends Service {
 					log("cbservice sensor; no event values");
 				}
 				
-			} else if (event.sensor.getType() == TYPE_RELATIVE_HUMIDITY) {
-				// recentHumidityReading = event.values[0];
-			} else if (event.sensor.getType() == TYPE_AMBIENT_TEMPERATURE) {
-				// recentTemperatureReading = event.values[0];
-			}
+			} 
 			batchReadingCount++;
 			if(batchReadingCount>10) {
 				log("batch readings " + batchReadingCount + ", stopping");
@@ -338,8 +336,14 @@ public class CbService extends Service {
 			}
 			log("collecting and submitting single "
 					+ settingsHandler.getServerURL());
-			dataCollector = new CbDataCollector();
+			
+			if(dataCollector!=null) {
+				dataCollector.stopCollectingData();
+			} else {
+				dataCollector = new CbDataCollector();
+			}
 			dataCollector.startCollectingData();
+			
 			CbObservation singleObservation = new CbObservation();
 			if (settingsHandler.isCollectingData()) {
 				// Collect
@@ -452,12 +456,11 @@ public class CbService extends Service {
 			}
 
 			if(dataCollector!=null) {
-				dataCollector.startCollectingData();	
+				dataCollector.stopCollectingData();
 			} else {
 				dataCollector = new CbDataCollector();
-				dataCollector.startCollectingData();
 			}
-
+			dataCollector.startCollectingData();
 
 			log("collecting and submitting " + settingsHandler.getServerURL());
 
@@ -1405,7 +1408,7 @@ public class CbService extends Service {
 
 	public void log(String message) {
 		if(CbConfiguration.DEBUG_MODE) {
-			//logToFile(message);
+			logToFile(message);
 			System.out.println(message);
 		}
 	}
