@@ -98,6 +98,7 @@ public class CbService extends Service {
 	public static final int MSG_MAKE_CURRENT_CONDITIONS_API_CALL = 28;
 	// Notifications
 	public static final int MSG_CHANGE_NOTIFICATION = 31;
+	public static final int MSG_CONDITION_NOTIFICATION = 39;
 	// Data management
 	public static final int MSG_COUNT_LOCAL_OBS = 32;
 	public static final int MSG_COUNT_API_CACHE = 33;
@@ -206,7 +207,7 @@ public class CbService extends Service {
 					if (pressureSensor != null) {
 						log("cbservice sensor SDK " + android.os.Build.VERSION.SDK_INT + "");
 						if(android.os.Build.VERSION.SDK_INT == 19) {
-							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI, 10000);
+							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI, 100000);
 						} else {
 							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI);
 						}
@@ -270,13 +271,35 @@ public class CbService extends Service {
 				}
 				
 			} 
+			stopSoon();
+			/*
 			batchReadingCount++;
-			if(batchReadingCount>10) {
+			if(batchReadingCount>2) {
 				log("batch readings " + batchReadingCount + ", stopping");
-				stopCollectingData();
+				//stopCollectingData();
 			} else {
 				log("batch readings " + batchReadingCount + ", not stopping");
 			}
+			*/
+		}
+		
+		private class SensorStopper implements Runnable {
+			
+			@Override
+			public void run() {
+				try {
+					stopCollectingData();
+				} catch (Exception e) {
+					//e.printStackTrace();
+				}
+			}
+
+			
+		}
+		
+		private void stopSoon() {
+			SensorStopper stop = new SensorStopper();
+			mHandler.postDelayed(stop, 100);
 		}
 	}
 
@@ -316,6 +339,8 @@ public class CbService extends Service {
 		}
 	}
 
+	
+	
 	private class LocationStopper implements Runnable {
 
 		@Override
@@ -598,6 +623,7 @@ public class CbService extends Service {
 												//e.printStackTrace();
 											}
 											lastPressureChangeAlert = rightNow;
+											// TODO: saveinprefs;
 										} else {
 											log("tendency equal");
 
