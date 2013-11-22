@@ -98,7 +98,6 @@ public class CbService extends Service {
 	public static final int MSG_MAKE_CURRENT_CONDITIONS_API_CALL = 28;
 	// Notifications
 	public static final int MSG_CHANGE_NOTIFICATION = 31;
-	public static final int MSG_CONDITION_NOTIFICATION = 39;
 	// Data management
 	public static final int MSG_COUNT_LOCAL_OBS = 32;
 	public static final int MSG_COUNT_API_CACHE = 33;
@@ -111,6 +110,7 @@ public class CbService extends Service {
 	public static final int MSG_DATA_RESULT = 38;
 
 	long lastAPICall = System.currentTimeMillis();
+	long lastConditionNotification = System.currentTimeMillis() - (1000 * 60 * 60 * 6);
 
 	private CbObservation collectedObservation;
 
@@ -470,6 +470,55 @@ public class CbService extends Service {
 	}
 	
 	/**
+	 * Periodically check to see if someone has
+	 * reported a current condition nearby. If it's 
+	 * appropriate, send a notification
+	 */
+	private void checkForLocalConditionReports() {
+		long now = System.currentTimeMillis();
+		long minWaitTime = 1000 * 60 * 60;
+		log("cbservice checking for local conditions reports");
+		// it has been long enough; make a conditions API call 
+		// for the local area
+		CbApi conditionApi = new CbApi(getApplicationContext());
+		CbApiCall conditionApiCall = buildLocalConditionsApiCall();
+		if(conditionApiCall!=null) {
+			if (lastMessenger != null) {
+				log("cbservice making conditions api call for local reports");
+				conditionApi.makeAPICall(conditionApiCall, service,
+						lastMessenger, "Conditions");
+			} else {
+				log("cbservice not making condition call, messenger is null");
+			}
+
+			// TODO: store this more permanently
+			lastConditionNotification = now;			
+		}
+		
+	}
+	
+	public CbApiCall buildLocalConditionsApiCall() {
+		CbApiCall conditionApiCall = new CbApiCall();
+		conditionApiCall.setCallType("Conditions");
+		Location location = new Location("network");
+		location.setLatitude(0);
+		location.setLongitude(0);
+		if(locationManager != null) {
+			location = locationManager.getCurrentBestLocation();
+			conditionApiCall.setMinLat(location.getLatitude() - .1);
+			conditionApiCall.setMaxLat(location.getLatitude() + .1);
+			conditionApiCall.setMinLon(location.getLongitude() - .1);
+			conditionApiCall.setMaxLon(location.getLongitude() + .1);
+			conditionApiCall.setStartTime(System.currentTimeMillis() - (1000 * 60 * 60));
+			conditionApiCall.setEndTime(System.currentTimeMillis());
+			return conditionApiCall;
+		} else {
+			log("cbservice not checking location condition reports, no locationmanager");
+			return null;
+		}
+	}
+	
+	/**
 	 * Collect and send data in a different thread. This runs itself every
 	 * "settingsHandler.getDataCollectionFrequency()" milliseconds
 	 */
@@ -553,6 +602,8 @@ public class CbService extends Service {
 							} else {
 								log("cbservice not sharing data, didn't send");
 							}
+							
+							checkForLocalConditionReports();
 
 							// If notifications are enabled,
 							log("is send notif "
