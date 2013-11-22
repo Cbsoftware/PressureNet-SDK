@@ -142,11 +142,12 @@ public class CbService extends Service {
 	public class CbDataCollector implements SensorEventListener {
 
 		private SensorManager sm;
+		Sensor pressureSensor;
 		private final int TYPE_AMBIENT_TEMPERATURE = 13;
 		private final int TYPE_RELATIVE_HUMIDITY = 12;
 
 		private ArrayList<CbObservation> recentObservations = new ArrayList<CbObservation>();
-
+		
 		public ArrayList<CbObservation> getRecentObservations() {
 			return recentObservations;
 		}
@@ -197,19 +198,23 @@ public class CbService extends Service {
 		 */
 		public boolean startCollectingData() {
 			batchReadingCount = 0;
+			sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+			pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
 			boolean collecting = false;
 			try {
-				sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-				Sensor pressureSensor = sm
-						.getDefaultSensor(Sensor.TYPE_PRESSURE);
-				
-				if (pressureSensor != null) {
-					log("cbservice sensor SDK " + android.os.Build.VERSION.SDK_INT + "");
-					if(android.os.Build.VERSION.SDK_INT == 19) {
-						collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI, 100000);
+				if(sm != null) {
+					if (pressureSensor != null) {
+						log("cbservice sensor SDK " + android.os.Build.VERSION.SDK_INT + "");
+						if(android.os.Build.VERSION.SDK_INT == 19) {
+							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI, 10000);
+						} else {
+							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI);
+						}
 					} else {
-						collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI);
+						log("cbservice pressure sensor is null");
 					}
+				} else {
+					log("cbservice sm is null");
 				}
 				return collecting;
 			} catch (Exception e) {
@@ -228,15 +233,18 @@ public class CbService extends Service {
 			if(sm!=null) {
 				log("cbservice sensormanager not null, unregistering");
 				sm.unregisterListener(this);
+				sm = null;
 			} else {
 				log("cbservice sensormanager null, creating and then unregistering");
 				sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 				sm.unregisterListener(this);
+				sm = null;
 			}
 		}
 
 		public CbDataCollector() {
-
+			
+			
 		}
 
 		@Override
@@ -339,6 +347,8 @@ public class CbService extends Service {
 			
 			if(dataCollector!=null) {
 				dataCollector.stopCollectingData();
+				dataCollector = null;
+				dataCollector = new CbDataCollector();
 			} else {
 				dataCollector = new CbDataCollector();
 			}
@@ -457,6 +467,8 @@ public class CbService extends Service {
 
 			if(dataCollector!=null) {
 				dataCollector.stopCollectingData();
+				dataCollector = null;
+				dataCollector = new CbDataCollector();
 			} else {
 				dataCollector = new CbDataCollector();
 			}
@@ -793,7 +805,6 @@ public class CbService extends Service {
 				}
 				
 				if(settingsHandler.isSharingData()) {
-					dataCollector = new CbDataCollector();
 					dataCollector.startCollectingData();
 					startWithIntent(intent, true);
 				} else {
