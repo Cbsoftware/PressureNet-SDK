@@ -1296,8 +1296,9 @@ public class CbService extends Service {
 						location.setAccuracy(ccCursor.getInt(4));
 						location.setProvider(ccCursor.getString(5));
 						cur.setLocation(location);
-						cur.setTime(ccCursor.getLong(6));
+						cur.setSharing_policy(ccCursor.getString(6));
 						cur.setTime(ccCursor.getLong(7));
+						cur.setTzoffset(ccCursor.getInt(8));
 						cur.setUser_id(ccCursor.getString(9));
 						cur.setGeneral_condition(ccCursor.getString(10));
 						cur.setWindy(ccCursor.getString(11));
@@ -1308,6 +1309,7 @@ public class CbService extends Service {
 						cur.setPrecipitation_unit(ccCursor.getString(16));
 						cur.setThunderstorm_intensity(ccCursor.getString(17));
 						cur.setUser_comment(ccCursor.getString(18));
+						log("Condition from db: \n" + cur.toString());
 						conditions.add(cur);
 					}
 				} catch (Exception e) {

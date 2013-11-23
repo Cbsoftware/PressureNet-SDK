@@ -54,7 +54,8 @@ public class CbCurrentCondition extends CbWeather {
 	
 	@Override
 	public String toString() {
-		return user_id + ", " + time + ", " + tzoffset + ", " + location.getLatitude() + ", " + location.getLongitude() + ", " + general_condition + "," + windy + ", " + 
+		return user_id + ", " + time + ", " + tzoffset + ", " + location.getLatitude() + ", " + location.getLongitude() + ", " + 
+				general_condition + "," + windy + ", " +  cloud_type + ", " + 
 				precipitation_type + ", " + precipitation_amount + ", " + thunderstorm_intensity;
 	}
 	

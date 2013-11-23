@@ -263,6 +263,7 @@ public class CbApi {
 						// current.setTzoffset(jsonObject.getInt("tzoffset"));
 						// current.setSharing_policy(jsonObject.getString("sharing"));
 						// current.setUser_id(jsonObject.getString("user_id"));
+						//current.setCloud_type(jsonObject.getString("cloud_type"));
 						current.setWindy(jsonObject.getString("windy"));
 						current.setFog_thickness(jsonObject
 								.getString("fog_thickness"));
@@ -275,6 +276,7 @@ public class CbApi {
 						current.setWindy(jsonObject
 								.getString("thunderstorm_intensity"));
 						current.setWindy(jsonObject.getString("user_comment"));
+						log("condition from API: \n" + current);
 						obsFromJSON.add(current);
 					}
 				} catch (Exception e) {
