@@ -1275,41 +1275,46 @@ public class CbService extends Service {
 				recentMsg = msg;
 				db.open();
 				CbApiCall currentConditionAPI = (CbApiCall) msg.obj;
-
-				Cursor ccCursor = db.getCurrentConditions(
-						currentConditionAPI.getMinLat(),
-						currentConditionAPI.getMaxLat(),
-						currentConditionAPI.getMinLon(),
-						currentConditionAPI.getMaxLon(),
-						currentConditionAPI.getStartTime(),
-						currentConditionAPI.getEndTime(), 1000);
-
 				ArrayList<CbCurrentCondition> conditions = new ArrayList<CbCurrentCondition>();
-				while (ccCursor.moveToNext()) {
-					CbCurrentCondition cur = new CbCurrentCondition();
-					Location location = new Location("network");
-					location.setLatitude(ccCursor.getDouble(1));
-					location.setLongitude(ccCursor.getDouble(2));
-					location.setAltitude(ccCursor.getDouble(3));
-					location.setAccuracy(ccCursor.getInt(4));
-					location.setProvider(ccCursor.getString(5));
-					cur.setLocation(location);
-					cur.setTime(ccCursor.getLong(6));
-					cur.setTime(ccCursor.getLong(7));
-					cur.setUser_id(ccCursor.getString(9));
-					cur.setGeneral_condition(ccCursor.getString(10));
-					cur.setWindy(ccCursor.getString(11));
-					cur.setFog_thickness(ccCursor.getString(12));
-					cur.setCloud_type(ccCursor.getString(13));
-					cur.setPrecipitation_type(ccCursor.getString(14));
-					cur.setPrecipitation_amount(ccCursor.getDouble(15));
-					cur.setPrecipitation_unit(ccCursor.getString(16));
-					cur.setThunderstorm_intensity(ccCursor.getString(17));
-					cur.setUser_comment(ccCursor.getString(18));
-					conditions.add(cur);
-				}
-				db.close();
+				try {
+					Cursor ccCursor = db.getCurrentConditions(
+							currentConditionAPI.getMinLat(),
+							currentConditionAPI.getMaxLat(),
+							currentConditionAPI.getMinLon(),
+							currentConditionAPI.getMaxLon(),
+							currentConditionAPI.getStartTime(),
+							currentConditionAPI.getEndTime(), 1000);
 
+				
+					
+					while (ccCursor.moveToNext()) {
+						CbCurrentCondition cur = new CbCurrentCondition();
+						Location location = new Location("network");
+						location.setLatitude(ccCursor.getDouble(1));
+						location.setLongitude(ccCursor.getDouble(2));
+						location.setAltitude(ccCursor.getDouble(3));
+						location.setAccuracy(ccCursor.getInt(4));
+						location.setProvider(ccCursor.getString(5));
+						cur.setLocation(location);
+						cur.setTime(ccCursor.getLong(6));
+						cur.setTime(ccCursor.getLong(7));
+						cur.setUser_id(ccCursor.getString(9));
+						cur.setGeneral_condition(ccCursor.getString(10));
+						cur.setWindy(ccCursor.getString(11));
+						cur.setFog_thickness(ccCursor.getString(12));
+						cur.setCloud_type(ccCursor.getString(13));
+						cur.setPrecipitation_type(ccCursor.getString(14));
+						cur.setPrecipitation_amount(ccCursor.getDouble(15));
+						cur.setPrecipitation_unit(ccCursor.getString(16));
+						cur.setThunderstorm_intensity(ccCursor.getString(17));
+						cur.setUser_comment(ccCursor.getString(18));
+						conditions.add(cur);
+					}
+				} catch (Exception e) {
+					log("cbservice get_current_conditions failed " + e.getMessage());
+				} finally {
+					db.close();
+				}
 				try {
 					msg.replyTo.send(Message.obtain(null,
 							MSG_CURRENT_CONDITIONS, conditions));
