@@ -724,7 +724,7 @@ public class CbDb {
 			listValues.put(KEY_LATITUDE, observation.getLocation().getLatitude());
 			listValues.put(KEY_LONGITUDE, observation.getLocation().getLongitude());
 			listValues.put(KEY_TIME, observation.getTime());
-			listValues.put(KEY_OBSERVATION_VALUE, observation.getTime());
+			listValues.put(KEY_OBSERVATION_VALUE, observation.getObservationValue());
 			
 			
 			mDB.insert(API_LIST_TABLE, null, listValues);
