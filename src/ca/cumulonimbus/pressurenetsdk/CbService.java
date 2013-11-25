@@ -109,6 +109,11 @@ public class CbService extends Service {
 	// Success / Failure notification for data submission
 	public static final int MSG_DATA_RESULT = 38;
 
+	// Intents
+	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
+	public static final String LOCAL_CONDITIONS_ALERT = "ca.cumulonimbus.pressurenetsdk.LOCAL_CONDITIONS_ALERT";
+		
+	
 	long lastAPICall = System.currentTimeMillis();
 	long lastConditionNotification = System.currentTimeMillis() - (1000 * 60 * 60 * 6);
 
@@ -484,13 +489,11 @@ public class CbService extends Service {
 			CbApi conditionApi = new CbApi(getApplicationContext());
 			CbApiCall conditionApiCall = buildLocalConditionsApiCall();
 			if(conditionApiCall!=null) {
-				if (lastMessenger != null) {
-					log("cbservice making conditions api call for local reports");
-					conditionApi.makeAPICall(conditionApiCall, service,
-							lastMessenger, "Conditions");
-				} else {
-					log("cbservice not making condition call, messenger is null");
-				}
+				
+				log("cbservice making conditions api call for local reports");
+				conditionApi.makeAPICall(conditionApiCall, service,
+						mMessenger, "Conditions");
+		
 				// TODO: store this more permanently
 				lastConditionNotification = now;
 			}
@@ -666,6 +669,11 @@ public class CbService extends Service {
 											log("Trend change! "
 													+ tendencyChange);
 
+											Intent intent = new Intent();
+											intent.setAction(PRESSURE_CHANGE_ALERT);
+											intent.putExtra("ca.cumulonimbus.pressurenetsdk.tendencyChange", tendencyChange);
+											sendBroadcast(intent);
+											
 											try {
 												if (lastMessenger != null) {
 													lastMessenger
@@ -1273,50 +1281,8 @@ public class CbService extends Service {
 				break;
 			case MSG_GET_CURRENT_CONDITIONS:
 				recentMsg = msg;
-				db.open();
 				CbApiCall currentConditionAPI = (CbApiCall) msg.obj;
-				ArrayList<CbCurrentCondition> conditions = new ArrayList<CbCurrentCondition>();
-				try {
-					Cursor ccCursor = db.getCurrentConditions(
-							currentConditionAPI.getMinLat(),
-							currentConditionAPI.getMaxLat(),
-							currentConditionAPI.getMinLon(),
-							currentConditionAPI.getMaxLon(),
-							currentConditionAPI.getStartTime(),
-							currentConditionAPI.getEndTime(), 1000);
-
-				
-					
-					while (ccCursor.moveToNext()) {
-						CbCurrentCondition cur = new CbCurrentCondition();
-						Location location = new Location("network");
-						location.setLatitude(ccCursor.getDouble(1));
-						location.setLongitude(ccCursor.getDouble(2));
-						location.setAltitude(ccCursor.getDouble(3));
-						location.setAccuracy(ccCursor.getInt(4));
-						location.setProvider(ccCursor.getString(5));
-						cur.setLocation(location);
-						cur.setSharing_policy(ccCursor.getString(6));
-						cur.setTime(ccCursor.getLong(7));
-						cur.setTzoffset(ccCursor.getInt(8));
-						cur.setUser_id(ccCursor.getString(9));
-						cur.setGeneral_condition(ccCursor.getString(10));
-						cur.setWindy(ccCursor.getString(11));
-						cur.setFog_thickness(ccCursor.getString(12));
-						cur.setCloud_type(ccCursor.getString(13));
-						cur.setPrecipitation_type(ccCursor.getString(14));
-						cur.setPrecipitation_amount(ccCursor.getDouble(15));
-						cur.setPrecipitation_unit(ccCursor.getString(16));
-						cur.setThunderstorm_intensity(ccCursor.getString(17));
-						cur.setUser_comment(ccCursor.getString(18));
-						log("Condition from db: \n" + cur.toString());
-						conditions.add(cur);
-					}
-				} catch (Exception e) {
-					log("cbservice get_current_conditions failed " + e.getMessage());
-				} finally {
-					db.close();
-				}
+				ArrayList<CbCurrentCondition> conditions = getCurrentConditionsFromLocalAPI(currentConditionAPI);
 				try {
 					msg.replyTo.send(Message.obtain(null,
 							MSG_CURRENT_CONDITIONS, conditions));
@@ -1370,16 +1336,114 @@ public class CbService extends Service {
 				}
 				break;
 			case MSG_CHANGE_NOTIFICATION:
-				if (msg.replyTo != null) {
-					lastMessenger = msg.replyTo;
-				} else {
-					// ..
+				log("cbservice dead code, change notification");
+				break;
+			case MSG_API_RESULT_COUNT:
+				log("cbservice msg_api_result_count");
+				// Current conditions API call for (made for local conditions alerts)
+				// returns here.
+				
+				// potentially notify about nearby conditions
+				CbApiCall localConditions = buildLocalCurrentConditionsCall(1);
+				ArrayList<CbCurrentCondition> localRecentConditions = getCurrentConditionsFromLocalAPI(localConditions);
+				
+				Intent intent = new Intent();
+				intent.setAction(CbService.LOCAL_CONDITIONS_ALERT);
+				if(localRecentConditions!=null) {
+					if(localRecentConditions.size()> 0) {
+						intent.putExtra("ca.cumulonimbus.pressurenetsdk.conditionNotification", localRecentConditions.get(0));
+						sendBroadcast(intent);
+					}
 				}
+				
 				break;
 			default:
 				super.handleMessage(msg);
 			}
 		}
+	}
+	
+	private ArrayList<CbCurrentCondition> getCurrentConditionsFromLocalAPI(CbApiCall currentConditionAPI) {
+		ArrayList<CbCurrentCondition> conditions = new ArrayList<CbCurrentCondition>();
+		try {
+			db.open();
+			Cursor ccCursor = db.getCurrentConditions(
+					currentConditionAPI.getMinLat(),
+					currentConditionAPI.getMaxLat(),
+					currentConditionAPI.getMinLon(),
+					currentConditionAPI.getMaxLon(),
+					currentConditionAPI.getStartTime(),
+					currentConditionAPI.getEndTime(), 1000);
+
+		
+			
+			while (ccCursor.moveToNext()) {
+				CbCurrentCondition cur = new CbCurrentCondition();
+				Location location = new Location("network");
+				location.setLatitude(ccCursor.getDouble(1));
+				location.setLongitude(ccCursor.getDouble(2));
+				location.setAltitude(ccCursor.getDouble(3));
+				location.setAccuracy(ccCursor.getInt(4));
+				location.setProvider(ccCursor.getString(5));
+				cur.setLocation(location);
+				cur.setSharing_policy(ccCursor.getString(6));
+				cur.setTime(ccCursor.getLong(7));
+				cur.setTzoffset(ccCursor.getInt(8));
+				cur.setUser_id(ccCursor.getString(9));
+				cur.setGeneral_condition(ccCursor.getString(10));
+				cur.setWindy(ccCursor.getString(11));
+				cur.setFog_thickness(ccCursor.getString(12));
+				cur.setCloud_type(ccCursor.getString(13));
+				cur.setPrecipitation_type(ccCursor.getString(14));
+				cur.setPrecipitation_amount(ccCursor.getDouble(15));
+				cur.setPrecipitation_unit(ccCursor.getString(16));
+				cur.setThunderstorm_intensity(ccCursor.getString(17));
+				cur.setUser_comment(ccCursor.getString(18));
+				log("Condition from db: \n" + cur.toString());
+				conditions.add(cur);
+			}
+		} catch (Exception e) {
+			log("cbservice get_current_conditions failed " + e.getMessage());
+		} finally {
+			db.close();
+		}
+		return conditions;
+	}
+	
+	
+	private CbApiCall buildLocalCurrentConditionsCall(double hoursAgo) {
+		log("building map conditions call for hours: "
+				+ hoursAgo);
+		long startTime = System.currentTimeMillis()
+				- (int) ((hoursAgo * 60 * 60 * 1000));
+		long endTime = System.currentTimeMillis();
+		CbApiCall api = new CbApiCall();
+
+		double minLat = 0;
+		double maxLat = 0;
+		double minLon = 0;
+		double maxLon = 0;
+
+		Location lastKnown = locationManager.getCurrentBestLocation();
+		if(lastKnown.getLatitude() != 0) {
+			minLat = lastKnown.getLatitude() - .1;
+			maxLat = lastKnown.getLatitude() + .1;
+			minLon = lastKnown.getLongitude() - .1;
+			maxLon = lastKnown.getLongitude() + .1;
+		} else {
+			log("no location, bailing on csll");
+			return null;
+		}
+			
+		api.setMinLat(minLat);
+		api.setMaxLat(maxLat);
+		api.setMinLon(minLon);
+		api.setMaxLon(maxLon);
+		api.setStartTime(startTime);
+		api.setEndTime(endTime);
+		api.setLimit(500);
+		api.setCallType("Conditions");
+		return api;
 	}
 
 	public void sendSingleObs() {
