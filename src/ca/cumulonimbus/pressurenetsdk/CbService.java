@@ -157,6 +157,8 @@ public class CbService extends Service {
 
 		private ArrayList<CbObservation> recentObservations = new ArrayList<CbObservation>();
 		
+		int stopSoonCalls = 0;
+		
 		public ArrayList<CbObservation> getRecentObservations() {
 			return recentObservations;
 		}
@@ -207,6 +209,7 @@ public class CbService extends Service {
 		 */
 		public boolean startCollectingData() {
 			batchReadingCount = 0;
+			stopSoonCalls = 0;
 			sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 			pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
 			if(wl!=null) {
@@ -251,10 +254,13 @@ public class CbService extends Service {
 				sm.unregisterListener(this);
 				sm = null;
 			} else {
-				log("cbservice sensormanager null, creating and then unregistering");
+				
+				log("cbservice sensormanager null, walk away");
+				/*
 				sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 				sm.unregisterListener(this);
 				sm = null;
+				*/
 			}
 		}
 
@@ -286,8 +292,12 @@ public class CbService extends Service {
 				}
 				
 			} 
-			//stopSoon();
 			
+			
+			if(stopSoonCalls<=1) {
+				stopSoon();
+			}
+			/*
 			batchReadingCount++;
 			if(batchReadingCount>2) {
 				log("batch readings " + batchReadingCount + ", stopping");
@@ -295,10 +305,11 @@ public class CbService extends Service {
 			} else {
 				log("batch readings " + batchReadingCount + ", not stopping");
 			}
+			*/
 			
 		}
 		
-		/*
+		
 		private class SensorStopper implements Runnable {
 			
 			@Override
@@ -309,10 +320,11 @@ public class CbService extends Service {
 		}
 		
 		private void stopSoon() {
+			stopSoonCalls++;
 			SensorStopper stop = new SensorStopper();
 			mHandler.postDelayed(stop, 100);
 		}
-		*/
+		
 	}
 
 	/**
