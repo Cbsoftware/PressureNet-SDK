@@ -209,11 +209,13 @@ public class CbService extends Service {
 			batchReadingCount = 0;
 			sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 			pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
-			log("cbservice startcollectingdata wakelock " + wl.isHeld());
-			if(!wl.isHeld()) {
-				log("cbservice startcollectingdata no wakelock, bailing");
-				return false;
-			} 
+			if(wl!=null) {
+				log("cbservice startcollectingdata wakelock " + wl.isHeld());
+				if(!wl.isHeld()) {
+					log("cbservice startcollectingdata no wakelock, bailing");
+					return false;
+				} 
+			}
 			boolean collecting = false;
 			try {
 				if(sm != null) {
@@ -867,11 +869,23 @@ public class CbService extends Service {
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		log("cb onstartcommand");
+		log("cbservice onstartcommand");
+		
+		// wakelock management
+		if(wl!=null) {
+			log("cbservice wakelock not null:");
+			if(wl.isHeld()) {
+				log("cbservice existing wakelock; releasing");
+				wl.release();
+			} else {
+				log("cbservice wakelock not null but no existing lock");
+			}
+		}
 		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP , "CbService"); // PARTIAL_WAKE_LOCK
 		wl.acquire(5000);
 		log("cbservice acquiring wakelock " + wl.isHeld());
+		
 		dataCollector = new CbDataCollector();
 		try {
 			if (intent != null) {
@@ -893,7 +907,7 @@ public class CbService extends Service {
 					
 					
 					if(settingsHandler.isSharingData()) {
-						dataCollector.startCollectingData();
+						//dataCollector.startCollectingData();
 						startWithIntent(intent, true);
 					} else {
 						log("cbservice not sharing data");
