@@ -276,36 +276,33 @@ public class CbService extends Service {
 				}
 				
 			} 
-			stopSoon();
-			/*
+			//stopSoon();
+			
 			batchReadingCount++;
 			if(batchReadingCount>2) {
 				log("batch readings " + batchReadingCount + ", stopping");
-				//stopCollectingData();
+				stopCollectingData();
 			} else {
 				log("batch readings " + batchReadingCount + ", not stopping");
 			}
-			*/
+			
 		}
 		
+		/*
 		private class SensorStopper implements Runnable {
 			
 			@Override
 			public void run() {
-				try {
-					stopCollectingData();
-				} catch (Exception e) {
-					//e.printStackTrace();
-				}
+				stopCollectingData();
+				
 			}
-
-			
 		}
 		
 		private void stopSoon() {
 			SensorStopper stop = new SensorStopper();
 			mHandler.postDelayed(stop, 100);
 		}
+		*/
 	}
 
 	/**
@@ -375,13 +372,7 @@ public class CbService extends Service {
 			log("collecting and submitting single "
 					+ settingsHandler.getServerURL());
 			
-			if(dataCollector!=null) {
-				dataCollector.stopCollectingData();
-				dataCollector = null;
-				dataCollector = new CbDataCollector();
-			} else {
-				dataCollector = new CbDataCollector();
-			}
+			dataCollector = new CbDataCollector();
 			dataCollector.startCollectingData();
 			
 			CbObservation singleObservation = new CbObservation();
@@ -431,101 +422,6 @@ public class CbService extends Service {
 			}
 		}
 	}
-
-	/**
-	 *  Put together all the information that defines
-	 *  an observation and store it in a single object.
-	 * @return
-	 */
-	public CbObservation buildPressureObservation() {
-		CbObservation pressureObservation = new CbObservation();
-		pressureObservation.setTime(System.currentTimeMillis());
-		pressureObservation.setTimeZoneOffset(Calendar.getInstance()
-				.getTimeZone().getRawOffset());
-		pressureObservation.setUser_id(getID());
-		pressureObservation.setObservationType("pressure");
-		pressureObservation.setObservationValue(recentPressureReading);
-		
-		pressureObservation.setObservationUnit("mbar");
-		// pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
-		pressureObservation.setSharing(settingsHandler.getShareLevel());
-		
-		pressureObservation.setVersionNumber(getSDKVersion());
-		
-		log("cbservice buildobs, share level "
-				+ settingsHandler.getShareLevel() + " " + getID());
-		return pressureObservation;
-	}
-
-	/**
-	 * Return the version number of the SDK sending this reading
-	 * @return
-	 */
-	public String getSDKVersion() {
-		String version = "-1.0";
-		try {
-			version = getPackageManager()
-					.getPackageInfo("ca.cumulonimbus.pressurenetsdk", 0).versionName;
-		} catch (NameNotFoundException nnfe) {
-			// TODO: this is not an okay return value
-			// (Don't send error messages as version numbers)
-			version = nnfe.getMessage(); 
-		}
-		return version;
-	}
-	
-	/**
-	 * Periodically check to see if someone has
-	 * reported a current condition nearby. If it's 
-	 * appropriate, send a notification
-	 */
-	private void checkForLocalConditionReports() {
-		long now = System.currentTimeMillis();
-		long minWaitTime = 1000 * 60 * 60;
-		if(now - minWaitTime > lastConditionNotification) {
-			log("cbservice checking for local conditions reports");
-			// it has been long enough; make a conditions API call 
-			// for the local area
-			CbApi conditionApi = new CbApi(getApplicationContext());
-			CbApiCall conditionApiCall = buildLocalConditionsApiCall();
-			if(conditionApiCall!=null) {
-				
-				log("cbservice making conditions api call for local reports");
-				conditionApi.makeAPICall(conditionApiCall, service,
-						mMessenger, "Conditions");
-		
-				// TODO: store this more permanently
-				lastConditionNotification = now;
-			}
-		} else {
-			log("cbservice not checking for local conditions, too recent");
-		}
-	}
-	
-	/**
-	 * Make a CbApiCall object for local conditions
-	 * @return
-	 */
-	public CbApiCall buildLocalConditionsApiCall() {
-		CbApiCall conditionApiCall = new CbApiCall();
-		conditionApiCall.setCallType("Conditions");
-		Location location = new Location("network");
-		location.setLatitude(0);
-		location.setLongitude(0);
-		if(locationManager != null) {
-			location = locationManager.getCurrentBestLocation();
-			conditionApiCall.setMinLat(location.getLatitude() - .1);
-			conditionApiCall.setMaxLat(location.getLatitude() + .1);
-			conditionApiCall.setMinLon(location.getLongitude() - .1);
-			conditionApiCall.setMaxLon(location.getLongitude() + .1);
-			conditionApiCall.setStartTime(System.currentTimeMillis() - (1000 * 60 * 60));
-			conditionApiCall.setEndTime(System.currentTimeMillis());
-			return conditionApiCall;
-		} else {
-			log("cbservice not checking location condition reports, no locationmanager");
-			return null;
-		}
-	}
 	
 	/**
 	 * Collect and send data in a different thread. This runs itself every
@@ -541,20 +437,11 @@ public class CbService extends Service {
 			}
 			
 			// retrieve updated settings
-			if(settingsHandler == null) {
-				settingsHandler = new CbSettingsHandler(getApplicationContext());
-				settingsHandler = settingsHandler.getSettings();
-			} else {
-				settingsHandler = settingsHandler.getSettings();
-			}
+			settingsHandler = new CbSettingsHandler(getApplicationContext());
+			settingsHandler = settingsHandler.getSettings();
 
-			if(dataCollector!=null) {
-				dataCollector.stopCollectingData();
-				dataCollector = null;
-				dataCollector = new CbDataCollector();
-			} else {
-				dataCollector = new CbDataCollector();
-			}
+			// start collecting data
+			dataCollector = new CbDataCollector();
 			dataCollector.startCollectingData();
 
 			log("collecting and submitting " + settingsHandler.getServerURL());
@@ -713,6 +600,102 @@ public class CbService extends Service {
 			}
 		}
 	}
+	
+
+	/**
+	 *  Put together all the information that defines
+	 *  an observation and store it in a single object.
+	 * @return
+	 */
+	public CbObservation buildPressureObservation() {
+		CbObservation pressureObservation = new CbObservation();
+		pressureObservation.setTime(System.currentTimeMillis());
+		pressureObservation.setTimeZoneOffset(Calendar.getInstance()
+				.getTimeZone().getRawOffset());
+		pressureObservation.setUser_id(getID());
+		pressureObservation.setObservationType("pressure");
+		pressureObservation.setObservationValue(recentPressureReading);
+		
+		pressureObservation.setObservationUnit("mbar");
+		// pressureObservation.setSensor(sm.getSensorList(Sensor.TYPE_PRESSURE).get(0));
+		pressureObservation.setSharing(settingsHandler.getShareLevel());
+		
+		pressureObservation.setVersionNumber(getSDKVersion());
+		
+		log("cbservice buildobs, share level "
+				+ settingsHandler.getShareLevel() + " " + getID());
+		return pressureObservation;
+	}
+
+	/**
+	 * Return the version number of the SDK sending this reading
+	 * @return
+	 */
+	public String getSDKVersion() {
+		String version = "-1.0";
+		try {
+			version = getPackageManager()
+					.getPackageInfo("ca.cumulonimbus.pressurenetsdk", 0).versionName;
+		} catch (NameNotFoundException nnfe) {
+			// TODO: this is not an okay return value
+			// (Don't send error messages as version numbers)
+			version = nnfe.getMessage(); 
+		}
+		return version;
+	}
+	
+	/**
+	 * Periodically check to see if someone has
+	 * reported a current condition nearby. If it's 
+	 * appropriate, send a notification
+	 */
+	private void checkForLocalConditionReports() {
+		long now = System.currentTimeMillis();
+		long minWaitTime = 1000 * 60 * 60;
+		if(now - minWaitTime > lastConditionNotification) {
+			log("cbservice checking for local conditions reports");
+			// it has been long enough; make a conditions API call 
+			// for the local area
+			CbApi conditionApi = new CbApi(getApplicationContext());
+			CbApiCall conditionApiCall = buildLocalConditionsApiCall();
+			if(conditionApiCall!=null) {
+				
+				log("cbservice making conditions api call for local reports");
+				conditionApi.makeAPICall(conditionApiCall, service,
+						mMessenger, "Conditions");
+		
+				// TODO: store this more permanently
+				lastConditionNotification = now;
+			}
+		} else {
+			log("cbservice not checking for local conditions, too recent");
+		}
+	}
+	
+	/**
+	 * Make a CbApiCall object for local conditions
+	 * @return
+	 */
+	public CbApiCall buildLocalConditionsApiCall() {
+		CbApiCall conditionApiCall = new CbApiCall();
+		conditionApiCall.setCallType("Conditions");
+		Location location = new Location("network");
+		location.setLatitude(0);
+		location.setLongitude(0);
+		if(locationManager != null) {
+			location = locationManager.getCurrentBestLocation();
+			conditionApiCall.setMinLat(location.getLatitude() - .1);
+			conditionApiCall.setMaxLat(location.getLatitude() + .1);
+			conditionApiCall.setMinLon(location.getLongitude() - .1);
+			conditionApiCall.setMaxLon(location.getLongitude() + .1);
+			conditionApiCall.setStartTime(System.currentTimeMillis() - (1000 * 60 * 60));
+			conditionApiCall.setEndTime(System.currentTimeMillis());
+			return conditionApiCall;
+		} else {
+			log("cbservice not checking location condition reports, no locationmanager");
+			return null;
+		}
+	}
 
 	/**
 	 * Check for network connection, return true
@@ -834,9 +817,11 @@ public class CbService extends Service {
 		}
 	}
 
+	
+	
 	@Override
 	public void onDestroy() {
-		log("on destroy");
+		log("cbservice on destroy");
 		stopAutoSubmit();
 		super.onDestroy();
 	}
@@ -890,10 +875,9 @@ public class CbService extends Service {
 				log("cbservice alarm firing, sending data");
 				if(settingsHandler == null) {
 					settingsHandler = new CbSettingsHandler(getApplicationContext());
-					settingsHandler.getSettings();
-				} else {
-					settingsHandler.getSettings();
 				}
+				settingsHandler.getSettings();
+				
 				
 				if(settingsHandler.isSharingData()) {
 					dataCollector.startCollectingData();
@@ -1081,7 +1065,7 @@ public class CbService extends Service {
 				// startWithDatabase();
 				break;
 			case MSG_STOP_AUTOSUBMIT:
-				log("stop autosubmit");
+				log("cbservice stop autosubmit");
 				stopAutoSubmit();
 				break;
 			case MSG_GET_SETTINGS:
