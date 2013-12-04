@@ -24,13 +24,14 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
-import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.PowerManager;
 import android.os.RemoteException;
+import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 
@@ -139,6 +140,8 @@ public class CbService extends Service {
 	
 	private long lastSubmit = 0;
 
+	private PowerManager.WakeLock wl;
+	
 	/**
 	 * Collect data from onboard sensors and store locally
 	 * 
@@ -206,6 +209,11 @@ public class CbService extends Service {
 			batchReadingCount = 0;
 			sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 			pressureSensor = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
+			log("cbservice startcollectingdata wakelock " + wl.isHeld());
+			if(!wl.isHeld()) {
+				log("cbservice startcollectingdata no wakelock, bailing");
+				return false;
+			} 
 			boolean collecting = false;
 			try {
 				if(sm != null) {
@@ -750,7 +758,7 @@ public class CbService extends Service {
 				//loadSetttingsFromPreferences();
 				// settingsHandler = settingsHandler.getSettings();
 			}
-			log("sendCbObservation with settings " + settingsHandler);
+			log("sendCbObservation with wakelock " + wl.isHeld() + " and settings " + settingsHandler);
 			sender.setSettings(settingsHandler, locationManager,
 					lastMessenger, fromUser);
 			sender.execute(observation.getObservationAsParams());
@@ -860,46 +868,52 @@ public class CbService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cb onstartcommand");
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP , "CbService"); // PARTIAL_WAKE_LOCK
+		wl.acquire(5000);
+		log("cbservice acquiring wakelock " + wl.isHeld());
 		dataCollector = new CbDataCollector();
-		if (intent != null) {
-			if (intent.getAction() != null) {
-				if (intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
-					// send just a single measurement
-					log("sending single observation, request from intent");
-					sendSingleObs();
+		try {
+			if (intent != null) {
+				if (intent.getAction() != null) {
+					if (intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
+						// send just a single measurement
+						log("sending single observation, request from intent");
+						sendSingleObs();
+						return START_NOT_STICKY;
+					}
+				} else if (intent.getBooleanExtra("alarm", false)) {
+					// This runs when the service is started from the alarm.
+					// Submit a data point
+					log("cbservice alarm firing, sending data");
+					if(settingsHandler == null) {
+						settingsHandler = new CbSettingsHandler(getApplicationContext());
+					}
+					settingsHandler.getSettings();
+					
+					
+					if(settingsHandler.isSharingData()) {
+						dataCollector.startCollectingData();
+						startWithIntent(intent, true);
+					} else {
+						log("cbservice not sharing data");
+					}
+					
+					LocationStopper stop = new LocationStopper();
+					mHandler.postDelayed(stop, 1000 * 3);
+					return START_NOT_STICKY;
+				} else {
+					// Check the database
+					
+					log("starting service with db");
+					startWithDatabase();
 					return START_NOT_STICKY;
 				}
-			} else if (intent.getBooleanExtra("alarm", false)) {
-				// This runs when the service is started from the alarm.
-				// Submit a data point
-				log("cbservice alarm firing, sending data");
-				if(settingsHandler == null) {
-					settingsHandler = new CbSettingsHandler(getApplicationContext());
-				}
-				settingsHandler.getSettings();
-				
-				
-				if(settingsHandler.isSharingData()) {
-					dataCollector.startCollectingData();
-					startWithIntent(intent, true);
-				} else {
-					log("cbservice not sharing data");
-				}
-				
-				LocationStopper stop = new LocationStopper();
-				mHandler.postDelayed(stop, 1000 * 3);
-				return START_NOT_STICKY;
-			} else {
-				// Check the database
-				
-				log("starting service with db");
-				startWithDatabase();
-				return START_NOT_STICKY;
 			}
-		}
+		} catch (Exception e) {
+			log("cbservice onstartcommand exception");
+		} 
 		
-	
-
 		super.onStartCommand(intent, flags, startId);
 		return START_NOT_STICKY;
 	}
