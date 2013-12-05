@@ -306,7 +306,7 @@ public class CbDb {
 				+ " > ? and " + KEY_LONGITUDE + " < ? and " + KEY_TIME
 				+ " > ? and " + KEY_TIME + " < ? ", new String[] {
 				min_lat + "", max_lat + "", min_lon + "", max_lon + "",
-				start_time + "", end_time + "" }, null, null, null, null);
+				start_time + "", end_time + "" }, null, null, KEY_TIME, null);
 
 		return cursor;
 	}
