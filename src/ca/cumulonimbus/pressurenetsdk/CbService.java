@@ -769,7 +769,7 @@ public class CbService extends Service {
 			CbDataSender sender = new CbDataSender(getApplicationContext());
 			settingsHandler = settingsHandler.getSettings();
 			if(settingsHandler.getServerURL().equals("")) {
-				log("settings are empty; defaults");
+				log("cbservice settings are empty; defaults");
 				//loadSetttingsFromPreferences();
 				// settingsHandler = settingsHandler.getSettings();
 			}
@@ -968,7 +968,7 @@ public class CbService extends Service {
 	}
 
 	public void loadSetttingsFromPreferences() {
-		log("loading settings from prefs");
+		log("cbservice loading settings from prefs");
 		settingsHandler = new CbSettingsHandler(getApplicationContext());
 		settingsHandler.setServerURL(serverURL);
 		settingsHandler.setAppID(getApplication().getPackageName());
@@ -1125,9 +1125,10 @@ public class CbService extends Service {
 				// ...
 				break;
 			case MSG_SET_SETTINGS:
-				log("cbservice set settings");
 				settingsHandler = (CbSettingsHandler) msg.obj;
+				log("cbservice set settings " + settingsHandler);
 				settingsHandler.saveSettings();
+				startSubmit();
 				break;
 			case MSG_GET_LOCAL_RECENTS:
 				log("get local recents");
