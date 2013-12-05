@@ -31,7 +31,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.PowerManager;
 import android.os.RemoteException;
-import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 
@@ -829,17 +828,15 @@ public class CbService extends Service {
 	public void startSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
 		if (!alarm.isRepeating()) {
-			log("cbservice alarm not repeating, starting alarm");
+			log("cbservice alarm not repeating, starting alarm at " + settingsHandler.getDataCollectionFrequency());
 			alarm.setAlarm(getApplicationContext(),
 					settingsHandler.getDataCollectionFrequency());
 		} else {
-			log("cbservice startsubmit, alarm is already repeating. restarting.");
+			log("cbservice startsubmit, alarm is already repeating. restarting at " + settingsHandler.getDataCollectionFrequency());
 			alarm.restartAlarm(getApplicationContext(),
 					settingsHandler.getDataCollectionFrequency());
 		}
 	}
-
-	
 	
 	@Override
 	public void onDestroy() {
@@ -912,10 +909,8 @@ public class CbService extends Service {
 					// This runs when the service is started from the alarm.
 					// Submit a data point
 					log("cbservice alarm firing, sending data");
-					if(settingsHandler == null) {
-						settingsHandler = new CbSettingsHandler(getApplicationContext());
-					}
-					settingsHandler.getSettings();
+					settingsHandler = new CbSettingsHandler(getApplicationContext());
+					settingsHandler = settingsHandler.getSettings();
 					
 					
 					if(settingsHandler.isSharingData()) {
@@ -937,7 +932,7 @@ public class CbService extends Service {
 				}
 			}
 		} catch (Exception e) {
-			log("cbservice onstartcommand exception");
+			log("cbservice onstartcommand exception " + e.getMessage());
 		} 
 		
 		super.onStartCommand(intent, flags, startId);
@@ -1127,7 +1122,7 @@ public class CbService extends Service {
 				// ...
 				break;
 			case MSG_SET_SETTINGS:
-				log("set settings");
+				log("cbservice set settings");
 				settingsHandler = (CbSettingsHandler) msg.obj;
 				settingsHandler.saveSettings();
 				break;
@@ -1198,7 +1193,26 @@ public class CbService extends Service {
 						obs.setTime(cacheCursor.getLong(4));
 						cacheResults.add(obs);
 					}
+					
+					// and get a few recent local results
+					Cursor localCursor = db.runLocalAPICall(
+							apiCacheCall.getMinLat(), apiCacheCall.getMaxLat(),
+							apiCacheCall.getMinLon(), apiCacheCall.getMaxLon(),
+							apiCacheCall.getStartTime(),
+							apiCacheCall.getEndTime(), 5);
+					ArrayList<CbObservation> localResults = new ArrayList<CbObservation>();
+					while (localCursor.moveToNext()) {
+						CbObservation obs = new CbObservation();
+						Location location = new Location("network");
+						location.setLatitude(localCursor.getDouble(1));
+						location.setLongitude(localCursor.getDouble(2));
+						obs.setLocation(location);
+						obs.setObservationValue(localCursor.getDouble(3));
+						obs.setTime(localCursor.getLong(4));
+						localResults.add(obs);
+					}
 					db.close();
+					cacheResults.addAll(localResults);
 					try {
 						msg.replyTo.send(Message.obtain(null, MSG_API_RECENTS,
 								cacheResults));

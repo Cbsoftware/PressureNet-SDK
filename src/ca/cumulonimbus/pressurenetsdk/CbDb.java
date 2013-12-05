@@ -529,6 +529,7 @@ public class CbDb {
 			results = fudgeGPSData(results);
 			addObservationArrayList(results, api);
 		} else {
+			// TODO: fudge current conditions locations too
 			addCurrentConditionArrayList(results, api);
 		}
 
@@ -697,7 +698,7 @@ public class CbDb {
 	 */
 	public long addObservation(CbObservation observation) {
 		ContentValues initialValues = new ContentValues();
-		ContentValues listValues = new ContentValues();
+		//ContentValues listValues = new ContentValues();
 		try {
 			initialValues
 					.put(KEY_LATITUDE, observation.getLocation().getLatitude());
@@ -720,14 +721,13 @@ public class CbDb {
 			initialValues.put(KEY_TIMEZONE, observation.getTimeZoneOffset());
 			initialValues.put(KEY_USERID, observation.getUser_id());
 			initialValues.put(KEY_OBSERVATION_TREND, observation.getTrend());
-			
+			/*
 			listValues.put(KEY_LATITUDE, observation.getLocation().getLatitude());
 			listValues.put(KEY_LONGITUDE, observation.getLocation().getLongitude());
 			listValues.put(KEY_TIME, observation.getTime());
 			listValues.put(KEY_OBSERVATION_VALUE, observation.getObservationValue());
-			
-			
 			mDB.insert(API_LIST_TABLE, null, listValues);
+			*/
 			return mDB.insert(OBSERVATIONS_TABLE, null, initialValues);
 		} catch(NullPointerException npe) {
 			//npe.printStackTrace();
