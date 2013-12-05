@@ -112,6 +112,8 @@ public class CbService extends Service {
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
 	public static final String LOCAL_CONDITIONS_ALERT = "ca.cumulonimbus.pressurenetsdk.LOCAL_CONDITIONS_ALERT";
+	public static final String PRESSURE_SENT_TOAST = "ca.cumulonimbus.pressurenetsdk.PRESSURE_SENT_TOAST";
+	public static final String CONDITION_SENT_TOAST = "ca.cumulonimbus.pressurenetsdk.CONDITION_SENT_TOAST";
 		
 	
 	long lastAPICall = System.currentTimeMillis();
@@ -828,6 +830,7 @@ public class CbService extends Service {
 	public void startSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
 		if (!alarm.isRepeating()) {
+			settingsHandler = settingsHandler.getSettings();
 			log("cbservice alarm not repeating, starting alarm at " + settingsHandler.getDataCollectionFrequency());
 			alarm.setAlarm(getApplicationContext(),
 					settingsHandler.getDataCollectionFrequency());
