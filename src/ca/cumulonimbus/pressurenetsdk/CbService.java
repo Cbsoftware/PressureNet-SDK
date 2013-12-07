@@ -895,7 +895,7 @@ public class CbService extends Service {
 		}
 		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP , "CbService"); // PARTIAL_WAKE_LOCK
-		wl.acquire(5000);
+		wl.acquire(1000);
 		log("cbservice acquiring wakelock " + wl.isHeld());
 		
 		dataCollector = new CbDataCollector();
