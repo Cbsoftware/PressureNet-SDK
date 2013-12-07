@@ -1211,8 +1211,8 @@ public class CbService extends Service {
 						location.setLatitude(localCursor.getDouble(1));
 						location.setLongitude(localCursor.getDouble(2));
 						obs.setLocation(location);
-						obs.setObservationValue(localCursor.getDouble(3));
-						obs.setTime(localCursor.getLong(4));
+						obs.setObservationValue(localCursor.getDouble(8));
+						obs.setTime(localCursor.getLong(10));
 						localResults.add(obs);
 					}
 					db.close();
