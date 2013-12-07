@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ca.cumulonimbus.pressurenetsdk"
-    android:versionCode="0109112"
-    android:versionName="1.0.11BETA" >
+    android:versionCode="0109113"
+    android:versionName="1.0.11RC" >
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
