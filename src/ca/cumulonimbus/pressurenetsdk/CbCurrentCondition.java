@@ -1,5 +1,7 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.io.Serializable;
+
 import android.location.Location;
 
 /**
@@ -9,10 +11,12 @@ import android.location.Location;
  * @author jacob
  *
  */
-public class CbCurrentCondition extends CbWeather {
+public class CbCurrentCondition extends CbWeather implements Serializable {
+
+	private static final long serialVersionUID = 1344011178344527607L;
 	private long time = 0;
 	private int tzoffset = 0;
-	private Location location;
+	private transient Location location;
 	private String general_condition = "-";
 	private String windy = "-";
 	private String fog_thickness = "-";
@@ -54,7 +58,8 @@ public class CbCurrentCondition extends CbWeather {
 	
 	@Override
 	public String toString() {
-		return user_id + ", " + time + ", " + tzoffset + ", " + location.getLatitude() + ", " + location.getLongitude() + ", " + general_condition + "," + windy + ", " + 
+		return user_id + ", " + time + ", " + tzoffset + ", " + location.getLatitude() + ", " + location.getLongitude() + ", " + 
+				general_condition + "," + windy + ", " +  cloud_type + ", " + 
 				precipitation_type + ", " + precipitation_amount + ", " + thunderstorm_intensity;
 	}
 	
@@ -148,5 +153,6 @@ public class CbCurrentCondition extends CbWeather {
 	}
 	public void setThunderstorm_intensity(String thunderstorm_intensity) {
 		this.thunderstorm_intensity = thunderstorm_intensity;
-	}	
+	}
+
 }

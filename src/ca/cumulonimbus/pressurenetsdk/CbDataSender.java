@@ -22,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Message;
 import android.os.Messenger;
@@ -64,7 +65,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		this.userSent = fromUser;
 	}
 
-	 private void returnResult(String result, String condition) {
+	 private void returnResult(String result, String condition, long time, double pressure) {
     	boolean success = true;
     	String errorMessage = "";
     	try {
@@ -78,27 +79,34 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
     			}
     		}
     		// notify
-    		if(messenger!=null ) {
-    			// TODO: currently, only sending result if user initiated the data submission
-    			// fix this and send results every time, process it app-side better
-    			try {
-    				if(userSent) {
-    	    			log("cbdatasender notifying result of data submission");
-    	    			if(condition.length()>1) {
-    	    				errorMessage = condition;
-    	    			}
-	    				messenger.send(Message.obtain(null,
-								CbService.MSG_DATA_RESULT, errorMessage));
-	    				userSent = false;
-    				} else {
-    					log("cbdatasender not notifying result");
-    				}
-    			} catch(RemoteException re) {
-    				re.printStackTrace();
-    			}
-    		} else {
-    			log("cbdatasender messenger null, not notifying of result");
-    		}
+			long now = System.currentTimeMillis();
+			if(now - time > 1000 * 10) {
+				log("cbdatasender not notifying, time too long " + (now - time));
+			} else {
+				log("cbdatasender notifying, time " + (now - time));
+				if(userSent) {
+	    			log("cbdatasender notifying result of data submission");
+	    			if(condition.length()>1) {
+	    				errorMessage = condition;
+	    				Intent intent = new Intent();
+						intent.setAction(CbService.CONDITION_SENT_TOAST);
+						intent.putExtra("ca.cumulonimbus.pressurenetsdk.conditionSent", condition);
+						context.sendBroadcast(intent);
+	    			} else {
+	    				Intent intent = new Intent();
+						intent.setAction(CbService.PRESSURE_SENT_TOAST);
+						intent.putExtra("ca.cumulonimbus.pressurenetsdk.pressureSent", pressure);
+						context.sendBroadcast(intent);
+	    			}
+	    			
+    				userSent = false;
+				} else {
+					log("cbdatasender not notifying result");
+				}
+			
+			}
+			
+    		
     	} catch(JSONException jsone) {
     		
     	}
@@ -110,8 +118,10 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 		DefaultHttpClient client = new DefaultHttpClient();
 		try {
 			String condition = "";
+			double pressure = 0.0;
 			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
 			boolean isCbOb = true; // TODO: fix hack to determine the data type sent
+			long time = System.currentTimeMillis();
 			for(String singleParam : params) {
 				String[] fromCSV = singleParam.split(",");
 				String key = fromCSV[0];
@@ -127,6 +137,17 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 					isCbOb = false;
 					condition = value;
 				} 
+				if(key.equals("reading")) {
+					try {
+						pressure = Double.parseDouble(value);
+					} catch (Exception e) {
+						log("cbdatasender: reading should be double but isn't");
+					}
+				} 
+				//log("singleparam " + key + " " + value);
+				if(key.equals("daterecorded")) {
+					time = Long.parseLong(value);
+				}
 			} 
 			String serverURL = settings.getServerURL();
 			log("settings url " + serverURL);
@@ -160,7 +181,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			}
 			log("addresp " + addResp);
 			
-			returnResult(addResp, condition);
+			returnResult(addResp, condition, time, pressure);
 			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();
@@ -174,7 +195,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	
 	public void log(String message) {
 		if(CbConfiguration.DEBUG_MODE) {
-			logToFile(message);
+			//logToFile(message);
 			System.out.println(message);
 		}
 	}

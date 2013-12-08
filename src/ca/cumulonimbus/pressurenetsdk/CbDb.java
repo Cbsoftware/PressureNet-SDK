@@ -216,7 +216,7 @@ public class CbDb {
 	 * Keep the database cache clean
 	 */
 	public void deleteOldCacheData() {
-		long hoursAgo = 12;
+		long hoursAgo = 24*3;
 		long timeAgo = System.currentTimeMillis() - (1000 * 60 * 60 * hoursAgo);
 		mDB.execSQL("delete from " + API_LIST_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
 		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
@@ -306,7 +306,7 @@ public class CbDb {
 				+ " > ? and " + KEY_LONGITUDE + " < ? and " + KEY_TIME
 				+ " > ? and " + KEY_TIME + " < ? ", new String[] {
 				min_lat + "", max_lat + "", min_lon + "", max_lon + "",
-				start_time + "", end_time + "" }, null, null, null, null);
+				start_time + "", end_time + "" }, null, null, KEY_TIME, null);
 
 		return cursor;
 	}
@@ -529,6 +529,7 @@ public class CbDb {
 			results = fudgeGPSData(results);
 			addObservationArrayList(results, api);
 		} else {
+			// TODO: fudge current conditions locations too
 			addCurrentConditionArrayList(results, api);
 		}
 
@@ -697,6 +698,7 @@ public class CbDb {
 	 */
 	public long addObservation(CbObservation observation) {
 		ContentValues initialValues = new ContentValues();
+		//ContentValues listValues = new ContentValues();
 		try {
 			initialValues
 					.put(KEY_LATITUDE, observation.getLocation().getLatitude());
@@ -718,17 +720,14 @@ public class CbDb {
 			initialValues.put(KEY_TIME, observation.getTime());
 			initialValues.put(KEY_TIMEZONE, observation.getTimeZoneOffset());
 			initialValues.put(KEY_USERID, observation.getUser_id());
-			/*
-			initialValues.put(KEY_SENSOR_NAME, observation.getSensor().getName());
-			initialValues.put(KEY_SENSOR_TYPE, observation.getSensor().getType());
-			initialValues.put(KEY_SENSOR_VENDOR, observation.getSensor()
-					.getVendor());
-			initialValues.put(KEY_SENSOR_RESOLUTION, observation.getSensor()
-					.getResolution());
-			initialValues.put(KEY_SENSOR_VERSION, observation.getSensor()
-					.getVersion());
-			*/
 			initialValues.put(KEY_OBSERVATION_TREND, observation.getTrend());
+			/*
+			listValues.put(KEY_LATITUDE, observation.getLocation().getLatitude());
+			listValues.put(KEY_LONGITUDE, observation.getLocation().getLongitude());
+			listValues.put(KEY_TIME, observation.getTime());
+			listValues.put(KEY_OBSERVATION_VALUE, observation.getObservationValue());
+			mDB.insert(API_LIST_TABLE, null, listValues);
+			*/
 			return mDB.insert(OBSERVATIONS_TABLE, null, initialValues);
 		} catch(NullPointerException npe) {
 			//npe.printStackTrace();

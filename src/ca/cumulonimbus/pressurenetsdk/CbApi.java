@@ -238,7 +238,7 @@ public class CbApi {
 			JSONArray jsonArray = new JSONArray(resultJSON);
 			for (int i = 0; i < jsonArray.length(); i++) {
 				JSONObject jsonObject = jsonArray.getJSONObject(i);
-				try {
+				
 					if (apiCall.getCallType().equals("Readings")) {
 						CbObservation singleObs = new CbObservation();
 
@@ -252,6 +252,7 @@ public class CbApi {
 						obsFromJSON.add(singleObs);
 
 					} else {
+						log("json condition " + jsonObject.toString());
 						CbCurrentCondition current = new CbCurrentCondition();
 						Location location = new Location("network");
 						location.setLatitude(jsonObject.getDouble("latitude"));
@@ -263,23 +264,25 @@ public class CbApi {
 						// current.setTzoffset(jsonObject.getInt("tzoffset"));
 						// current.setSharing_policy(jsonObject.getString("sharing"));
 						// current.setUser_id(jsonObject.getString("user_id"));
+						if(jsonObject.has("cloud_type")) {
+							current.setCloud_type(jsonObject.getString("cloud_type"));
+						}
 						current.setWindy(jsonObject.getString("windy"));
 						current.setFog_thickness(jsonObject
 								.getString("fog_thickness"));
-						current.setWindy(jsonObject
+						current.setPrecipitation_type(jsonObject
 								.getString("precipitation_type"));
-						current.setWindy(jsonObject
-								.getString("precipitation_amount"));
-						current.setWindy(jsonObject
+						current.setPrecipitation_amount(jsonObject
+								.getDouble("precipitation_amount"));
+						current.setPrecipitation_unit(jsonObject
 								.getString("precipitation_unit"));
-						current.setWindy(jsonObject
+						current.setThunderstorm_intensity(jsonObject
 								.getString("thunderstorm_intensity"));
-						current.setWindy(jsonObject.getString("user_comment"));
+						current.setUser_comment(jsonObject.getString("user_comment"));
+						log("condition from API: \n" + current);
 						obsFromJSON.add(current);
 					}
-				} catch (Exception e) {
-					//e.printStackTrace();
-				}
+				
 			}
 
 		} catch (Exception e) {
@@ -295,7 +298,7 @@ public class CbApi {
 	public void log(String message) {
 		if(CbConfiguration.DEBUG_MODE) {
 			System.out.println(message);
-			logToFile(message);
+			//logToFile(message);
 		}
 	}
 	
