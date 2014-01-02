@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabaseLockedException;
@@ -142,6 +143,8 @@ public class CbService extends Service {
 	private long lastSubmit = 0;
 
 	private PowerManager.WakeLock wl;
+	
+	private boolean hasBarometer = true;
 	
 	/**
 	 * Collect data from onboard sensors and store locally
@@ -447,12 +450,32 @@ public class CbService extends Service {
 	}
 	
 	/**
+	 * Check if we have a barometer. Use info to disable menu items, choose to
+	 * run the service or not, etc.
+	 */
+	private boolean checkBarometer() {
+		PackageManager packageManager = this.getPackageManager();
+		hasBarometer = packageManager
+				.hasSystemFeature(PackageManager.FEATURE_SENSOR_BAROMETER);
+		return hasBarometer;
+	}
+
+	
+	/**
 	 * Collect and send data in a different thread. This runs itself every
 	 * "settingsHandler.getDataCollectionFrequency()" milliseconds
 	 */
 	private class ReadingSender implements Runnable {
 
 		public void run() {
+			
+			checkForLocalConditionReports();
+			
+			if(!hasBarometer) {
+				log("cbservice reading sender hasbaroemter false, returning");
+				return;
+			}
+			
 			long now = System.currentTimeMillis();
 			if(now - lastSubmit < 2000) {
 				log("too soon, bailing");
@@ -522,8 +545,6 @@ public class CbService extends Service {
 								log("cbservice not sharing data, didn't send");
 							}
 							
-							checkForLocalConditionReports();
-
 							// If notifications are enabled,
 							log("is send notif "
 									+ settingsHandler.isSendNotifications());
@@ -883,6 +904,8 @@ public class CbService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cbservice onstartcommand");
 		
+		checkBarometer();
+	
 		// wakelock management
 		if(wl!=null) {
 			log("cbservice wakelock not null:");
