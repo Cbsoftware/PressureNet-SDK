@@ -261,7 +261,7 @@ public class CbApi {
 						current.setGeneral_condition(jsonObject
 								.getString("general_condition"));
 						current.setTime(jsonObject.getLong("daterecorded"));
-						// current.setTzoffset(jsonObject.getInt("tzoffset"));
+						current.setTzoffset(jsonObject.getInt("tzoffset"));
 						// current.setSharing_policy(jsonObject.getString("sharing"));
 						// current.setUser_id(jsonObject.getString("user_id"));
 						if(jsonObject.has("cloud_type")) {
