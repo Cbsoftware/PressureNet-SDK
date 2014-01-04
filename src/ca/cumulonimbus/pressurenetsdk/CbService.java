@@ -731,13 +731,17 @@ public class CbService extends Service {
 		location.setLongitude(0);
 		if(locationManager != null) {
 			location = locationManager.getCurrentBestLocation();
-			conditionApiCall.setMinLat(location.getLatitude() - .1);
-			conditionApiCall.setMaxLat(location.getLatitude() + .1);
-			conditionApiCall.setMinLon(location.getLongitude() - .1);
-			conditionApiCall.setMaxLon(location.getLongitude() + .1);
-			conditionApiCall.setStartTime(System.currentTimeMillis() - (1000 * 60 * 60));
-			conditionApiCall.setEndTime(System.currentTimeMillis());
-			return conditionApiCall;
+			if(location != null) {
+				conditionApiCall.setMinLat(location.getLatitude() - .1);
+				conditionApiCall.setMaxLat(location.getLatitude() + .1);
+				conditionApiCall.setMinLon(location.getLongitude() - .1);
+				conditionApiCall.setMaxLon(location.getLongitude() + .1);
+				conditionApiCall.setStartTime(System.currentTimeMillis() - (1000 * 60 * 60));
+				conditionApiCall.setEndTime(System.currentTimeMillis());
+				return conditionApiCall;
+			} else {
+				return null;
+			}
 		} else {
 			log("cbservice not checking location condition reports, no locationmanager");
 			return null;
