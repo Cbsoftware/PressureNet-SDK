@@ -700,6 +700,9 @@ public class CbService extends Service {
 		long now = System.currentTimeMillis();
 		long minWaitTime = 1000 * 60 * 60;
 		if(now - minWaitTime > lastConditionNotification) {
+			if(locationManager == null) {
+				locationManager = new CbLocationManager(getApplicationContext());
+			}
 			log("cbservice checking for local conditions reports");
 			// it has been long enough; make a conditions API call 
 			// for the local area
