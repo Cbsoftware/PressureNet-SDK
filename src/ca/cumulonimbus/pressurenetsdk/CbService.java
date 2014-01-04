@@ -391,6 +391,9 @@ public class CbService extends Service {
 
 		@Override
 		public void run() {
+			
+			checkForLocalConditionReports();
+			
 			if(settingsHandler == null) {
 				log("single reading sender, loading settings from prefs");
 				loadSetttingsFromPreferences();
@@ -398,12 +401,13 @@ public class CbService extends Service {
 			log("collecting and submitting single "
 					+ settingsHandler.getServerURL());
 			
-			dataCollector = new CbDataCollector();
-			dataCollector.startCollectingData();
 			
 			CbObservation singleObservation = new CbObservation();
-			if (settingsHandler.isCollectingData()) {
+			if (hasBarometer && settingsHandler.isCollectingData()) {
 				// Collect
+				dataCollector = new CbDataCollector();
+				dataCollector.startCollectingData();
+				
 				singleObservation = collectNewObservation();
 				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
@@ -471,24 +475,15 @@ public class CbService extends Service {
 			
 			checkForLocalConditionReports();
 			
-			if(!hasBarometer) {
-				log("cbservice reading sender hasbaroemter false, returning");
-				return;
-			}
-			
 			long now = System.currentTimeMillis();
 			if(now - lastSubmit < 2000) {
-				log("too soon, bailing");
+				log("cbservice readingsender too soon, bailing");
 				return;
 			}
 			
 			// retrieve updated settings
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
 			settingsHandler = settingsHandler.getSettings();
-
-			// start collecting data
-			dataCollector = new CbDataCollector();
-			dataCollector.startCollectingData();
 
 			log("collecting and submitting " + settingsHandler.getServerURL());
 
@@ -500,9 +495,17 @@ public class CbService extends Service {
 					okayToGo = false;
 				}
 			}
+			
+			if(!hasBarometer) {
+				okayToGo = false;
+			}
 
 			if (okayToGo && settingsHandler.isCollectingData()) {
 				// Collect
+				// start collecting data
+				dataCollector = new CbDataCollector();
+				dataCollector.startCollectingData();
+				
 				CbObservation singleObservation = new CbObservation();
 				singleObservation = collectNewObservation();
 				if (singleObservation != null) {
