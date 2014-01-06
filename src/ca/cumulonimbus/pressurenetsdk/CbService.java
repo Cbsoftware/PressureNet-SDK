@@ -26,6 +26,7 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -479,6 +480,16 @@ public class CbService extends Service {
 			if(now - lastSubmit < 2000) {
 				log("cbservice readingsender too soon, bailing");
 				return;
+			}
+			
+			// limit the Nexus 5
+			// Hack to minimize sensor issues
+			if(Build.MODEL.equals("Nexus 5")) {
+				long n5Limit = 1000 * 60 * 60;
+				if(now - lastSubmit < (n5Limit)) {
+					log("Nexus 5 submitting too frequently, bailing");
+					return;
+				}
 			}
 			
 			// retrieve updated settings
