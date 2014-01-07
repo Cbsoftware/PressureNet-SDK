@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabaseLockedException;
@@ -25,6 +26,7 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -142,6 +144,8 @@ public class CbService extends Service {
 	private long lastSubmit = 0;
 
 	private PowerManager.WakeLock wl;
+	
+	private boolean hasBarometer = true;
 	
 	/**
 	 * Collect data from onboard sensors and store locally
@@ -388,6 +392,9 @@ public class CbService extends Service {
 
 		@Override
 		public void run() {
+			
+			checkForLocalConditionReports();
+			
 			if(settingsHandler == null) {
 				log("single reading sender, loading settings from prefs");
 				loadSetttingsFromPreferences();
@@ -395,12 +402,13 @@ public class CbService extends Service {
 			log("collecting and submitting single "
 					+ settingsHandler.getServerURL());
 			
-			dataCollector = new CbDataCollector();
-			dataCollector.startCollectingData();
 			
 			CbObservation singleObservation = new CbObservation();
-			if (settingsHandler.isCollectingData()) {
+			if (hasBarometer && settingsHandler.isCollectingData()) {
 				// Collect
+				dataCollector = new CbDataCollector();
+				dataCollector.startCollectingData();
+				
 				singleObservation = collectNewObservation();
 				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
@@ -447,25 +455,46 @@ public class CbService extends Service {
 	}
 	
 	/**
+	 * Check if we have a barometer. Use info to disable menu items, choose to
+	 * run the service or not, etc.
+	 */
+	private boolean checkBarometer() {
+		PackageManager packageManager = this.getPackageManager();
+		hasBarometer = packageManager
+				.hasSystemFeature(PackageManager.FEATURE_SENSOR_BAROMETER);
+		return hasBarometer;
+	}
+
+	
+	/**
 	 * Collect and send data in a different thread. This runs itself every
 	 * "settingsHandler.getDataCollectionFrequency()" milliseconds
 	 */
 	private class ReadingSender implements Runnable {
 
 		public void run() {
+			
+			checkForLocalConditionReports();
+			
 			long now = System.currentTimeMillis();
 			if(now - lastSubmit < 2000) {
-				log("too soon, bailing");
+				log("cbservice readingsender too soon, bailing");
 				return;
+			}
+			
+			// limit the Nexus 5
+			// Hack to minimize sensor issues
+			if(Build.MODEL.equals("Nexus 5")) {
+				long n5Limit = 1000 * 60 * 60;
+				if(now - lastSubmit < (n5Limit)) {
+					log("Nexus 5 submitting too frequently, bailing");
+					return;
+				}
 			}
 			
 			// retrieve updated settings
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
 			settingsHandler = settingsHandler.getSettings();
-
-			// start collecting data
-			dataCollector = new CbDataCollector();
-			dataCollector.startCollectingData();
 
 			log("collecting and submitting " + settingsHandler.getServerURL());
 
@@ -477,9 +506,17 @@ public class CbService extends Service {
 					okayToGo = false;
 				}
 			}
+			
+			if(!hasBarometer) {
+				okayToGo = false;
+			}
 
 			if (okayToGo && settingsHandler.isCollectingData()) {
 				// Collect
+				// start collecting data
+				dataCollector = new CbDataCollector();
+				dataCollector.startCollectingData();
+				
 				CbObservation singleObservation = new CbObservation();
 				singleObservation = collectNewObservation();
 				if (singleObservation != null) {
@@ -522,8 +559,6 @@ public class CbService extends Service {
 								log("cbservice not sharing data, didn't send");
 							}
 							
-							checkForLocalConditionReports();
-
 							// If notifications are enabled,
 							log("is send notif "
 									+ settingsHandler.isSendNotifications());
@@ -676,6 +711,9 @@ public class CbService extends Service {
 		long now = System.currentTimeMillis();
 		long minWaitTime = 1000 * 60 * 60;
 		if(now - minWaitTime > lastConditionNotification) {
+			if(locationManager == null) {
+				locationManager = new CbLocationManager(getApplicationContext());
+			}
 			log("cbservice checking for local conditions reports");
 			// it has been long enough; make a conditions API call 
 			// for the local area
@@ -707,13 +745,17 @@ public class CbService extends Service {
 		location.setLongitude(0);
 		if(locationManager != null) {
 			location = locationManager.getCurrentBestLocation();
-			conditionApiCall.setMinLat(location.getLatitude() - .1);
-			conditionApiCall.setMaxLat(location.getLatitude() + .1);
-			conditionApiCall.setMinLon(location.getLongitude() - .1);
-			conditionApiCall.setMaxLon(location.getLongitude() + .1);
-			conditionApiCall.setStartTime(System.currentTimeMillis() - (1000 * 60 * 60));
-			conditionApiCall.setEndTime(System.currentTimeMillis());
-			return conditionApiCall;
+			if(location != null) {
+				conditionApiCall.setMinLat(location.getLatitude() - .1);
+				conditionApiCall.setMaxLat(location.getLatitude() + .1);
+				conditionApiCall.setMinLon(location.getLongitude() - .1);
+				conditionApiCall.setMaxLon(location.getLongitude() + .1);
+				conditionApiCall.setStartTime(System.currentTimeMillis() - (1000 * 60 * 60));
+				conditionApiCall.setEndTime(System.currentTimeMillis());
+				return conditionApiCall;
+			} else {
+				return null;
+			}
 		} else {
 			log("cbservice not checking location condition reports, no locationmanager");
 			return null;
@@ -883,6 +925,8 @@ public class CbService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		log("cbservice onstartcommand");
 		
+		checkBarometer();
+	
 		// wakelock management
 		if(wl!=null) {
 			log("cbservice wakelock not null:");
