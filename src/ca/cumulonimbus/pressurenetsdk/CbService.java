@@ -485,7 +485,7 @@ public class CbService extends Service {
 			// limit the Nexus 5
 			// Hack to minimize sensor issues
 			if(Build.MODEL.equals("Nexus 5")) {
-				long n5Limit = 1000 * 60 * 60;
+				long n5Limit = 1000 * 60 * 60 * 2;
 				if(now - lastSubmit < (n5Limit)) {
 					log("Nexus 5 submitting too frequently, bailing");
 					return;
