@@ -874,6 +874,7 @@ public class CbService extends Service {
 	 */
 	public void startSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
+		fromUser = false;
 		if (!alarm.isRepeating()) {
 			settingsHandler = settingsHandler.getSettings();
 			log("cbservice alarm not repeating, starting alarm at " + settingsHandler.getDataCollectionFrequency());
@@ -900,6 +901,7 @@ public class CbService extends Service {
 		settingsHandler = new CbSettingsHandler(getApplicationContext());
 		settingsHandler.getSettings();
 		db = new CbDb(getApplicationContext());
+		fromUser = false;
 		super.onCreate();
 	}
 
@@ -951,6 +953,7 @@ public class CbService extends Service {
 				if (intent.getAction() != null) {
 					if (intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
 						// send just a single measurement
+						fromUser = false;
 						log("sending single observation, request from intent");
 						sendSingleObs();
 						return START_NOT_STICKY;
