@@ -383,7 +383,7 @@ public class CbApi {
 						obsFromJSON.add(singleObs);
 
 					} else {
-						log("json condition " + jsonObject.toString());
+						//log("json condition " + jsonObject.toString());
 						CbCurrentCondition current = new CbCurrentCondition();
 						Location location = new Location("network");
 						location.setLatitude(jsonObject.getDouble("latitude"));
@@ -410,7 +410,7 @@ public class CbApi {
 						current.setThunderstorm_intensity(jsonObject
 								.getString("thunderstorm_intensity"));
 						current.setUser_comment(jsonObject.getString("user_comment"));
-						log("condition from API: \n" + current);
+						//log("condition from API: \n" + current);
 						obsFromJSON.add(current);
 					}
 				

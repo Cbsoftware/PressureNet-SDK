@@ -1494,7 +1494,6 @@ public class CbService extends Service {
 				cur.setPrecipitation_unit(ccCursor.getString(16));
 				cur.setThunderstorm_intensity(ccCursor.getString(17));
 				cur.setUser_comment(ccCursor.getString(18));
-				log("Condition from db: \n" + cur.toString());
 				conditions.add(cur);
 			}
 		} catch (Exception e) {
