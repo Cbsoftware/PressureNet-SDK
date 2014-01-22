@@ -14,6 +14,7 @@ public class CbStats {
 	 * "mean": 992.45627848300001}
 	 */
 
+	private int users;
 	private double min;
 	private long timeStamp;
 	private double median;
@@ -23,7 +24,11 @@ public class CbStats {
 	private double stdDev;
 	private double mean;
 	
-	public CbStats(double min, long timeStamp, double median, String geohash, int samples, double max, double stdDev, double mean) {
+	public CbStats() {
+		
+	}
+	
+	public CbStats(int users, double min, long timeStamp, double median, String geohash, int samples, double max, double stdDev, double mean) {
 		this.min = min;
 		this.timeStamp = timeStamp;
 		this.median = median;
@@ -32,8 +37,15 @@ public class CbStats {
 		this.max = max;
 		this.stdDev = stdDev;
 		this.mean = mean;
+		this.users = users;
 	}
 	
+	public int getUsers() {
+		return users;
+	}
+	public void setUsers(int users) {
+		this.users = users;
+	}
 	public double getMin() {
 		return min;
 	}

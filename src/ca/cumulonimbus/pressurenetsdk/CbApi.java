@@ -38,8 +38,10 @@ public class CbApi {
 	Context context;
 	String apiServerURL 			= CbConfiguration.SERVER_URL + "list/?";
 	String apiConditionsServerURL 	= CbConfiguration.SERVER_URL + "conditions/list/?";
+	String apiStatsServerURL	 	= CbConfiguration.SERVER_URL + "stats/?";
 	private CbDb db;
 	private ArrayList<CbWeather> callResults = new ArrayList<CbWeather>();
+	private ArrayList<CbStats> statsResults = new ArrayList<CbStats>();
 
 	private Messenger replyResult = null;
 
@@ -222,6 +224,136 @@ public class CbApi {
 			}
 		}
 
+	}
+	
+	private class StatsDataDownload extends AsyncTask<String, String, String> {
+
+		Messenger replyToApp = null;
+		private CbStatsAPICall apiCall;
+
+		public CbStatsAPICall getApiCall() {
+			return apiCall;
+		}
+
+		public void setApiCall(CbStatsAPICall apiCall) {
+			this.apiCall = apiCall;
+		}
+
+		public Messenger getReplyToApp() {
+			return replyToApp;
+		}
+
+		public void setReplyToApp(Messenger replyToApp) {
+			this.replyToApp = replyToApp;
+		}
+
+		@Override
+		protected String doInBackground(String... params) {
+			String responseText = "";
+			try {
+				DefaultHttpClient client = new DefaultHttpClient();
+				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+				nvps.add(new BasicNameValuePair("min_latitude", apiCall
+						.getMinLatitude() + "" + ""));
+				nvps.add(new BasicNameValuePair("max_latitude", apiCall
+						.getMaxLatitude() + "" + ""));
+				nvps.add(new BasicNameValuePair("min_longitude", apiCall
+						.getMinLongitude() + "" + ""));
+				nvps.add(new BasicNameValuePair("max_longitude", apiCall
+						.getMaxLongitude() + "" + ""));
+				nvps.add(new BasicNameValuePair("start_time", apiCall
+						.getStartTime() + ""));
+				nvps.add(new BasicNameValuePair("end_time", apiCall
+						.getEndTime() + ""));
+				nvps.add(new BasicNameValuePair("log_duration", apiCall.getLogDuration()));
+
+				String paramString = URLEncodedUtils.format(nvps, "utf-8");
+
+				String serverURL = apiStatsServerURL;
+
+				serverURL = serverURL + paramString;
+				
+				log("cbservice api sending " + serverURL);
+				HttpGet get = new HttpGet(serverURL);
+				// Execute the GET call and obtain the response
+				HttpResponse getResponse = client.execute(get);
+				HttpEntity responseEntity = getResponse.getEntity()	;
+				log("response " + responseEntity.getContentLength());
+
+				BufferedReader r = new BufferedReader(new InputStreamReader(
+						responseEntity.getContent()));
+
+				StringBuilder total = new StringBuilder();
+				String line;
+				if (r != null) {
+					while ((line = r.readLine()) != null) {
+						total.append(line);
+					}
+					responseText = total.toString();
+				}
+			} catch (Exception e) {
+				// System.out.println("api error");
+				//e.printStackTrace();
+			}
+			return responseText;
+		}
+
+		protected void onPostExecute(String result) {
+			resultText = result;
+
+			// handler.postDelayed(jsonProcessor, 0);
+			SaveAPIData save = new SaveAPIData();
+			save.execute("");
+		}
+
+		private class SaveAPIData extends AsyncTask<String, String, String> {
+
+			@Override
+			protected String doInBackground(String... params) {
+				statsResults = processJSONStats(resultText);
+				return null;
+			}
+
+			@Override
+			protected void onPostExecute(String result) {
+				// System.out.println("saved " + callResults.size() +
+				// " api call results");
+				caller.notifyAPIStats(replyToApp, statsResults);
+
+				super.onPostExecute(result);
+			}
+		}
+
+	}
+	
+	/**
+	 * Take a JSON string and return the data in a useful structure
+	 * 
+	 * @param resultJSON
+	 */
+	private ArrayList<CbStats> processJSONStats(String resultJSON) {
+		ArrayList<CbStats> statistics = new ArrayList<CbStats>();
+		try {
+			JSONArray jsonArray = new JSONArray(resultJSON);
+			for (int i = 0; i < jsonArray.length(); i++) {
+				JSONObject jsonObject = jsonArray.getJSONObject(i);
+				CbStats singleStat = new CbStats();
+				singleStat.setUsers(jsonObject.getInt("users"));
+				singleStat.setMin(jsonObject.getDouble("min"));
+				singleStat.setTimeStamp(jsonObject.getLong("timestamp"));
+				singleStat.setMedian(jsonObject.getDouble("median"));
+				singleStat.setGeohash(jsonObject.getString("geohash"));
+				singleStat.setSamples(jsonObject.getInt("samples"));
+				singleStat.setMax(jsonObject.getDouble("max"));
+				singleStat.setStdDev(jsonObject.getDouble("std_dev"));
+				singleStat.setMean(jsonObject.getDouble("mean"));
+				statistics.add(singleStat);
+			}
+
+		} catch (Exception e) {
+			//e.printStackTrace();
+		}
+		return statistics;
 	}
 
 	/**

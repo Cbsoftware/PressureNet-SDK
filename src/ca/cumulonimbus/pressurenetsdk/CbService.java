@@ -110,6 +110,9 @@ public class CbService extends Service {
 	public static final int MSG_API_RECENTS_FOR_GRAPH = 37;
 	// Success / Failure notification for data submission
 	public static final int MSG_DATA_RESULT = 38;
+	// Statistics
+	public static final int MSG_MAKE_STATS_CALL = 39;
+	public static final int MSG_STATS = 40;
 
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -1560,6 +1563,22 @@ public class CbService extends Service {
 				log("cannot notify, reply is null");
 			} else {
 				reply.send(Message.obtain(null, MSG_API_RESULT_COUNT, count, 0));
+			}
+
+		} catch (RemoteException re) {
+			re.printStackTrace();
+		} catch (NullPointerException npe) {
+			//npe.printStackTrace();
+		}
+		return false;
+	}
+	
+	public boolean notifyAPIStats(Messenger reply, ArrayList<CbStats> statsResult) {
+		try {
+			if (reply == null) {
+				log("cannot notify, reply is null");
+			} else {
+				reply.send(Message.obtain(null, MSG_STATS, statsResult));
 			}
 
 		} catch (RemoteException re) {
