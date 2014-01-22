@@ -1450,7 +1450,7 @@ public class CbService extends Service {
 				log("CbService received message to make stats API call");
 				CbStatsAPICall statsCall =  (CbStatsAPICall) msg.obj;
 				CbApi statsApi = new CbApi(getApplicationContext());
-				statsApi.makeStatsAPICall(statsCall, service, mMessenger);
+				statsApi.makeStatsAPICall(statsCall, service, msg.replyTo);
 				break;
 			default:
 				super.handleMessage(msg);
@@ -1584,13 +1584,14 @@ public class CbService extends Service {
 			if (reply == null) {
 				log("cannot notify, reply is null");
 			} else {
+				log("cbservice notifying, " + statsResult.size());
 				reply.send(Message.obtain(null, MSG_STATS, statsResult));
 			}
 
 		} catch (RemoteException re) {
 			re.printStackTrace();
 		} catch (NullPointerException npe) {
-			//npe.printStackTrace();
+			npe.printStackTrace();
 		}
 		return false;
 	}

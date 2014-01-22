@@ -297,7 +297,7 @@ public class CbApi {
 				// Execute the GET call and obtain the response
 				HttpResponse getResponse = client.execute(get);
 				HttpEntity responseEntity = getResponse.getEntity()	;
-				log("response " + responseEntity.getContentLength());
+				log("stats response " + responseEntity.getContentLength());
 
 				BufferedReader r = new BufferedReader(new InputStreamReader(
 						responseEntity.getContent()));
@@ -311,38 +311,18 @@ public class CbApi {
 					responseText = total.toString();
 				}
 			} catch (Exception e) {
-				// System.out.println("api error");
-				//e.printStackTrace();
+				System.out.println("api error");
+				e.printStackTrace();
 			}
 			return responseText;
 		}
 
 		protected void onPostExecute(String result) {
 			resultText = result;
-
-			// handler.postDelayed(jsonProcessor, 0);
-			SaveAPIData save = new SaveAPIData();
-			save.execute("");
+			statsResults = processJSONStats(resultText);
+			log("statsResults" + statsResults.size());
+			caller.notifyAPIStats(replyToApp, statsResults);
 		}
-
-		private class SaveAPIData extends AsyncTask<String, String, String> {
-
-			@Override
-			protected String doInBackground(String... params) {
-				statsResults = processJSONStats(resultText);
-				return null;
-			}
-
-			@Override
-			protected void onPostExecute(String result) {
-				// System.out.println("saved " + callResults.size() +
-				// " api call results");
-				caller.notifyAPIStats(replyToApp, statsResults);
-
-				super.onPostExecute(result);
-			}
-		}
-
 	}
 	
 	/**

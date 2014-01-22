@@ -24,6 +24,9 @@ public class CbStatsAPICall {
 		this.startTime = startTime;
 		this.endTime = endTime;
 		this.logDuration = duration;
+	}
+	
+	public CbStatsAPICall() {
 		
 	}
 
