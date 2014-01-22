@@ -1446,6 +1446,12 @@ public class CbService extends Service {
 				}
 				
 				break;
+			case MSG_MAKE_STATS_CALL:
+				log("CbService received message to make stats API call");
+				CbStatsAPICall statsCall =  (CbStatsAPICall) msg.obj;
+				CbApi statsApi = new CbApi(getApplicationContext());
+				statsApi.makeStatsAPICall(statsCall, service, mMessenger);
+				break;
 			default:
 				super.handleMessage(msg);
 			}

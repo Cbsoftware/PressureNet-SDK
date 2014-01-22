@@ -71,7 +71,26 @@ public class CbApi {
 
 		return System.currentTimeMillis();
 	}
+	
+	/**
+	 * Make an API call and store the results
+	 * 
+	 * @return
+	 */
+	public long makeStatsAPICall(CbStatsAPICall call, CbService caller, Messenger ms) {
 
+		this.replyResult = ms;
+		this.caller = caller;
+		StatsDataDownload api = new StatsDataDownload();
+		api.setReplyToApp(ms);
+		api.setApiCall(call);
+		api.execute("");
+
+		return System.currentTimeMillis();
+	}
+
+	
+	
 	/**
 	 * When an API call finishes we'll have an ArrayList of results. Save them
 	 * into the database
