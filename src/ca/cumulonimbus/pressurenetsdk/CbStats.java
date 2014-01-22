@@ -23,6 +23,17 @@ public class CbStats {
 	private double stdDev;
 	private double mean;
 	
+	public CbStats(double min, long timeStamp, double median, String geohash, int samples, double max, double stdDev, double mean) {
+		this.min = min;
+		this.timeStamp = timeStamp;
+		this.median = median;
+		this.geohash = geohash;
+		this.samples = samples;
+		this.max = max;
+		this.stdDev = stdDev;
+		this.mean = mean;
+	}
+	
 	public double getMin() {
 		return min;
 	}
