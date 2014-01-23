@@ -3,7 +3,7 @@ pressureNET SDK
 
 The pressureNET SDK is an Android library project that enables simple atmosphere sensor data collection and transmission to researchers. This SDK was created by [Cumulonimbus](http://cumulonimbus.ca) for use in [pressureNET](https://play.google.com/store/apps/details?id=ca.cumulonimbus.barometernetwork) and third-party Android apps. The code is open source and released under the MIT license. 
 
-This SDK is intended for data collection. We have also built a pressureNET API for data dissemination that is actively used by scientists and researchers. We provide a [visualzation of the live pressureNET data](http://pressurenet.cumulonimbus.ca/) as well as an explanation and documentation for the [Live API](http://pressurenet.cumulonimbus.ca/livestream/). Of course, that project is [open source](https://github.com/JacobSheehy/pressureNETAnalysis) too.
+This SDK is intended for data collection. We have also built a pressureNET API for data dissemination that is actively used by scientists and researchers. We provide an explanation and documentation for the [Live API](http://pressurenet.io/developers/). Of course, that project is [open source](https://github.com/CbSoftware/pressureNET-server) too.
 
 Installation
 --------------

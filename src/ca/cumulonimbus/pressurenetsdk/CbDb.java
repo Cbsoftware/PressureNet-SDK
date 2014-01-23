@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 
@@ -538,8 +539,15 @@ public class CbDb {
 
 	public boolean addCurrentConditionArrayList(ArrayList<CbWeather> weather, CbApiCall api) {
 
-		mDB.beginTransaction();
-
+		
+		try {
+			mDB.beginTransaction();
+		} catch(SQLiteDatabaseLockedException sqldble) {
+			// This try/catch block is a bad hack. Refactor db usaage to use only one lock
+			// regardless of the thread
+			
+		}
+		
 		String insertSQL = "INSERT INTO "
 				+ CURRENT_CONDITIONS_TABLE
 				+ " ("

@@ -38,8 +38,10 @@ public class CbApi {
 	Context context;
 	String apiServerURL 			= CbConfiguration.SERVER_URL + "list/?";
 	String apiConditionsServerURL 	= CbConfiguration.SERVER_URL + "conditions/list/?";
+	String apiStatsServerURL	 	= CbConfiguration.SERVER_URL + "stats/?";
 	private CbDb db;
 	private ArrayList<CbWeather> callResults = new ArrayList<CbWeather>();
+	private ArrayList<CbStats> statsResults = new ArrayList<CbStats>();
 
 	private Messenger replyResult = null;
 
@@ -69,7 +71,26 @@ public class CbApi {
 
 		return System.currentTimeMillis();
 	}
+	
+	/**
+	 * Make an API call and store the results
+	 * 
+	 * @return
+	 */
+	public long makeStatsAPICall(CbStatsAPICall call, CbService caller, Messenger ms) {
 
+		this.replyResult = ms;
+		this.caller = caller;
+		StatsDataDownload api = new StatsDataDownload();
+		api.setReplyToApp(ms);
+		api.setApiCall(call);
+		api.execute("");
+
+		return System.currentTimeMillis();
+	}
+
+	
+	
 	/**
 	 * When an API call finishes we'll have an ArrayList of results. Save them
 	 * into the database
@@ -223,6 +244,116 @@ public class CbApi {
 		}
 
 	}
+	
+	private class StatsDataDownload extends AsyncTask<String, String, String> {
+
+		Messenger replyToApp = null;
+		private CbStatsAPICall apiCall;
+
+		public CbStatsAPICall getApiCall() {
+			return apiCall;
+		}
+
+		public void setApiCall(CbStatsAPICall apiCall) {
+			this.apiCall = apiCall;
+		}
+
+		public Messenger getReplyToApp() {
+			return replyToApp;
+		}
+
+		public void setReplyToApp(Messenger replyToApp) {
+			this.replyToApp = replyToApp;
+		}
+
+		@Override
+		protected String doInBackground(String... params) {
+			String responseText = "";
+			try {
+				DefaultHttpClient client = new DefaultHttpClient();
+				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+				nvps.add(new BasicNameValuePair("min_latitude", apiCall
+						.getMinLatitude() + "" + ""));
+				nvps.add(new BasicNameValuePair("max_latitude", apiCall
+						.getMaxLatitude() + "" + ""));
+				nvps.add(new BasicNameValuePair("min_longitude", apiCall
+						.getMinLongitude() + "" + ""));
+				nvps.add(new BasicNameValuePair("max_longitude", apiCall
+						.getMaxLongitude() + "" + ""));
+				nvps.add(new BasicNameValuePair("start_time", apiCall
+						.getStartTime() + ""));
+				nvps.add(new BasicNameValuePair("end_time", apiCall
+						.getEndTime() + ""));
+				nvps.add(new BasicNameValuePair("log_duration", apiCall.getLogDuration()));
+
+				String paramString = URLEncodedUtils.format(nvps, "utf-8");
+
+				String serverURL = apiStatsServerURL;
+
+				serverURL = serverURL + paramString;
+				
+				log("cbservice api sending " + serverURL);
+				HttpGet get = new HttpGet(serverURL);
+				// Execute the GET call and obtain the response
+				HttpResponse getResponse = client.execute(get);
+				HttpEntity responseEntity = getResponse.getEntity()	;
+				log("stats response " + responseEntity.getContentLength());
+
+				BufferedReader r = new BufferedReader(new InputStreamReader(
+						responseEntity.getContent()));
+
+				StringBuilder total = new StringBuilder();
+				String line;
+				if (r != null) {
+					while ((line = r.readLine()) != null) {
+						total.append(line);
+					}
+					responseText = total.toString();
+				}
+			} catch (Exception e) {
+				System.out.println("api error");
+				e.printStackTrace();
+			}
+			return responseText;
+		}
+
+		protected void onPostExecute(String result) {
+			resultText = result;
+			statsResults = processJSONStats(resultText);
+			log("statsResults" + statsResults.size());
+			caller.notifyAPIStats(replyToApp, statsResults);
+		}
+	}
+	
+	/**
+	 * Take a JSON string and return the data in a useful structure
+	 * 
+	 * @param resultJSON
+	 */
+	private ArrayList<CbStats> processJSONStats(String resultJSON) {
+		ArrayList<CbStats> statistics = new ArrayList<CbStats>();
+		try {
+			JSONArray jsonArray = new JSONArray(resultJSON);
+			for (int i = 0; i < jsonArray.length(); i++) {
+				JSONObject jsonObject = jsonArray.getJSONObject(i);
+				CbStats singleStat = new CbStats();
+				singleStat.setUsers(jsonObject.getInt("users"));
+				singleStat.setMin(jsonObject.getDouble("min"));
+				singleStat.setTimeStamp(jsonObject.getLong("timestamp"));
+				singleStat.setMedian(jsonObject.getDouble("median"));
+				singleStat.setGeohash(jsonObject.getString("geohash"));
+				singleStat.setSamples(jsonObject.getInt("samples"));
+				singleStat.setMax(jsonObject.getDouble("max"));
+				singleStat.setStdDev(jsonObject.getDouble("std_dev"));
+				singleStat.setMean(jsonObject.getDouble("mean"));
+				statistics.add(singleStat);
+			}
+
+		} catch (Exception e) {
+			//e.printStackTrace();
+		}
+		return statistics;
+	}
 
 	/**
 	 * Take a JSON string and return the data in a useful structure
@@ -252,7 +383,7 @@ public class CbApi {
 						obsFromJSON.add(singleObs);
 
 					} else {
-						log("json condition " + jsonObject.toString());
+						//log("json condition " + jsonObject.toString());
 						CbCurrentCondition current = new CbCurrentCondition();
 						Location location = new Location("network");
 						location.setLatitude(jsonObject.getDouble("latitude"));
@@ -279,7 +410,7 @@ public class CbApi {
 						current.setThunderstorm_intensity(jsonObject
 								.getString("thunderstorm_intensity"));
 						current.setUser_comment(jsonObject.getString("user_comment"));
-						log("condition from API: \n" + current);
+						//log("condition from API: \n" + current);
 						obsFromJSON.add(current);
 					}
 				

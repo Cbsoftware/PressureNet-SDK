@@ -20,7 +20,7 @@ You may also choose to download our Example project, which this documentation us
 Usage
 -----
 
-The pressureNET SDK sends and receives data from our servers. In order to use the SDK, please sign up for an API key and get a Cumulonimbus developer account at http://pressurenet.cumulonimbus.ca/. You'll receive an API key by email, which you can then put into CbConfiguration to send and receive data. 
+The pressureNET SDK sends and receives data from our servers. In order to use the SDK, please sign up for an API key and get a pressureNET developer account at https://pressurenet.io/. You'll receive an API key by email, which you can then put into CbConfiguration to send and receive data. 
 
 You must reference the CbService class in your project's AndroidManifest.xml in order to use it. Inside the <application> element, add a reference like this:
 

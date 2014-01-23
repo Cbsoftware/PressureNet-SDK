@@ -110,6 +110,9 @@ public class CbService extends Service {
 	public static final int MSG_API_RECENTS_FOR_GRAPH = 37;
 	// Success / Failure notification for data submission
 	public static final int MSG_DATA_RESULT = 38;
+	// Statistics
+	public static final int MSG_MAKE_STATS_CALL = 39;
+	public static final int MSG_STATS = 40;
 
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -485,7 +488,7 @@ public class CbService extends Service {
 			// limit the Nexus 5
 			// Hack to minimize sensor issues
 			if(Build.MODEL.equals("Nexus 5")) {
-				long n5Limit = 1000 * 60 * 60;
+				long n5Limit = 1000 * 60 * 60 * 2;
 				if(now - lastSubmit < (n5Limit)) {
 					log("Nexus 5 submitting too frequently, bailing");
 					return;
@@ -871,6 +874,7 @@ public class CbService extends Service {
 	 */
 	public void startSubmit() {
 		log("CbService: Starting to auto-collect and submit data.");
+		fromUser = false;
 		if (!alarm.isRepeating()) {
 			settingsHandler = settingsHandler.getSettings();
 			log("cbservice alarm not repeating, starting alarm at " + settingsHandler.getDataCollectionFrequency());
@@ -897,6 +901,7 @@ public class CbService extends Service {
 		settingsHandler = new CbSettingsHandler(getApplicationContext());
 		settingsHandler.getSettings();
 		db = new CbDb(getApplicationContext());
+		fromUser = false;
 		super.onCreate();
 	}
 
@@ -948,6 +953,7 @@ public class CbService extends Service {
 				if (intent.getAction() != null) {
 					if (intent.getAction().equals(ACTION_SEND_MEASUREMENT)) {
 						// send just a single measurement
+						fromUser = false;
 						log("sending single observation, request from intent");
 						sendSingleObs();
 						return START_NOT_STICKY;
@@ -1443,6 +1449,12 @@ public class CbService extends Service {
 				}
 				
 				break;
+			case MSG_MAKE_STATS_CALL:
+				log("CbService received message to make stats API call");
+				CbStatsAPICall statsCall =  (CbStatsAPICall) msg.obj;
+				CbApi statsApi = new CbApi(getApplicationContext());
+				statsApi.makeStatsAPICall(statsCall, service, msg.replyTo);
+				break;
 			default:
 				super.handleMessage(msg);
 			}
@@ -1485,7 +1497,6 @@ public class CbService extends Service {
 				cur.setPrecipitation_unit(ccCursor.getString(16));
 				cur.setThunderstorm_intensity(ccCursor.getString(17));
 				cur.setUser_comment(ccCursor.getString(18));
-				log("Condition from db: \n" + cur.toString());
 				conditions.add(cur);
 			}
 		} catch (Exception e) {
@@ -1566,6 +1577,23 @@ public class CbService extends Service {
 			re.printStackTrace();
 		} catch (NullPointerException npe) {
 			//npe.printStackTrace();
+		}
+		return false;
+	}
+	
+	public boolean notifyAPIStats(Messenger reply, ArrayList<CbStats> statsResult) {
+		try {
+			if (reply == null) {
+				log("cannot notify, reply is null");
+			} else {
+				log("cbservice notifying, " + statsResult.size());
+				reply.send(Message.obtain(null, MSG_STATS, statsResult));
+			}
+
+		} catch (RemoteException re) {
+			re.printStackTrace();
+		} catch (NullPointerException npe) {
+			npe.printStackTrace();
 		}
 		return false;
 	}
