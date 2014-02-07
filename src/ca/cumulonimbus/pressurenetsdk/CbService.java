@@ -466,6 +466,8 @@ public class CbService extends Service {
 			for(CbSensorStreamer s : activeStreams) {
 				if (s.sensorId == sensorId) {
 					s.stopSendingData();
+					activeStreams.remove(s);
+					break;
 				}
 			}
 		} else {
