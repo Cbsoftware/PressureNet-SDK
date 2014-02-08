@@ -16,4 +16,8 @@ public class CbConfiguration {
 	public static final boolean DEBUG_MODE 		= true;
 	public static final String SDK_VERSION 		= "1.0.15";
 	
+	// External API keys
+	public static final String EXTERNAL_URL = ""; 
+	public static final String EXTERNAL_KEY = "";
+	
 }
