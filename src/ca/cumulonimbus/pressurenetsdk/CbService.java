@@ -116,7 +116,10 @@ public class CbService extends Service {
 	// Statistics
 	public static final int MSG_MAKE_STATS_CALL = 39;
 	public static final int MSG_STATS = 40;
-
+	// External Weather Services
+	public static final int MSG_GET_EXTERNAL_LOCAL_EXPANDED = 41;
+	public static final int MSG_EXTERNAL_LOCAL_EXPANDED = 42;
+	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
 	public static final String LOCAL_CONDITIONS_ALERT = "ca.cumulonimbus.pressurenetsdk.LOCAL_CONDITIONS_ALERT";
@@ -1598,6 +1601,16 @@ public class CbService extends Service {
 				CbApi statsApi = new CbApi(getApplicationContext());
 				statsApi.makeStatsAPICall(statsCall, service, msg.replyTo);
 				break;
+			case MSG_GET_EXTERNAL_LOCAL_EXPANDED:
+				log("cbservice getting external, local expanded conditions");
+				CbExternalWeatherData external = new CbExternalWeatherData();
+				if(locationManager != null) {
+					double latitude = locationManager.getCurrentBestLocation().getLatitude();
+					double longitude = locationManager.getCurrentBestLocation().getLongitude();
+					
+					external.getCurrentTemperatureForLocation(latitude, longitude, msg.replyTo);
+				}
+	
 			default:
 				super.handleMessage(msg);
 			}

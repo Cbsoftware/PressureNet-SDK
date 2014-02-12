@@ -12,6 +12,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.os.AsyncTask;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 
 /**
  * Gather weather data for external sources. Use for MSLP correction,
@@ -24,9 +27,13 @@ public class CbExternalWeatherData {
 	
 	public String apiString = "";
 	
+	private Messenger reply;
+	
+	
 	ArrayList<CbExpandedCondition> externalResults = new ArrayList<CbExpandedCondition>();
 	
-	public void getCurrentTemperatureForLocation (double latitude, double longitde) {
+	public void getCurrentTemperatureForLocation (double latitude, double longitde, Messenger replyTo) {
+		this.reply = replyTo;
 		apiString = CbConfiguration.EXTERNAL_URL + 
 						   CbConfiguration.EXTERNAL_KEY + "/" +
 						   latitude + "," + longitde;
@@ -71,6 +78,12 @@ public class CbExternalWeatherData {
 			log(result);
 			//externalResults = processJSONConditions(result);
 			//log("externalResults " + externalResults.size());
+			try {
+				reply.send(Message.obtain(null, CbService.MSG_EXTERNAL_LOCAL_EXPANDED, result));
+			} catch (RemoteException re) {
+				log("cbexternal remote exception delivering results");
+			}
+			
 		}
 	}
 	
