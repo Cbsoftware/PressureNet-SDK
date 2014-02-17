@@ -247,18 +247,18 @@ public class CbDb {
 	 * Get last week current condition count
 	 * @return
 	 */
-	public long getLast7dConditionCount() {
+	public long getLast7dConditionCount(String id) {
 		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
-                KEY_TIME + " > ? and " + KEY_USERID + " = ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + "", getID()});
+                KEY_TIME + " > ? and " + KEY_USERID + " = ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + "", id});
 	}
 	
 	/**
 	 * Get last week current condition count
 	 * @return
 	 */
-	public long getallTimeConditionCount() {
+	public long getAllTimeConditionCount(String id) {
 		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
-               KEY_USERID + " = ?", new String[] {getID()});
+               KEY_USERID + " = ?", new String[] {id});
 	}
 	
 	
@@ -270,29 +270,6 @@ public class CbDb {
 	public long getUserDataCount() {
 		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
                 null,null);
-	}
-	
-	/**
-	 * Get a unique ID by fetching the phone ID and hashing it
-	 * 
-	 * @return
-	 */
-	private String getID() {
-		try {
-			MessageDigest md = MessageDigest.getInstance("MD5");
-
-			String actual_id = Secure.getString(mContext
-					.getContentResolver(), Secure.ANDROID_ID);
-			byte[] bytes = actual_id.getBytes();
-			byte[] digest = md.digest(bytes);
-			StringBuffer hexString = new StringBuffer();
-			for (int i = 0; i < digest.length; i++) {
-				hexString.append(Integer.toHexString(0xFF & digest[i]));
-			}
-			return hexString.toString();
-		} catch (Exception e) {
-			return "--";
-		}
 	}
 	
 	/**
@@ -777,7 +754,7 @@ public class CbDb {
 		initialValues.put(KEY_SHARING, "default");
 		initialValues.put(KEY_TIME, cc.getTime());
 		initialValues.put(KEY_TIMEZONE, cc.getTzoffset());
-		initialValues.put(KEY_USERID, getID());
+		initialValues.put(KEY_USERID, cc.getUser_id());
 		initialValues.put(KEY_GENERAL_CONDITION, cc.getGeneral_condition());
 		initialValues.put(KEY_WINDY, cc.getWindy());
 		initialValues.put(KEY_FOGGY, cc.getFog_thickness());
