@@ -114,6 +114,9 @@ public class CbDb {
 			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + ", " + KEY_USERID + ","
 			+ KEY_OBSERVATION_VALUE + ") ON CONFLICT REPLACE)";
 	
+	private static final String OBSERVATIONS_TABLE_IDX = "observations_table_idx";
+	private static final String API_LIST_IDX = "api_list_idx";
+	private static final String CONDITIONS_IDX = "conditions_idx";
 	
 	private static final String API_LIST_TABLE_CREATE = "create table "
 			+ API_LIST_TABLE + " (_id integer primary key autoincrement, "
@@ -164,7 +167,9 @@ public class CbDb {
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 40;
+	private static final int DATABASE_VERSION = 43; 
+	// 40 = 4.2.7 
+	// 41+ = 4.3.0
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -182,12 +187,25 @@ public class CbDb {
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			// Build upgrade mechanism
+			// TODO: Build upgrade mechanism
+			/*
 			db.execSQL("DROP TABLE IF EXISTS " + SETTINGS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + OBSERVATIONS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
-			db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);			
+			db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);
 			onCreate(db);
+			*/
+			
+			if((oldVersion <=40) && (newVersion >= 41)) {
+				String indexObs = "Create Index " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
+				String indexApi = "Create Index " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+				String indexConditions = "Create Index " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+				db.execSQL(indexObs);
+				db.execSQL(indexApi);
+				db.execSQL(indexConditions);
+			}
+			
+
 		}
 	}
 	
