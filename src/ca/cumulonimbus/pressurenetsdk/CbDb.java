@@ -1,5 +1,6 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -12,6 +13,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
+import android.provider.Settings.Secure;
 
 /**
  * Keep track of app settings, as this SDK may be used by more than one app on a
@@ -183,6 +185,13 @@ public class CbDb {
 			db.execSQL(OBSERVATIONS_TABLE_CREATE);
 			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
 			db.execSQL(API_LIST_TABLE_CREATE);
+			
+			String indexObs = "Create Index " + OBSERVATIONS_TABLE_IDX + " IF NOT EXISTS ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
+			String indexApi = "Create Index " + API_LIST_IDX + " IF NOT EXISTS ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			String indexConditions = "Create Index " + CONDITIONS_IDX + " IF NOT EXISTS ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			db.execSQL(indexObs);
+			db.execSQL(indexApi);
+			db.execSQL(indexConditions);
 		}
 
 		@Override
@@ -197,9 +206,9 @@ public class CbDb {
 			*/
 			
 			if((oldVersion <=40) && (newVersion >= 41)) {
-				String indexObs = "Create Index " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
-				String indexApi = "Create Index " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
-				String indexConditions = "Create Index " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+				String indexObs = "Create Index " + OBSERVATIONS_TABLE_IDX + " IF NOT EXISTS ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
+				String indexApi = "Create Index " + API_LIST_IDX + " IF NOT EXISTS ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+				String indexConditions = "Create Index " + CONDITIONS_IDX + " IF NOT EXISTS ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
 				db.execSQL(indexObs);
 				db.execSQL(indexApi);
 				db.execSQL(indexConditions);
@@ -231,7 +240,7 @@ public class CbDb {
 	 */
 	public long getLast7dPressureCount() {
 		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
-                "time > ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + ""});
+                KEY_TIME + " > ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + ""});
 	}
 	
 	/**
@@ -239,7 +248,8 @@ public class CbDb {
 	 * @return
 	 */
 	public long getLast7dConditionCount() {
-		return 0;
+		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
+                KEY_TIME + " > ? and " + KEY_USERID + " = ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + "", getID()});
 	}
 	
 	/**
@@ -247,7 +257,8 @@ public class CbDb {
 	 * @return
 	 */
 	public long getallTimeConditionCount() {
-		return 0;
+		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
+               KEY_USERID + " = ?", new String[] {getID()});
 	}
 	
 	
@@ -259,6 +270,29 @@ public class CbDb {
 	public long getUserDataCount() {
 		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
                 null,null);
+	}
+	
+	/**
+	 * Get a unique ID by fetching the phone ID and hashing it
+	 * 
+	 * @return
+	 */
+	private String getID() {
+		try {
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			String actual_id = Secure.getString(mContext
+					.getContentResolver(), Secure.ANDROID_ID);
+			byte[] bytes = actual_id.getBytes();
+			byte[] digest = md.digest(bytes);
+			StringBuffer hexString = new StringBuffer();
+			for (int i = 0; i < digest.length; i++) {
+				hexString.append(Integer.toHexString(0xFF & digest[i]));
+			}
+			return hexString.toString();
+		} catch (Exception e) {
+			return "--";
+		}
 	}
 	
 	/**
@@ -743,7 +777,7 @@ public class CbDb {
 		initialValues.put(KEY_SHARING, "default");
 		initialValues.put(KEY_TIME, cc.getTime());
 		initialValues.put(KEY_TIMEZONE, cc.getTzoffset());
-		initialValues.put(KEY_USERID, cc.getUser_id());
+		initialValues.put(KEY_USERID, getID());
 		initialValues.put(KEY_GENERAL_CONDITION, cc.getGeneral_condition());
 		initialValues.put(KEY_WINDY, cc.getWindy());
 		initialValues.put(KEY_FOGGY, cc.getFog_thickness());
