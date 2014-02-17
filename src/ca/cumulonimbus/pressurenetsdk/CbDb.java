@@ -166,10 +166,10 @@ public class CbDb {
 			+ " real not null, "
 			+ KEY_USER_COMMENT + " text not null, " + "UNIQUE (" + KEY_LATITUDE
 			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + ","
-			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
+			+ KEY_GENERAL_CONDITION + ") ON CONFLICT IGNORE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 44; 
+	private static final int DATABASE_VERSION = 45; 
 	// 40 = 4.2.7 
 	// 41+ = 4.3.0
 
@@ -204,6 +204,10 @@ public class CbDb {
 			db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);
 			onCreate(db);
 			*/
+			
+			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
+			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
+			
 			
 			if((oldVersion <=40) && (newVersion >= 41)) {
 				String indexObs = "Create Index " + OBSERVATIONS_TABLE_IDX + " IF NOT EXISTS ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
@@ -249,7 +253,7 @@ public class CbDb {
 	 */
 	public long getLast7dConditionCount(String id) {
 		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
-                KEY_TIME + " > ? and " + KEY_USERID + " = ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + "", id});
+                KEY_TIME + " > ? and " + KEY_USERID + " LIKE ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + "", "%" + id + "%"});
 	}
 	
 	/**
@@ -257,6 +261,7 @@ public class CbDb {
 	 * @return
 	 */
 	public long getAllTimeConditionCount(String id) {
+		System.out.println("all time conditions id " + id);
 		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
                KEY_USERID + " = ?", new String[] {id});
 	}
