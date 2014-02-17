@@ -1618,7 +1618,11 @@ public class CbService extends Service {
 			case MSG_GET_CONTRIBUTIONS:
 				CbContributions contrib = new CbContributions();
 				db.open();
-				contrib.setPressureAllTime(db.getUserDataCount());
+				contrib.setPressureAllTime(db.getAllTimePressureCount());
+				contrib.setPressureLast24h(db.getLast24hPressureCount());
+				contrib.setPressureLast7d(db.getLast7dPressureCount());
+				contrib.setConditionsAllTime(db.getallTimeConditionCount());
+				contrib.setConditionsLastWeek(db.getLast7dConditionCount());
 				db.close();
 				try {
 					msg.replyTo.send(Message

@@ -167,7 +167,7 @@ public class CbDb {
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 43; 
+	private static final int DATABASE_VERSION = 44; 
 	// 40 = 4.2.7 
 	// 41+ = 4.3.0
 
@@ -204,9 +204,50 @@ public class CbDb {
 				db.execSQL(indexApi);
 				db.execSQL(indexConditions);
 			}
-			
-
 		}
+	}
+	
+	/**
+	 * Get all-time pressure count
+	 * @return
+	 */
+	public long getAllTimePressureCount() {
+		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
+                null,null);
+	}
+	
+	/**
+	 * Get last day pressure count
+	 * @return
+	 */
+	public long getLast24hPressureCount() {
+		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
+                "time > ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24) + ""});
+	}
+	
+	/**
+	 * Get last week pressure count
+	 * @return
+	 */
+	public long getLast7dPressureCount() {
+		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
+                "time > ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + ""});
+	}
+	
+	/**
+	 * Get last week current condition count
+	 * @return
+	 */
+	public long getLast7dConditionCount() {
+		return 0;
+	}
+	
+	/**
+	 * Get last week current condition count
+	 * @return
+	 */
+	public long getallTimeConditionCount() {
+		return 0;
 	}
 	
 	
