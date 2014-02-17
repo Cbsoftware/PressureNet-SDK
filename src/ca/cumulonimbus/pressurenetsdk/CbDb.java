@@ -205,17 +205,17 @@ public class CbDb {
 			onCreate(db);
 			*/
 			
-			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
-			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
-			
-			
 			if((oldVersion <=40) && (newVersion >= 41)) {
+				// Add indexes
 				String indexObs = "Create Index " + OBSERVATIONS_TABLE_IDX + " IF NOT EXISTS ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
 				String indexApi = "Create Index " + API_LIST_IDX + " IF NOT EXISTS ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
 				String indexConditions = "Create Index " + CONDITIONS_IDX + " IF NOT EXISTS ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
 				db.execSQL(indexObs);
 				db.execSQL(indexApi);
 				db.execSQL(indexConditions);
+				// Update the current conditions table to track user contributions
+				db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
+				db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
 			}
 		}
 	}
