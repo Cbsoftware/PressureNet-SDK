@@ -1614,7 +1614,20 @@ public class CbService extends Service {
 					
 					external.getCurrentTemperatureForLocation(latitude, longitude, msg.replyTo);
 				}
-	
+				break;
+			case MSG_GET_CONTRIBUTIONS:
+				CbContributions contrib = new CbContributions();
+				db.open();
+				contrib.setPressureAllTime(db.getUserDataCount());
+				db.close();
+				try {
+					msg.replyTo.send(Message
+							.obtain(null, MSG_CONTRIBUTIONS, contrib));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+				
+				break;
 			default:
 				super.handleMessage(msg);
 			}

@@ -2,43 +2,40 @@ package ca.cumulonimbus.pressurenetsdk;
 
 public class CbContributions {
 	
-	private int pressureLast24h;
-	private int pressureLast7d;
-	private int pressureAllTime;
-	private int conditionsLastWeek;
-	private int conditionsAllTime;
+	private long pressureLast24h;
+	private long pressureLast7d;
+	private long pressureAllTime;
+	private long conditionsLastWeek;
+	private long conditionsAllTime;
 	
-	public int getPressureLast24h() {
+	public long getPressureLast24h() {
 		return pressureLast24h;
 	}
-	public void setPressureLast24h(int pressureLast24h) {
+	public void setPressureLast24h(long pressureLast24h) {
 		this.pressureLast24h = pressureLast24h;
 	}
-	public int getPressureLast7d() {
+	public long getPressureLast7d() {
 		return pressureLast7d;
 	}
-	public void setPressureLast7d(int pressureLast7d) {
+	public void setPressureLast7d(long pressureLast7d) {
 		this.pressureLast7d = pressureLast7d;
 	}
-	public int getPressureAllTime() {
+	public long getPressureAllTime() {
 		return pressureAllTime;
 	}
-	public void setPressureAllTime(int pressureAllTime) {
+	public void setPressureAllTime(long pressureAllTime) {
 		this.pressureAllTime = pressureAllTime;
 	}
-	public int getConditionsLastWeek() {
+	public long getConditionsLastWeek() {
 		return conditionsLastWeek;
 	}
-	public void setConditionsLastWeek(int conditionsLastWeek) {
+	public void setConditionsLastWeek(long conditionsLastWeek) {
 		this.conditionsLastWeek = conditionsLastWeek;
 	}
-	public int getConditionsAllTime() {
+	public long getConditionsAllTime() {
 		return conditionsAllTime;
 	}
-	public void setConditionsAllTime(int conditionsAllTime) {
+	public void setConditionsAllTime(long conditionsAllTime) {
 		this.conditionsAllTime = conditionsAllTime;
 	}
-	
-	
-	
 }
