@@ -169,7 +169,7 @@ public class CbDb {
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT IGNORE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 45; 
+	private static final int DATABASE_VERSION = 48; 
 	// 40 = 4.2.7 
 	// 41+ = 4.3.0
 
@@ -186,9 +186,9 @@ public class CbDb {
 			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
 			db.execSQL(API_LIST_TABLE_CREATE);
 			
-			String indexObs = "Create Index " + OBSERVATIONS_TABLE_IDX + " IF NOT EXISTS ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
-			String indexApi = "Create Index " + API_LIST_IDX + " IF NOT EXISTS ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
-			String indexConditions = "Create Index " + CONDITIONS_IDX + " IF NOT EXISTS ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
+			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			String indexConditions = "Create Index IF NOT EXISTS " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
 			db.execSQL(indexObs);
 			db.execSQL(indexApi);
 			db.execSQL(indexConditions);
@@ -205,18 +205,17 @@ public class CbDb {
 			onCreate(db);
 			*/
 			
-			if((oldVersion <=40) && (newVersion >= 41)) {
-				// Add indexes
-				String indexObs = "Create Index " + OBSERVATIONS_TABLE_IDX + " IF NOT EXISTS ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
-				String indexApi = "Create Index " + API_LIST_IDX + " IF NOT EXISTS ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
-				String indexConditions = "Create Index " + CONDITIONS_IDX + " IF NOT EXISTS ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
-				db.execSQL(indexObs);
-				db.execSQL(indexApi);
-				db.execSQL(indexConditions);
-				// Update the current conditions table to track user contributions
-				db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
-				db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
-			}
+			// Update the current conditions table to track user contributions
+			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
+			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
+			// Add indexes
+			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
+			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			String indexConditions = "Create Index IF NOT EXISTS " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			db.execSQL(indexObs);
+			db.execSQL(indexApi);
+			db.execSQL(indexConditions);
+		
 		}
 	}
 	
