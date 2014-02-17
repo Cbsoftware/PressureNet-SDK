@@ -119,6 +119,10 @@ public class CbService extends Service {
 	// External Weather Services
 	public static final int MSG_GET_EXTERNAL_LOCAL_EXPANDED = 41;
 	public static final int MSG_EXTERNAL_LOCAL_EXPANDED = 42;
+	// User contributions summary
+	public static final int MSG_GET_CONTRIBUTIONS = 43;
+	public static final int MSG_CONTRIBUTIONS = 44;	
+	
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
