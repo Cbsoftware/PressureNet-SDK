@@ -1623,6 +1623,7 @@ public class CbService extends Service {
 				contrib.setPressureLast7d(db.getLast7dPressureCount());
 				contrib.setConditionsAllTime(db.getAllTimeConditionCount(getID()));
 				contrib.setConditionsLastWeek(db.getLast7dConditionCount(getID()));
+				contrib.setConditionsLastDay(db.getLastDayConditionCount(getID()));
 				db.close();
 				try {
 					msg.replyTo.send(Message

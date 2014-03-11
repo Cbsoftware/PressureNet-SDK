@@ -256,6 +256,15 @@ public class CbDb {
 	}
 	
 	/**
+	 * Get last day's current condition count
+	 * @return
+	 */
+	public long getLastDayConditionCount(String id) {
+		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
+                KEY_TIME + " > ? and " + KEY_USERID + " LIKE ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24) + "", "%" + id + "%"});
+	}
+	
+	/**
 	 * Get last week current condition count
 	 * @return
 	 */
@@ -294,7 +303,6 @@ public class CbDb {
 		long hoursAgo = 24*3;
 		long timeAgo = System.currentTimeMillis() - (1000 * 60 * 60 * hoursAgo);
 		mDB.execSQL("delete from " + API_LIST_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
-		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
 	}
 	
 	/**

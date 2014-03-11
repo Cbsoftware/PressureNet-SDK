@@ -7,7 +7,14 @@ public class CbContributions {
 	private long pressureAllTime;
 	private long conditionsLastWeek;
 	private long conditionsAllTime;
+	private long conditionsLastDay;
 	
+	public long getConditionsLastDay() {
+		return conditionsLastDay;
+	}
+	public void setConditionsLastDay(long conditionsLastDay) {
+		this.conditionsLastDay = conditionsLastDay;
+	}
 	public long getPressureLast24h() {
 		return pressureLast24h;
 	}
