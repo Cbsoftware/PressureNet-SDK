@@ -61,7 +61,7 @@ public class CbService extends Service {
 
 	String serverURL = CbConfiguration.SERVER_URL;
 
-	public static String ACTION_SEND_MEASUREMENT = "SendMeasurement";
+	public static String ACTION_SEND_MEASUREMENT = "ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT";
 
 	// Service Interaction API Messages
 	public static final int MSG_OKAY = 0;
@@ -123,7 +123,6 @@ public class CbService extends Service {
 	public static final int MSG_GET_CONTRIBUTIONS = 43;
 	public static final int MSG_CONTRIBUTIONS = 44;	
 	
-	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
 	public static final String LOCAL_CONDITIONS_ALERT = "ca.cumulonimbus.pressurenetsdk.LOCAL_CONDITIONS_ALERT";
@@ -133,11 +132,10 @@ public class CbService extends Service {
 	// Support for new sensor type constants
 	private final int TYPE_AMBIENT_TEMPERATURE = 13;
 	private final int TYPE_RELATIVE_HUMIDITY = 12;
-
 	
 	long lastAPICall = System.currentTimeMillis();
 	long lastConditionNotification = System.currentTimeMillis() - (1000 * 60 * 60 * 6);
-
+	
 	private CbObservation collectedObservation;
 
 	private final Handler mHandler = new Handler();

@@ -41,9 +41,15 @@ You must reference the CbService class in your project's AndroidManifest.xml in 
 
 The <service> tag identifies our service to the Android OS, and the <receiver> lets pressureNET receive the alarm signals it sends in the background, enabling auto-submit. 
 
-Then, to start the service, use the following code to create an Intent and start the Service.
+Then, to start the service, use the following code to create an Intent and start the Service. This will tell the service to run automatically in the background and periodically collect and send data.
 
     Intent intent  = new Intent(getApplicationContext(), CbService.class);
+    startService(intent);
+
+If you prefer to manage the timing yourself and not have pressureNET's service running in the background, you can periodically send an Intent directing the SDK to send just a single measurement:
+
+    Intent intent = new Intent(getApplicationContext(), CbService.class);
+    intent.setAction(CbService.ACTION_SEND_MEASUREMENT);
     startService(intent);
 
 Features of the SDK include the ability to view and change settings, start and stop the service, access saved data, access the live data set and other useful methods. Simple examples are shown here, with sample source code in the [SDK Example app](github.com/CbSoftware/pressureNET-SDK-Example).
