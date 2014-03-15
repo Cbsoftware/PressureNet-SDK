@@ -476,7 +476,6 @@ public class CbDb {
 	 */
 	public void clearAPICache() {
 		mDB.execSQL("delete from " + API_LIST_TABLE);
-		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE);
 	}
 
 	/**
