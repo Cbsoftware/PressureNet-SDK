@@ -17,6 +17,26 @@ import android.location.Location;
  */
 public class CbScience {
 
+	// Mean Sea-Level Pressure calculation constants and estimates
+	private static final double STANDARD_PRESSURE = 1013.25; // mb
+	private static final double e = 2.71828;
+	private static final double GRAVITY = -9.80665;
+	private static final double M = 0.0289644; // Molar mass of Earth's air, km/mol
+	private static final double R_STAR = 8.31432; // universal gas constant for air; N*m /  (mol*)
+	
+	/**
+	 * Calculate mean sea-level pressure from the altiude and temperature
+	 * 
+	 * @param altitude (m)
+	 * @param temperature (K)
+	 * @return
+	 */
+	public static double calculateMSLP(double altitude, double temperature) {
+		double numerator = GRAVITY * M * altitude;
+		double denominator = R_STAR * temperature;
+		double exp = Math.pow(e, numerator / denominator);
+		return STANDARD_PRESSURE * exp;
+	}
 	
 	/**
 	 * Look for a recent change in trend

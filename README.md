@@ -17,7 +17,14 @@ Include this SDK in your Android project:
 Usage
 --------
 
-Simple steps to get started with the SDK are presented here. Full documentation is in the docs/ folder. We also provide a [full Example project](https://github.com/Cbsoftware/pressureNET-SDK-Example) that uses the SDK and simplified code to help you get started.
+There are two usage paradigms: 
+
+1. Start the SDK Service and let it manage periodic data collection. 
+2. Periodically send an Intent to the SDK to collect and send a single measurement at a time.
+
+If your app already periodically runs in the background, it might make sense to pick option 2 rather than have two background services running. Otherwise, choose option 1 and let pressureNET do all the work. Simple steps to get started with the SDK are presented here. Full documentation is in the docs/ folder. We also provide a [full Example project](https://github.com/Cbsoftware/pressureNET-SDK-Example) that uses the SDK and simplified code to help you get started.
+
+Option 1: Start the service and let it run
 
 All interaction with the pressureNET SDK will be done through the CbService class. Start the service by creating an Intent and calling startService:
 
@@ -34,7 +41,7 @@ Add the service to your AndroidManifest.xml file inside the <application> tags:
             </intent-filter>
     </service>
 
-The final element required is to add the following <receiver> tag, which can go right below the <service> tag:
+The final element required is to add the following <receiver> tag, which can go right below the &lt;service&gt; tag:
 
     <receiver
         android:name="ca.cumulonimbus.pressurenetsdk.CbAlarm"
@@ -45,6 +52,26 @@ The final element required is to add the following <receiver> tag, which can go 
     </receiver> 
 
 And that's it! By adding those elements to your manifest and calling startService, the pressureNET SDK will run in the background and send data. For more control, your app can communicate with the SDK.
+
+Option 2: Manually, periodically send Intents
+
+You'll use the same Service tag as above in your AndroidManifest.xml:
+
+    <service
+        android:name="ca.cumulonimbus.pressurenetsdk.CbService"
+        android:enabled="true" >
+            <intent-filter>
+                <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT" />
+            </intent-filter>
+    </service>
+
+To send an intent directing the pressureNET SDK to send a single measurement, do something like this: 
+
+    Intent intent = new Intent(getApplicationContext(), CbService.class);
+    intent.setAction(CbService.ACTION_SEND_MEASUREMENT);
+    startService(intent);
+
+And that's it! The pressureNET SDK will collect and send (or bufffer) a single atmospheric pressure measurement.
 
 Communication
 --------------------

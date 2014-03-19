@@ -1,5 +1,6 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -12,6 +13,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
+import android.provider.Settings.Secure;
 
 /**
  * Keep track of app settings, as this SDK may be used by more than one app on a
@@ -114,6 +116,9 @@ public class CbDb {
 			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + ", " + KEY_USERID + ","
 			+ KEY_OBSERVATION_VALUE + ") ON CONFLICT REPLACE)";
 	
+	private static final String OBSERVATIONS_TABLE_IDX = "observations_table_idx";
+	private static final String API_LIST_IDX = "api_list_idx";
+	private static final String CONDITIONS_IDX = "conditions_idx";
 	
 	private static final String API_LIST_TABLE_CREATE = "create table "
 			+ API_LIST_TABLE + " (_id integer primary key autoincrement, "
@@ -161,10 +166,12 @@ public class CbDb {
 			+ " real not null, "
 			+ KEY_USER_COMMENT + " text not null, " + "UNIQUE (" + KEY_LATITUDE
 			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + ","
-			+ KEY_GENERAL_CONDITION + ") ON CONFLICT REPLACE)";
+			+ KEY_GENERAL_CONDITION + ") ON CONFLICT IGNORE)";
 
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 40;
+	private static final int DATABASE_VERSION = 48; 
+	// 40 = 4.2.7 
+	// 41+ = 4.3.0
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -178,17 +185,93 @@ public class CbDb {
 			db.execSQL(OBSERVATIONS_TABLE_CREATE);
 			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
 			db.execSQL(API_LIST_TABLE_CREATE);
+			
+			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
+			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			String indexConditions = "Create Index IF NOT EXISTS " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			db.execSQL(indexObs);
+			db.execSQL(indexApi);
+			db.execSQL(indexConditions);
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			// Build upgrade mechanism
+			// TODO: Build upgrade mechanism
+			/*
 			db.execSQL("DROP TABLE IF EXISTS " + SETTINGS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + OBSERVATIONS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
-			db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);			
+			db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);
 			onCreate(db);
+			*/
+			
+			// Update the current conditions table to track user contributions
+			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
+			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
+			// Add indexes
+			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
+			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			String indexConditions = "Create Index IF NOT EXISTS " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			db.execSQL(indexObs);
+			db.execSQL(indexApi);
+			db.execSQL(indexConditions);
+		
 		}
+	}
+	
+	/**
+	 * Get all-time pressure count
+	 * @return
+	 */
+	public long getAllTimePressureCount() {
+		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
+                null,null);
+	}
+	
+	/**
+	 * Get last day pressure count
+	 * @return
+	 */
+	public long getLast24hPressureCount() {
+		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
+                "time > ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24) + ""});
+	}
+	
+	/**
+	 * Get last week pressure count
+	 * @return
+	 */
+	public long getLast7dPressureCount() {
+		return DatabaseUtils.queryNumEntries(mDB,  OBSERVATIONS_TABLE,
+                KEY_TIME + " > ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + ""});
+	}
+	
+	/**
+	 * Get last week current condition count
+	 * @return
+	 */
+	public long getLast7dConditionCount(String id) {
+		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
+                KEY_TIME + " > ? and " + KEY_USERID + " LIKE ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 7) + "", "%" + id + "%"});
+	}
+	
+	/**
+	 * Get last day's current condition count
+	 * @return
+	 */
+	public long getLastDayConditionCount(String id) {
+		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
+                KEY_TIME + " > ? and " + KEY_USERID + " LIKE ?", new String[] {System.currentTimeMillis() - (1000 * 60 * 60 * 24) + "", "%" + id + "%"});
+	}
+	
+	/**
+	 * Get last week current condition count
+	 * @return
+	 */
+	public long getAllTimeConditionCount(String id) {
+		System.out.println("all time conditions id " + id);
+		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
+               KEY_USERID + " = ?", new String[] {id});
 	}
 	
 	
@@ -220,7 +303,6 @@ public class CbDb {
 		long hoursAgo = 24*3;
 		long timeAgo = System.currentTimeMillis() - (1000 * 60 * 60 * hoursAgo);
 		mDB.execSQL("delete from " + API_LIST_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
-		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE + " WHERE " + KEY_TIME + " < " + timeAgo);
 	}
 	
 	/**
@@ -394,7 +476,6 @@ public class CbDb {
 	 */
 	public void clearAPICache() {
 		mDB.execSQL("delete from " + API_LIST_TABLE);
-		mDB.execSQL("delete from " + CURRENT_CONDITIONS_TABLE);
 	}
 
 	/**

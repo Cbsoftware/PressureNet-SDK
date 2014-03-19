@@ -61,7 +61,7 @@ public class CbService extends Service {
 
 	String serverURL = CbConfiguration.SERVER_URL;
 
-	public static String ACTION_SEND_MEASUREMENT = "SendMeasurement";
+	public static String ACTION_SEND_MEASUREMENT = "ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT";
 
 	// Service Interaction API Messages
 	public static final int MSG_OKAY = 0;
@@ -76,8 +76,11 @@ public class CbService extends Service {
 	public static final int MSG_GET_SETTINGS = 9;
 	public static final int MSG_SETTINGS = 10;
 
+	// Live sensor streaming
+	public static final int MSG_START_STREAM = 11;
 	public static final int MSG_DATA_STREAM = 12;
-
+	public static final int MSG_STOP_STREAM = 13;
+	
 	// pressureNET Live API
 	public static final int MSG_GET_LOCAL_RECENTS = 14;
 	public static final int MSG_LOCAL_RECENTS = 15;
@@ -113,17 +116,26 @@ public class CbService extends Service {
 	// Statistics
 	public static final int MSG_MAKE_STATS_CALL = 39;
 	public static final int MSG_STATS = 40;
-
+	// External Weather Services
+	public static final int MSG_GET_EXTERNAL_LOCAL_EXPANDED = 41;
+	public static final int MSG_EXTERNAL_LOCAL_EXPANDED = 42;
+	// User contributions summary
+	public static final int MSG_GET_CONTRIBUTIONS = 43;
+	public static final int MSG_CONTRIBUTIONS = 44;	
+	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
 	public static final String LOCAL_CONDITIONS_ALERT = "ca.cumulonimbus.pressurenetsdk.LOCAL_CONDITIONS_ALERT";
 	public static final String PRESSURE_SENT_TOAST = "ca.cumulonimbus.pressurenetsdk.PRESSURE_SENT_TOAST";
 	public static final String CONDITION_SENT_TOAST = "ca.cumulonimbus.pressurenetsdk.CONDITION_SENT_TOAST";
 		
+	// Support for new sensor type constants
+	private final int TYPE_AMBIENT_TEMPERATURE = 13;
+	private final int TYPE_RELATIVE_HUMIDITY = 12;
 	
 	long lastAPICall = System.currentTimeMillis();
 	long lastConditionNotification = System.currentTimeMillis() - (1000 * 60 * 60 * 6);
-
+	
 	private CbObservation collectedObservation;
 
 	private final Handler mHandler = new Handler();
@@ -149,6 +161,8 @@ public class CbService extends Service {
 	private PowerManager.WakeLock wl;
 	
 	private boolean hasBarometer = true;
+
+	ArrayList<CbSensorStreamer> activeStreams = new ArrayList<CbSensorStreamer>();
 	
 	/**
 	 * Collect data from onboard sensors and store locally
@@ -334,6 +348,137 @@ public class CbService extends Service {
 		}
 		
 	}
+	
+	/**
+	 * Collect data from onboard sensors and store locally
+	 * 
+	 * @author jacob
+	 * 
+	 */
+	public class CbSensorStreamer implements SensorEventListener {
+
+		public int sensorId;
+		private Messenger replyTo;
+		
+		private SensorManager sm;
+		Sensor sensor;
+				
+		/**
+		 * Start collecting sensor data.
+		 * 
+		 * @param m
+		 * @return
+		 */
+		public void startSendingData() {
+			sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+			sensor = sm.getDefaultSensor(sensorId);
+			try {
+				if(sm != null) {
+					if (sensor != null) {
+						log("CbService streamer registering sensorID " + sensorId);
+						sm.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
+					} else {
+						log("cbservice streaming sensor is null");
+					}
+
+				} else {
+					log("cbservice sm is null");
+				}
+			} catch (Exception e) {
+				log("cbservice sensor error " + e.getMessage());
+			}
+		}
+		
+		/**
+		 * Stop collecting sensor data
+		 */
+		public void stopSendingData() {
+			log("cbservice streaming stop collecting data");
+			if(sm!=null) {
+				log("cbservice streaming sensormanager not null, unregistering");
+				sm.unregisterListener(this);
+				sm = null;
+			} else {
+				log("cbservice streaming sensormanager null, walk away");
+			}
+		}
+
+		public CbSensorStreamer(int id, Messenger reply) {
+			this.sensorId = id;
+			this.replyTo = reply;
+		}
+
+		@Override
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {
+			if (sensor.getType() == sensorId) {
+
+			}
+		}
+
+		@Override
+		public void onSensorChanged(SensorEvent event) {
+			if (event.sensor.getType() == sensorId) {
+				// new sensor reading
+				CbObservation obs = new CbObservation();
+				obs.setObservationValue(event.values[0]);
+				try {
+					replyTo.send(Message.obtain(null,
+							MSG_DATA_STREAM, obs));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Check if a sensor is already being used in an active stream
+	 * to avoid multiple listeners on the same sensor. 
+	 * @param sensorId
+	 * @return
+	 */
+	
+	private boolean isSensorStreaming(int sensorId) {
+		for(CbSensorStreamer s : activeStreams) {
+			if (s.sensorId == sensorId) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Start live sensor streaming from the service
+	 * to the app. MSG_START_STREAM
+	 */
+	public void startSensorStream(int sensorId, Messenger reply) {
+		if(!isSensorStreaming(sensorId)) {
+			log("CbService starting live sensor streaming " + sensorId);
+			CbSensorStreamer streamer = new CbSensorStreamer(sensorId, reply);
+			activeStreams.add(streamer);
+			streamer.startSendingData();
+		} else {
+			log("CbService not starting live sensor streaming " + sensorId + ", already streaming");
+		}
+	}
+	
+	/**
+	 * Stop live sensor streaming. MSG_STOP_STREAM
+	 */
+	public void stopSensorStream(int sensorId) {
+		if(isSensorStreaming(sensorId)) {
+			log("CbService stopping live sensor streaming " + sensorId);
+			for(CbSensorStreamer s : activeStreams) {
+				if (s.sensorId == sensorId) {
+					s.stopSendingData();
+					activeStreams.remove(s);
+					break;
+				}
+			}
+		} else {
+			log("CbService not stopping live sensor streaming " + sensorId + " sensor not running");
+		}
+	}
 
 	/**
 	 * Find all the data for an observation.
@@ -370,8 +515,6 @@ public class CbService extends Service {
 			return null;
 		}
 	}
-
-	
 	
 	private class LocationStopper implements Runnable {
 
@@ -1171,8 +1314,13 @@ public class CbService extends Service {
 					re.printStackTrace();
 				}
 				break;
-			case MSG_DATA_STREAM:
-				// ...
+			case MSG_START_STREAM:
+				int sensorToStream = msg.arg1;
+				startSensorStream(sensorToStream, msg.replyTo);
+				break;
+			case MSG_STOP_STREAM:
+				int sensorToStop = msg.arg1;
+				stopSensorStream(sensorToStop);
 				break;
 			case MSG_SET_SETTINGS:
 				settingsHandler = (CbSettingsHandler) msg.obj;
@@ -1454,6 +1602,34 @@ public class CbService extends Service {
 				CbStatsAPICall statsCall =  (CbStatsAPICall) msg.obj;
 				CbApi statsApi = new CbApi(getApplicationContext());
 				statsApi.makeStatsAPICall(statsCall, service, msg.replyTo);
+				break;
+			case MSG_GET_EXTERNAL_LOCAL_EXPANDED:
+				log("cbservice getting external, local expanded conditions");
+				CbExternalWeatherData external = new CbExternalWeatherData();
+				if(locationManager != null) {
+					double latitude = locationManager.getCurrentBestLocation().getLatitude();
+					double longitude = locationManager.getCurrentBestLocation().getLongitude();
+					
+					external.getCurrentTemperatureForLocation(latitude, longitude, msg.replyTo);
+				}
+				break;
+			case MSG_GET_CONTRIBUTIONS:
+				CbContributions contrib = new CbContributions();
+				db.open();
+				contrib.setPressureAllTime(db.getAllTimePressureCount());
+				contrib.setPressureLast24h(db.getLast24hPressureCount());
+				contrib.setPressureLast7d(db.getLast7dPressureCount());
+				contrib.setConditionsAllTime(db.getAllTimeConditionCount(getID()));
+				contrib.setConditionsLastWeek(db.getLast7dConditionCount(getID()));
+				contrib.setConditionsLastDay(db.getLastDayConditionCount(getID()));
+				db.close();
+				try {
+					msg.replyTo.send(Message
+							.obtain(null, MSG_CONTRIBUTIONS, contrib));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+				
 				break;
 			default:
 				super.handleMessage(msg);
