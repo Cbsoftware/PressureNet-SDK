@@ -29,6 +29,7 @@ You must reference the CbService class in your project's AndroidManifest.xml in 
         android:enabled="true" >
             <intent-filter>
                 <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT" />
+                <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_REGISTER" />
             </intent-filter>
     </service>
     <receiver
