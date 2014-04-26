@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -62,6 +63,7 @@ public class CbService extends Service {
 	String serverURL = CbConfiguration.SERVER_URL;
 
 	public static String ACTION_SEND_MEASUREMENT = "ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT";
+	public static String ACTION_REGISTER = "ca.cumulonimbus.pressurenetsdk.ACTION_REGISTER";
 
 	// Service Interaction API Messages
 	public static final int MSG_OKAY = 0;
@@ -122,6 +124,8 @@ public class CbService extends Service {
 	// User contributions summary
 	public static final int MSG_GET_CONTRIBUTIONS = 43;
 	public static final int MSG_CONTRIBUTIONS = 44;	
+	// Database info, test suites/debugging
+	public static final int MSG_GET_DATABASE_INFO = 45;
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -1034,6 +1038,7 @@ public class CbService extends Service {
 	public void onDestroy() {
 		log("cbservice on destroy");
 		stopAutoSubmit();
+		unregisterReceiver(receiver);
 		super.onDestroy();
 	}
 
@@ -1045,9 +1050,21 @@ public class CbService extends Service {
 		settingsHandler.getSettings();
 		db = new CbDb(getApplicationContext());
 		fromUser = false;
+		
+		prepForRegistration();
+		
 		super.onCreate();
 	}
-
+	
+	/**
+	 * SDK registration
+	 */
+	private void prepForRegistration() {
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(CbService.ACTION_REGISTER);
+		registerReceiver(receiver, filter);
+	}
+	
 	/**
 	 * Check charge state for preferences.
 	 * 
@@ -1064,7 +1081,31 @@ public class CbService extends Service {
 				|| status == BatteryManager.BATTERY_STATUS_FULL;
 		return isCharging;
 	}
+	
+	/**
+	 * Each app registers with the SDK. Send the package name
+	 * to 
+	 */
+	private void sendRegistrationInfo() {
+		log("SDKTESTS: sending registration info");
+		Intent intent = new Intent(ACTION_REGISTER);
+		intent.putExtra("packagename", getApplicationContext().getPackageName());
+		intent.putExtra("time", System.currentTimeMillis());
+		sendBroadcast(intent);
+	}
 
+	private final BroadcastReceiver receiver = new BroadcastReceiver() {
+	   @Override
+	   public void onReceive(Context context, Intent intent) {
+		   String action = intent.getAction();
+		   if (action.equals(ACTION_REGISTER)) {
+			   String registeredName = intent.getStringExtra("packagename");
+			   Long registeredTime = intent.getLongExtra("time", 0);
+			   log("SDKTESTS: " + registeredName + " registered at " + registeredTime);
+		   }
+	   }
+	};
+	
 	/**
 	 * Start running background data collection methods.
 	 * 
@@ -1074,6 +1115,7 @@ public class CbService extends Service {
 		log("cbservice onstartcommand");
 		
 		checkBarometer();
+		sendRegistrationInfo();
 	
 		// wakelock management
 		if(wl!=null) {
@@ -1100,7 +1142,7 @@ public class CbService extends Service {
 						log("sending single observation, request from intent");
 						sendSingleObs();
 						return START_NOT_STICKY;
-					}
+					} 
 				} else if (intent.getBooleanExtra("alarm", false)) {
 					// This runs when the service is started from the alarm.
 					// Submit a data point
@@ -1120,6 +1162,7 @@ public class CbService extends Service {
 					mHandler.postDelayed(stop, 1000 * 3);
 					return START_NOT_STICKY;
 				} else {
+				
 					// Check the database
 					
 					log("starting service with db");
@@ -1630,6 +1673,22 @@ public class CbService extends Service {
 					re.printStackTrace();
 				}
 				
+				break;
+			case MSG_GET_DATABASE_INFO:
+				db.open();
+				long localObsCount = db.getUserDataCount();
+				db.close();
+				log("SDKTESTS: CbService says localObsCount is " + localObsCount);
+			    /*
+				try {
+					
+					msg.replyTo.send(Message.obtain(null,
+							MSG_COUNT_LOCAL_OBS_TOTALS,
+							(int) countLocalObsOnly2, 0));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+				*/
 				break;
 			default:
 				super.handleMessage(msg);
