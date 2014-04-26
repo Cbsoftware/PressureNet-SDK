@@ -1,11 +1,12 @@
 package ca.cumulonimbus.pressurenetsdk;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Random;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
@@ -13,7 +14,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.provider.Settings.Secure;
 
 /**
  * Keep track of app settings, as this SDK may be used by more than one app on a
@@ -234,7 +234,70 @@ public class CbDb {
 		}
 	}
 	
+	/**
+	 * Check the oldest registered package name
+	 * and compare to our package name.
+	 * @return
+	 */
+	public boolean isPrimaryApp() {
+		String localPackageName = mContext.getPackageName();
+		Cursor cursor = mDB.query(APP_REGISTRATION_TABLE, new String[] {KEY_PACKAGE_NAME}, null, null, null, null, KEY_REGISTRATION_TIME + " ASC");
+		String packageName = "";
+		if(cursor.moveToFirst()) {
+			 packageName = cursor.getString(0);
+		}
+		System.out.println("SDKTESTS: checking primary app " + packageName.equals(localPackageName));
+		return packageName.equals(localPackageName);
+	}
+
+	private Cursor getAppsList() {
+		return mDB.query(APP_REGISTRATION_TABLE, new String[] {KEY_PACKAGE_NAME, KEY_REGISTRATION_TIME}, null, null, null, null, KEY_REGISTRATION_TIME + " ASC");
+	}
 	
+
+	private boolean isPackageInstalled(String packagename, Context context) {
+	    PackageManager pm = context.getPackageManager();
+	    try {
+	        pm.getPackageInfo(packagename, PackageManager.GET_ACTIVITIES);
+	        return true;
+	    } catch (NameNotFoundException e) {
+	        return false;
+	    }
+	}
+	
+	/**
+	 * If an SDK App has not been active for the last 
+	 * X days, remove it from the list and allow other 
+	 * apps to take precedence
+	 */
+	public void removeOldSDKApps(int days) {
+		// remove old apps
+		long timeAgo = System.currentTimeMillis() - (days * 24 * 60 * 60 * 1000);
+		mDB.execSQL("delete from " + APP_REGISTRATION_TABLE + " WHERE " + KEY_REGISTRATION_TIME + " < " + timeAgo);
+		
+		// Remove uninstalled apps
+		Cursor c = getAppsList();
+		ArrayList<CbRegisteredApp> apps = new ArrayList<CbRegisteredApp>();
+		while(c.moveToNext()) {
+			CbRegisteredApp app = new CbRegisteredApp();
+			// TODO: fix these constants
+			app.setPackageName(c.getString(0));
+			app.setRegistrationTime(c.getLong(1));
+			apps.add(app);
+		}
+		
+		for(CbRegisteredApp app : apps) {
+			boolean installed = isPackageInstalled(app.getPackageName(), mContext);
+			System.out.println("SDKTESTS: " + app.getPackageName() + " installed? " + installed);
+			if(!installed) {
+				// TODO: fix poor SQL practices
+				mDB.execSQL("delete from " + APP_REGISTRATION_TABLE + " WHERE " + KEY_PACKAGE_NAME + " = '" + app.getPackageName() + "'");
+				System.out.println("SDKTESTS: removed uninstalled app " + app.getPackageName());
+			}
+		}
+		
+		
+	}
 	
 	/**
 	 * Get all-time pressure count
@@ -840,6 +903,8 @@ public class CbDb {
 		}
 		return -1;
 	}
+	
+	
 
 	/**
 	 * Add new registration for an application

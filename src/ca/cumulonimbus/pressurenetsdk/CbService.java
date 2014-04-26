@@ -251,7 +251,7 @@ public class CbService extends Service {
 					if (pressureSensor != null) {
 						log("cbservice sensor SDK " + android.os.Build.VERSION.SDK_INT + "");
 						if(android.os.Build.VERSION.SDK_INT == 19) {
-							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI, 100000);
+							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI); // , 100000);
 						} else {
 							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI);
 						}
@@ -1106,8 +1106,16 @@ public class CbService extends Service {
 			   // addRegistration
 			   db.open();
 			   db.addRegistration(registeredName, registeredTime);
-			   db.close();
+
 			   
+			   // check status
+			   if(db.isPrimaryApp()) {
+				   log("SDKTESTS: " + getApplicationContext().getPackageName() + " is primary");
+			   } else {
+				   log("SDKTESTS: " + getApplicationContext().getPackageName() + " is not primary");
+			   }
+			   
+			   db.close();			   
 		   }
 	   }
 	};
@@ -1121,7 +1129,6 @@ public class CbService extends Service {
 		log("cbservice onstartcommand");
 		
 		checkBarometer();
-		sendRegistrationInfo();
 	
 		// wakelock management
 		if(wl!=null) {
@@ -1156,6 +1163,9 @@ public class CbService extends Service {
 					settingsHandler = new CbSettingsHandler(getApplicationContext());
 					settingsHandler = settingsHandler.getSettings();
 					
+					removeOldSDKApps();
+					sendRegistrationInfo();
+					
 					
 					if(settingsHandler.isSharingData()) {
 						//dataCollector.startCollectingData();
@@ -1183,7 +1193,19 @@ public class CbService extends Service {
 		super.onStartCommand(intent, flags, startId);
 		return START_NOT_STICKY;
 	}
-
+	
+	public void removeAllUninstalledApps() {
+		db.open();
+		
+		db.close();
+	}
+	
+	private void removeOldSDKApps() {
+		db.open();
+		db.removeOldSDKApps(1);
+		db.close();
+	}
+	
 	/**
 	 * Convert time ago text to ms. TODO: not this. values in xml.
 	 * 
