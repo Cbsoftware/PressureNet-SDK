@@ -126,6 +126,9 @@ public class CbService extends Service {
 	public static final int MSG_CONTRIBUTIONS = 44;	
 	// Database info, test suites/debugging
 	public static final int MSG_GET_DATABASE_INFO = 45;
+	// Multitenancy Support
+	public static final int MSG_GET_PRIMARY_APP = 46;
+	public static final int MSG_IS_PRIMARY = 47;
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -1717,6 +1720,19 @@ public class CbService extends Service {
 					re.printStackTrace();
 				}
 				*/
+				break;
+			case MSG_GET_PRIMARY_APP:
+				db.open();
+				boolean primary = db.isPrimaryApp();
+				int p = (primary==true) ? 1 : 0;
+				db.close();
+				try {
+					
+					msg.replyTo.send(Message.obtain(null,
+							MSG_IS_PRIMARY, p, 0));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
 				break;
 			default:
 				super.handleMessage(msg);
