@@ -1101,7 +1101,13 @@ public class CbService extends Service {
 		   if (action.equals(ACTION_REGISTER)) {
 			   String registeredName = intent.getStringExtra("packagename");
 			   Long registeredTime = intent.getLongExtra("time", 0);
-			   log("SDKTESTS: " + registeredName + " registered at " + registeredTime);
+			   log("SDKTESTS: registering " + registeredName + " registered at " + registeredTime);
+			   
+			   // addRegistration
+			   db.open();
+			   db.addRegistration(registeredName, registeredTime);
+			   db.close();
+			   
 		   }
 	   }
 	};
