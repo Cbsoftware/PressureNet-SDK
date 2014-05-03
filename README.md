@@ -38,6 +38,7 @@ Add the service to your AndroidManifest.xml file inside the <application> tags:
         android:enabled="true" >
             <intent-filter>
                 <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT" />
+                <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_REGISTER" />
             </intent-filter>
     </service>
 
@@ -62,6 +63,7 @@ You'll use the same Service tag as above in your AndroidManifest.xml:
         android:enabled="true" >
             <intent-filter>
                 <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT" />
+                <action android:name="ca.cumulonimbus.pressurenetsdk.ACTION_REGISTER" />
             </intent-filter>
     </service>
 

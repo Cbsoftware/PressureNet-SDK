@@ -1,11 +1,12 @@
 package ca.cumulonimbus.pressurenetsdk;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Random;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
@@ -13,7 +14,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.provider.Settings.Secure;
 
 /**
  * Keep track of app settings, as this SDK may be used by more than one app on a
@@ -31,6 +31,7 @@ public class CbDb {
 	public static final String OBSERVATIONS_TABLE = "cb_observations";
 	public static final String CURRENT_CONDITIONS_TABLE = "cb_current_conditions";
 	public static final String API_LIST_TABLE = "cb_api_list";
+	public static final String APP_REGISTRATION_TABLE = "cb_registration";
 	
 	// Settings Fields
 	public static final String KEY_ROW_ID = "_id";
@@ -83,6 +84,10 @@ public class CbDb {
 	public static final String KEY_MAX_LON = "max_lon";
 	
 	public static final String KEY_USE_GPS = "use_gps";
+	
+	// APP_REGISTRATION_TABLE 
+	public static final String KEY_REGISTRATION_TIME = "registration_time";
+	public static final String KEY_PACKAGE_NAME = "package_name";
 	
 	private Context mContext;
 
@@ -168,10 +173,15 @@ public class CbDb {
 			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + ","
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT IGNORE)";
 
+	private static final String APP_REGISTRATION_TABLE_CREATE = "create table "
+			+ APP_REGISTRATION_TABLE + " (_id integer primary key autoincrement, "
+			+ KEY_PACKAGE_NAME + " text not null, " + KEY_REGISTRATION_TIME + " real not null, UNIQUE ( " + KEY_PACKAGE_NAME  + ") ON CONFLICT IGNORE)";
+	
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 48; 
+	private static final int DATABASE_VERSION = 49; 
 	// 40 = 4.2.7 
 	// 41+ = 4.3.0
+	// 49 = 4.3.4
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -185,6 +195,7 @@ public class CbDb {
 			db.execSQL(OBSERVATIONS_TABLE_CREATE);
 			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
 			db.execSQL(API_LIST_TABLE_CREATE);
+			db.execSQL(APP_REGISTRATION_TABLE_CREATE);
 			
 			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
 			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
@@ -205,6 +216,10 @@ public class CbDb {
 			onCreate(db);
 			*/
 			
+			// TODO: Only add this after checking oldVersion and newVersion
+			db.execSQL("DROP TABLE IF EXISTS " + APP_REGISTRATION_TABLE);
+			db.execSQL(APP_REGISTRATION_TABLE_CREATE);
+			
 			// Update the current conditions table to track user contributions
 			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
 			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
@@ -217,6 +232,71 @@ public class CbDb {
 			db.execSQL(indexConditions);
 		
 		}
+	}
+	
+	/**
+	 * Check the oldest registered package name
+	 * and compare to our package name.
+	 * @return
+	 */
+	public boolean isPrimaryApp() {
+		String localPackageName = mContext.getPackageName();
+		Cursor cursor = mDB.query(APP_REGISTRATION_TABLE, new String[] {KEY_PACKAGE_NAME}, null, null, null, null, KEY_REGISTRATION_TIME + " ASC");
+		String packageName = "";
+		if(cursor.moveToFirst()) {
+			 packageName = cursor.getString(0);
+		}
+		System.out.println("SDKTESTS: checking primary app " + packageName.equals(localPackageName));
+		return packageName.equals(localPackageName);
+	}
+
+	private Cursor getAppsList() {
+		return mDB.query(APP_REGISTRATION_TABLE, new String[] {KEY_PACKAGE_NAME, KEY_REGISTRATION_TIME}, null, null, null, null, KEY_REGISTRATION_TIME + " ASC");
+	}
+	
+
+	private boolean isPackageInstalled(String packagename, Context context) {
+	    PackageManager pm = context.getPackageManager();
+	    try {
+	        pm.getPackageInfo(packagename, PackageManager.GET_ACTIVITIES);
+	        return true;
+	    } catch (NameNotFoundException e) {
+	        return false;
+	    }
+	}
+	
+	/**
+	 * If an SDK App has not been active for the last 
+	 * X days, remove it from the list and allow other 
+	 * apps to take precedence
+	 */
+	public void removeOldSDKApps(int days) {
+		// remove old apps
+		long timeAgo = System.currentTimeMillis() - (days * 24 * 60 * 60 * 1000);
+		mDB.execSQL("delete from " + APP_REGISTRATION_TABLE + " WHERE " + KEY_REGISTRATION_TIME + " < " + timeAgo);
+		
+		// Remove uninstalled apps
+		Cursor c = getAppsList();
+		ArrayList<CbRegisteredApp> apps = new ArrayList<CbRegisteredApp>();
+		while(c.moveToNext()) {
+			CbRegisteredApp app = new CbRegisteredApp();
+			// TODO: fix these constants
+			app.setPackageName(c.getString(0));
+			app.setRegistrationTime(c.getLong(1));
+			apps.add(app);
+		}
+		
+		for(CbRegisteredApp app : apps) {
+			boolean installed = isPackageInstalled(app.getPackageName(), mContext);
+			System.out.println("SDKTESTS: " + app.getPackageName() + " installed? " + installed);
+			if(!installed) {
+				// TODO: fix poor SQL practices
+				mDB.execSQL("delete from " + APP_REGISTRATION_TABLE + " WHERE " + KEY_PACKAGE_NAME + " = '" + app.getPackageName() + "'");
+				System.out.println("SDKTESTS: removed uninstalled app " + app.getPackageName());
+			}
+		}
+		
+		
 	}
 	
 	/**
@@ -823,7 +903,27 @@ public class CbDb {
 		}
 		return -1;
 	}
+	
+	
 
+	/**
+	 * Add new registration for an application
+	 * 
+	 * @param packageName
+	 * @param registrationTime
+	 * @return
+	 */
+	public long addRegistration(String packageName, long registrationTime) {
+
+		ContentValues initialValues = new ContentValues();
+		initialValues.put(KEY_PACKAGE_NAME, packageName);
+		
+		initialValues.put(KEY_REGISTRATION_TIME, registrationTime);
+		long row =  mDB.insert(APP_REGISTRATION_TABLE, null, initialValues);
+		System.out.println("SDKTESTS: CbDb adding app " + packageName);
+		return row;
+	}
+	
 	/**
 	 * Add new settings for an application
 	 * 

@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -62,6 +63,7 @@ public class CbService extends Service {
 	String serverURL = CbConfiguration.SERVER_URL;
 
 	public static String ACTION_SEND_MEASUREMENT = "ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT";
+	public static String ACTION_REGISTER = "ca.cumulonimbus.pressurenetsdk.ACTION_REGISTER";
 
 	// Service Interaction API Messages
 	public static final int MSG_OKAY = 0;
@@ -122,6 +124,11 @@ public class CbService extends Service {
 	// User contributions summary
 	public static final int MSG_GET_CONTRIBUTIONS = 43;
 	public static final int MSG_CONTRIBUTIONS = 44;	
+	// Database info, test suites/debugging
+	public static final int MSG_GET_DATABASE_INFO = 45;
+	// Multitenancy Support
+	public static final int MSG_GET_PRIMARY_APP = 46;
+	public static final int MSG_IS_PRIMARY = 47;
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -247,7 +254,7 @@ public class CbService extends Service {
 					if (pressureSensor != null) {
 						log("cbservice sensor SDK " + android.os.Build.VERSION.SDK_INT + "");
 						if(android.os.Build.VERSION.SDK_INT == 19) {
-							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI, 100000);
+							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI); // , 100000);
 						} else {
 							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI);
 						}
@@ -1034,6 +1041,7 @@ public class CbService extends Service {
 	public void onDestroy() {
 		log("cbservice on destroy");
 		stopAutoSubmit();
+		unregisterReceiver(receiver);
 		super.onDestroy();
 	}
 
@@ -1045,9 +1053,21 @@ public class CbService extends Service {
 		settingsHandler.getSettings();
 		db = new CbDb(getApplicationContext());
 		fromUser = false;
+		
+		prepForRegistration();
+		
 		super.onCreate();
 	}
-
+	
+	/**
+	 * SDK registration
+	 */
+	private void prepForRegistration() {
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(CbService.ACTION_REGISTER);
+		registerReceiver(receiver, filter);
+	}
+	
 	/**
 	 * Check charge state for preferences.
 	 * 
@@ -1064,7 +1084,45 @@ public class CbService extends Service {
 				|| status == BatteryManager.BATTERY_STATUS_FULL;
 		return isCharging;
 	}
+	
+	/**
+	 * Each app registers with the SDK. Send the package name
+	 * to 
+	 */
+	private void sendRegistrationInfo() {
+		log("SDKTESTS: sending registration info");
+		Intent intent = new Intent(ACTION_REGISTER);
+		intent.putExtra("packagename", getApplicationContext().getPackageName());
+		intent.putExtra("time", System.currentTimeMillis());
+		sendBroadcast(intent);
+	}
 
+	private final BroadcastReceiver receiver = new BroadcastReceiver() {
+	   @Override
+	   public void onReceive(Context context, Intent intent) {
+		   String action = intent.getAction();
+		   if (action.equals(ACTION_REGISTER)) {
+			   String registeredName = intent.getStringExtra("packagename");
+			   Long registeredTime = intent.getLongExtra("time", 0);
+			   log("SDKTESTS: registering " + registeredName + " registered at " + registeredTime);
+			   
+			   // addRegistration
+			   db.open();
+			   db.addRegistration(registeredName, registeredTime);
+
+			   
+			   // check status
+			   if(db.isPrimaryApp()) {
+				   log("SDKTESTS: " + getApplicationContext().getPackageName() + " is primary");
+			   } else {
+				   log("SDKTESTS: " + getApplicationContext().getPackageName() + " is not primary");
+			   }
+			   
+			   db.close();			   
+		   }
+	   }
+	};
+	
 	/**
 	 * Start running background data collection methods.
 	 * 
@@ -1100,13 +1158,16 @@ public class CbService extends Service {
 						log("sending single observation, request from intent");
 						sendSingleObs();
 						return START_NOT_STICKY;
-					}
+					} 
 				} else if (intent.getBooleanExtra("alarm", false)) {
 					// This runs when the service is started from the alarm.
 					// Submit a data point
 					log("cbservice alarm firing, sending data");
 					settingsHandler = new CbSettingsHandler(getApplicationContext());
 					settingsHandler = settingsHandler.getSettings();
+					
+					removeOldSDKApps();
+					sendRegistrationInfo();
 					
 					
 					if(settingsHandler.isSharingData()) {
@@ -1120,6 +1181,7 @@ public class CbService extends Service {
 					mHandler.postDelayed(stop, 1000 * 3);
 					return START_NOT_STICKY;
 				} else {
+				
 					// Check the database
 					
 					log("starting service with db");
@@ -1134,7 +1196,19 @@ public class CbService extends Service {
 		super.onStartCommand(intent, flags, startId);
 		return START_NOT_STICKY;
 	}
-
+	
+	public void removeAllUninstalledApps() {
+		db.open();
+		
+		db.close();
+	}
+	
+	private void removeOldSDKApps() {
+		db.open();
+		db.removeOldSDKApps(1);
+		db.close();
+	}
+	
 	/**
 	 * Convert time ago text to ms. TODO: not this. values in xml.
 	 * 
@@ -1630,6 +1704,35 @@ public class CbService extends Service {
 					re.printStackTrace();
 				}
 				
+				break;
+			case MSG_GET_DATABASE_INFO:
+				db.open();
+				long localObsCount = db.getUserDataCount();
+				db.close();
+				log("SDKTESTS: CbService says localObsCount is " + localObsCount);
+			    /*
+				try {
+					
+					msg.replyTo.send(Message.obtain(null,
+							MSG_COUNT_LOCAL_OBS_TOTALS,
+							(int) countLocalObsOnly2, 0));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+				*/
+				break;
+			case MSG_GET_PRIMARY_APP:
+				db.open();
+				boolean primary = db.isPrimaryApp();
+				int p = (primary==true) ? 1 : 0;
+				db.close();
+				try {
+					
+					msg.replyTo.send(Message.obtain(null,
+							MSG_IS_PRIMARY, p, 0));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
 				break;
 			default:
 				super.handleMessage(msg);
