@@ -508,10 +508,6 @@ public class CbService extends Service {
 			pressureObservation.setLocation(locationManager
 					.getCurrentBestLocation());
 
-			// stop listening for locations
-			LocationStopper stop = new LocationStopper();
-			mHandler.postDelayed(stop, 1000 * 3);
-
 			log("returning pressure obs: "
 					+ pressureObservation.getObservationValue());
 
@@ -1346,7 +1342,7 @@ public class CbService extends Service {
 				}
 				break;
 			case MSG_GET_BEST_LOCATION:
-				log("message. bound service requesting location");
+				log("cbservice message. bound service requesting location");
 				if (locationManager != null) {
 					Location best = locationManager.getCurrentBestLocation();
 					try {
@@ -1464,6 +1460,7 @@ public class CbService extends Service {
 						Location location = new Location("network");
 						location.setLatitude(cacheCursor.getDouble(1));
 						location.setLongitude(cacheCursor.getDouble(2));
+						// location.setAltitude(cacheCursor.getDouble(5));
 						obs.setLocation(location);
 						obs.setObservationValue(cacheCursor.getDouble(3));
 						obs.setTime(cacheCursor.getLong(4));

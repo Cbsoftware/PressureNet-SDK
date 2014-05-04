@@ -25,17 +25,17 @@ public class CbScience {
 	private static final double R_STAR = 8.31432; // universal gas constant for air; N*m /  (mol*)
 	
 	/**
-	 * Calculate mean sea-level pressure from the altiude and temperature
+	 * Estimate MSLP
 	 * 
 	 * @param altitude (m)
 	 * @param temperature (K)
+	 * 
+	 * MSLP ~= pressure - (.12mbar / 1m)
+	 * 
 	 * @return
 	 */
-	public static double calculateMSLP(double altitude, double temperature) {
-		double numerator = GRAVITY * M * altitude;
-		double denominator = R_STAR * temperature;
-		double exp = Math.pow(e, numerator / denominator);
-		return STANDARD_PRESSURE * exp;
+	public static double estimateMSLP(double pressure, double altitude, double temperature) {
+		return (pressure + (.12*altitude));
 	}
 	
 	/**
