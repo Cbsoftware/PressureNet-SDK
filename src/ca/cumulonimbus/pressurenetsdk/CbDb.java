@@ -5,6 +5,7 @@ import java.util.Random;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
@@ -221,8 +222,13 @@ public class CbDb {
 			db.execSQL(APP_REGISTRATION_TABLE_CREATE);
 			
 			// Update the current conditions table to track user contributions
-			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
-			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
+			// make a current conditions backup first
+			// Upgrading from before 4.3.0
+			if (oldVersion<41) {			
+				db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
+				db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
+			}
+			
 			// Add indexes
 			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
 			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
