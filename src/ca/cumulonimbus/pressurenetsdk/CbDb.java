@@ -129,8 +129,9 @@ public class CbDb {
 	private static final String API_LIST_TABLE_CREATE = "create table "
 			+ API_LIST_TABLE + " (_id integer primary key autoincrement, "
 			+ KEY_LATITUDE + " real not null, " 
-			+ KEY_LONGITUDE + " real not null, " + KEY_TIME
-			+ " real not null, " + KEY_OBSERVATION_VALUE
+			+ KEY_LONGITUDE + " real not null, " 
+			+ KEY_ALTITUDE + " real not null, " 			
+			+ KEY_TIME + " real not null, " + KEY_OBSERVATION_VALUE
 			+ " real not null, UNIQUE (" + KEY_OBSERVATION_VALUE +", " + KEY_TIME + ") ON CONFLICT REPLACE)";
 
 	private static final String CURRENT_CONDITIONS_TABLE_CREATE = "create table "
@@ -179,10 +180,10 @@ public class CbDb {
 			+ KEY_PACKAGE_NAME + " text not null, " + KEY_REGISTRATION_TIME + " real not null, UNIQUE ( " + KEY_PACKAGE_NAME  + ") ON CONFLICT IGNORE)";
 	
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 49; 
+	private static final int DATABASE_VERSION = 50; 
 	// 40 = 4.2.7 
 	// 41+ = 4.3.0
-	// 49 = 4.3.4
+	// 49-50 = 4.3.4
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -198,12 +199,18 @@ public class CbDb {
 			db.execSQL(API_LIST_TABLE_CREATE);
 			db.execSQL(APP_REGISTRATION_TABLE_CREATE);
 			
+			createIndex(db);
+		}
+		
+		private void createIndex(SQLiteDatabase db) {
 			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
 			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
 			String indexConditions = "Create Index IF NOT EXISTS " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			String indexApiAltitude = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_ALTITUDE + ")";
 			db.execSQL(indexObs);
 			db.execSQL(indexApi);
 			db.execSQL(indexConditions);
+			db.execSQL(indexApiAltitude);
 		}
 
 		@Override
@@ -221,6 +228,12 @@ public class CbDb {
 			db.execSQL("DROP TABLE IF EXISTS " + APP_REGISTRATION_TABLE);
 			db.execSQL(APP_REGISTRATION_TABLE_CREATE);
 			
+			// Add support for API List Altitudes
+			if (oldVersion < 50 ) {
+				db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);
+				db.execSQL(API_LIST_TABLE_CREATE);
+			}
+			
 			// Update the current conditions table to track user contributions
 			// make a current conditions backup first
 			// Upgrading from before 4.3.0
@@ -230,13 +243,7 @@ public class CbDb {
 			}
 			
 			// Add indexes
-			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
-			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
-			String indexConditions = "Create Index IF NOT EXISTS " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
-			db.execSQL(indexObs);
-			db.execSQL(indexApi);
-			db.execSQL(indexConditions);
-		
+			createIndex(db);
 		}
 	}
 	
@@ -425,7 +432,7 @@ public class CbDb {
 			double min_lon, double max_lon, long start_time, long end_time,
 			double limit) {
 		Cursor cursor = mDB.query(false, API_LIST_TABLE, new String[] {
-				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE,
+				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE,
 				KEY_OBSERVATION_VALUE, 
 				KEY_TIME }, KEY_LATITUDE
 				+ " > ? and " + KEY_LATITUDE + " < ? and " + KEY_LONGITUDE
@@ -445,7 +452,7 @@ public class CbDb {
 			double min_lon, double max_lon, long start_time, long end_time,
 			double limit) {
 		Cursor cursor = mDB.query(false, API_LIST_TABLE, new String[] {
-				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE,
+				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE,
 				KEY_OBSERVATION_VALUE, 
 				KEY_TIME, KEY_ALTITUDE }, KEY_LATITUDE
 				+ " > ? and " + KEY_LATITUDE + " < ? and " + KEY_LONGITUDE
@@ -456,24 +463,6 @@ public class CbDb {
 		return cursor;
 	}
 
-	
-	/**
-	 * Run an API call against the API /list/ cache
-	 * 
-	 * @return
-	 */
-	public Cursor runListCacheCall(double min_lat, double max_lat,
-			double min_lon, double max_lon, long start_time, long end_time,
-			double limit) {
-		Cursor cursor = mDB.query(false, API_LIST_TABLE, new String[] {
-				KEY_ROW_ID, KEY_OBSERVATION_VALUE, KEY_TIME}, KEY_LATITUDE
-				+ " > ? and " + KEY_LATITUDE + " < ? and " + KEY_LONGITUDE
-				+ " > ? and " + KEY_LONGITUDE + " < ? and " + KEY_TIME
-				+ " > ? and " + KEY_TIME + " < ? ", new String[] {
-				min_lat + "", max_lat + "", min_lon + "", max_lon + "",
-				start_time + "", end_time + "" }, null, null, null, null);
-		return cursor;
-	}
 
 	/**
 	 * Run an "API call" against the local database
@@ -632,22 +621,7 @@ public class CbDb {
 				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION,
 				KEY_OBSERVATION_TREND }, null, null, null, null, null);
 	}
-
-	/**
-	 * Fetch every stored API observation
-	 * 
-	 * @return
-	 */
-	public Cursor fetchAllAPICacheObservations() {
-		return mDB.query(API_LIST_TABLE, new String[] { KEY_ROW_ID,
-				KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY,
-				KEY_PROVIDER, KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT,
-				KEY_OBSERVATION_VALUE, KEY_SHARING, KEY_TIME, KEY_TIMEZONE,
-				KEY_USERID, KEY_SENSOR_NAME, KEY_SENSOR_TYPE,
-				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION,
-				KEY_OBSERVATION_TREND }, null, null, null, null, null);
-	}
-
+	
 	/**
 	 * Get a single application's settings by app id
 	 * 
@@ -824,12 +798,14 @@ public class CbDb {
 				+ KEY_LATITUDE
 				+ ", "
 				+ KEY_LONGITUDE
-				+ ", "		
+				+ ", "
+				+ KEY_ALTITUDE
+				+ ", "
 				+ KEY_TIME
 				+ ", " 
 				+ KEY_OBSERVATION_VALUE
 				+ " "
-				+ ") values (?, ?, ?, ?)";
+				+ ") values (?, ?, ?, ?, ?)";
 		try {
 			SQLiteStatement insert = mDB.compileStatement(insertSQL);
 			
@@ -838,10 +814,12 @@ public class CbDb {
 				CbObservation ob = (CbObservation) weatherItem;
 				double latitude = ob.getLocation().getLatitude(); 
 				double longitude = ob.getLocation().getLongitude();
+				double altitude = ob.getLocation().getAltitude();
 				insert.bindDouble(1, latitude);
 				insert.bindDouble(2, longitude); 
-				insert.bindLong(3, ob.getTime());
-				insert.bindDouble(4, ob.getObservationValue());
+				insert.bindDouble(3, altitude);
+				insert.bindLong(4, ob.getTime());
+				insert.bindDouble(5, ob.getObservationValue());
 				insert.executeInsert();
 			}
 

@@ -1460,10 +1460,10 @@ public class CbService extends Service {
 						Location location = new Location("network");
 						location.setLatitude(cacheCursor.getDouble(1));
 						location.setLongitude(cacheCursor.getDouble(2));
-						// location.setAltitude(cacheCursor.getDouble(5));
+						location.setAltitude(cacheCursor.getDouble(3));
 						obs.setLocation(location);
-						obs.setObservationValue(cacheCursor.getDouble(3));
-						obs.setTime(cacheCursor.getLong(4));
+						obs.setObservationValue(cacheCursor.getDouble(4));
+						obs.setTime(cacheCursor.getLong(5));
 						cacheResults.add(obs);
 					}
 					

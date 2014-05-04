@@ -365,6 +365,7 @@ public class CbApi {
 		ArrayList<CbWeather> obsFromJSON = new ArrayList<CbWeather>();
 		// System.out.println("processing json result for " +
 		// apiCall.getApiName() + " call type " + apiCall.getCallType());
+		// System.out.println(resultJSON);
 		try {
 			JSONArray jsonArray = new JSONArray(resultJSON);
 			for (int i = 0; i < jsonArray.length(); i++) {
@@ -379,6 +380,9 @@ public class CbApi {
 						Location location = new Location("network");
 						location.setLatitude(jsonObject.getDouble("latitude"));
 						location.setLongitude(jsonObject.getDouble("longitude"));
+						if(jsonObject.has("altitude")) {
+							location.setAltitude(jsonObject.getDouble("altitude"));							
+						}
 						singleObs.setLocation(location);
 						obsFromJSON.add(singleObs);
 
