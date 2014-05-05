@@ -35,7 +35,12 @@ public class CbScience {
 	 * @return
 	 */
 	public static double estimateMSLP(double pressure, double altitude, double temperature) {
-		return (pressure + (.12*altitude));
+		// System.out.println("estimating mslp with pressure " + pressure + " and altitude " + altitude);
+		if(altitude!=0) {
+			return (pressure + (.12*altitude));
+		} else {
+			return pressure;
+		}
 	}
 	
 	/**
