@@ -1698,7 +1698,7 @@ public class CbService extends Service {
 					msg.replyTo.send(Message
 							.obtain(null, MSG_CONTRIBUTIONS, contrib));
 				} catch (RemoteException re) {
-					re.printStackTrace();
+					// re.printStackTrace();
 				}
 				
 				break;
@@ -1796,26 +1796,30 @@ public class CbService extends Service {
 		double maxLat = 0;
 		double minLon = 0;
 		double maxLon = 0;
-
-		Location lastKnown = locationManager.getCurrentBestLocation();
-		if(lastKnown.getLatitude() != 0) {
-			minLat = lastKnown.getLatitude() - .1;
-			maxLat = lastKnown.getLatitude() + .1;
-			minLon = lastKnown.getLongitude() - .1;
-			maxLon = lastKnown.getLongitude() + .1;
-		} else {
-			log("no location, bailing on csll");
-			return null;
+		
+		try {
+			Location lastKnown = locationManager.getCurrentBestLocation();
+			if(lastKnown.getLatitude() != 0) {
+				minLat = lastKnown.getLatitude() - .1;
+				maxLat = lastKnown.getLatitude() + .1;
+				minLon = lastKnown.getLongitude() - .1;
+				maxLon = lastKnown.getLongitude() + .1;
+			} else {
+				log("no location, bailing on csll");
+				return null;
+			}
+				
+			api.setMinLat(minLat);
+			api.setMaxLat(maxLat);
+			api.setMinLon(minLon);
+			api.setMaxLon(maxLon);
+			api.setStartTime(startTime);
+			api.setEndTime(endTime);
+			api.setLimit(500);
+			api.setCallType("Conditions");
+		} catch(NullPointerException npe) {
+			// 
 		}
-			
-		api.setMinLat(minLat);
-		api.setMaxLat(maxLat);
-		api.setMinLon(minLon);
-		api.setMaxLon(maxLon);
-		api.setStartTime(startTime);
-		api.setEndTime(endTime);
-		api.setLimit(500);
-		api.setCallType("Conditions");
 		return api;
 	}
 
