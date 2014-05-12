@@ -183,7 +183,7 @@ public class CbDb {
 	private static final int DATABASE_VERSION = 50; 
 	// 40 = 4.2.7 
 	// 41+ = 4.3.0
-	// 49-50 = 4.3.4
+	// 49-50 = 4.4
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -233,88 +233,16 @@ public class CbDb {
 				db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);
 				db.execSQL(API_LIST_TABLE_CREATE);
 			}
-			 
-			// Update the current conditions table to track user contributions
-			// TODO: make a current conditions backup first
-			// Upgrading from before 4.3.0
-			if (oldVersion<41) {
-				
-				// Backup the existing ones
-				ArrayList<CbCurrentCondition> backup = new ArrayList<CbCurrentCondition>();
-				Cursor c = db.query(CURRENT_CONDITIONS_TABLE, new String[] { KEY_ROW_ID,
-						KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY,
-						KEY_PROVIDER, KEY_SHARING, KEY_TIME, KEY_TIMEZONE, KEY_USERID,
-						KEY_GENERAL_CONDITION, KEY_WINDY, KEY_FOGGY, KEY_CLOUD_TYPE,
-						KEY_PRECIPITATION_TYPE, KEY_PRECIPITATION_AMOUNT,
-						KEY_PRECIPITATION_UNIT, KEY_THUNDERSTORM_INTENSITY,
-						KEY_USER_COMMENT }, null, null, null, null, null);
-				while(c.moveToNext()) {
-					CbCurrentCondition condition = new CbCurrentCondition();
-					Location location = new Location(c.getString(5));
-					location.setLatitude(c.getDouble(1));
-					location.setLongitude(c.getDouble(2));
-					location.setAltitude(c.getDouble(3));
-					location.setAccuracy((float)c.getDouble(4));
-					condition.setLocation(location);
-					condition.setSharing_policy(c.getString(6));
-					condition.setTime(c.getLong(7));
-					condition.setTzoffset(c.getInt(8));
-					condition.setUser_id(c.getString(9));
-					condition.setGeneral_condition(c.getString(10));
-					condition.setWindy(c.getString(11));
-					condition.setFog_thickness(c.getString(12));
-					condition.setCloud_type(c.getString(13));
-					condition.setPrecipitation_type(c.getString(14));
-					condition.setPrecipitation_amount(c.getDouble(15));
-					condition.setPrecipitation_unit(c.getString(16));
-					condition.setThunderstorm_intensity(c.getString(17));
-					condition.setUser_comment(c.getString(18));
-					backup.add(condition);
-				}
-				
-				
+			
+			// Add support for API List Altitudes
+			if (oldVersion < 41 ) {
 				db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
 				db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
-				
-				// and add them back again
-				for(CbCurrentCondition condition : backup) {
-					addCondition(db, condition);
-				}
-				
 			}
+			
 			
 			// Add indexes
 			createIndex(db);
-		}
-		
-		/**
-		 * Add a new current condition
-		 * 
-		 * @return
-		 */
-		public long addCondition(SQLiteDatabase db, CbCurrentCondition cc) {
-			ContentValues initialValues = new ContentValues();
-			initialValues.put(KEY_LATITUDE, cc.getLocation().getLatitude());
-			initialValues.put(KEY_LONGITUDE, cc.getLocation().getLongitude());
-			initialValues.put(KEY_ALTITUDE, cc.getLocation().getAltitude());
-			initialValues.put(KEY_ACCURACY, cc.getLocation().getAccuracy());
-			initialValues.put(KEY_PROVIDER, cc.getLocation().getProvider());
-			initialValues.put(KEY_SHARING, "default");
-			initialValues.put(KEY_TIME, cc.getTime());
-			initialValues.put(KEY_TIMEZONE, cc.getTzoffset());
-			initialValues.put(KEY_USERID, cc.getUser_id());
-			initialValues.put(KEY_GENERAL_CONDITION, cc.getGeneral_condition());
-			initialValues.put(KEY_WINDY, cc.getWindy());
-			initialValues.put(KEY_FOGGY, cc.getFog_thickness());
-			initialValues.put(KEY_CLOUD_TYPE, cc.getCloud_type());
-			initialValues.put(KEY_PRECIPITATION_TYPE, cc.getPrecipitation_type());
-			initialValues.put(KEY_PRECIPITATION_AMOUNT,
-					cc.getPrecipitation_amount());
-			initialValues.put(KEY_PRECIPITATION_UNIT, cc.getPrecipitation_unit());
-			initialValues.put(KEY_THUNDERSTORM_INTENSITY,
-					cc.getThunderstorm_intensity());
-			initialValues.put(KEY_USER_COMMENT, cc.getUser_comment());
-			return db.insert(CURRENT_CONDITIONS_TABLE, null, initialValues);
 		}
 	}
 	
