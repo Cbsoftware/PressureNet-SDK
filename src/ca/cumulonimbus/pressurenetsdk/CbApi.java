@@ -311,7 +311,7 @@ public class CbApi {
 					responseText = total.toString();
 				}
 			} catch (Exception e) {
-				System.out.println("api error");
+				//System.out.println("api error");
 				e.printStackTrace();
 			}
 			return responseText;

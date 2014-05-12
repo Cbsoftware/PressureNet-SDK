@@ -258,7 +258,7 @@ public class CbDb {
 		if(cursor.moveToFirst()) {
 			 packageName = cursor.getString(0);
 		}
-		System.out.println("SDKTESTS: checking primary app " + packageName.equals(localPackageName));
+		log("SDKTESTS: checking primary app " + packageName.equals(localPackageName));
 		return packageName.equals(localPackageName);
 	}
 
@@ -275,6 +275,12 @@ public class CbDb {
 	    } catch (NameNotFoundException e) {
 	        return false;
 	    }
+	}
+	
+	private void log(String message) {
+		if(CbConfiguration.DEBUG_MODE) {
+			System.out.println(message);
+		}
 	}
 	
 	/**
@@ -300,11 +306,11 @@ public class CbDb {
 		
 		for(CbRegisteredApp app : apps) {
 			boolean installed = isPackageInstalled(app.getPackageName(), mContext);
-			System.out.println("SDKTESTS: " + app.getPackageName() + " installed? " + installed);
+			log("SDKTESTS: " + app.getPackageName() + " installed? " + installed);
 			if(!installed) {
 				// TODO: fix poor SQL practices
 				mDB.execSQL("delete from " + APP_REGISTRATION_TABLE + " WHERE " + KEY_PACKAGE_NAME + " = '" + app.getPackageName() + "'");
-				System.out.println("SDKTESTS: removed uninstalled app " + app.getPackageName());
+				log("SDKTESTS: removed uninstalled app " + app.getPackageName());
 			}
 		}
 		
@@ -361,7 +367,7 @@ public class CbDb {
 	 * @return
 	 */
 	public long getAllTimeConditionCount(String id) {
-		System.out.println("all time conditions id " + id);
+		log("all time conditions id " + id);
 		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
                KEY_USERID + " = ?", new String[] {id});
 	}
@@ -923,7 +929,7 @@ public class CbDb {
 		
 		initialValues.put(KEY_REGISTRATION_TIME, registrationTime);
 		long row =  mDB.insert(APP_REGISTRATION_TABLE, null, initialValues);
-		System.out.println("SDKTESTS: CbDb adding app " + packageName);
+		log("SDKTESTS: CbDb adding app " + packageName);
 		return row;
 	}
 	
