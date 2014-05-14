@@ -23,6 +23,7 @@ public class CbScience {
 	private static final double GRAVITY = -9.80665;
 	private static final double M = 0.0289644; // Molar mass of Earth's air, km/mol
 	private static final double R_STAR = 8.31432; // universal gas constant for air; N*m /  (mol*)
+    public static final double EARTH_RADIUS = 6372.8; // In kilometers
 	
 	/**
 	 * Estimate MSLP
@@ -42,6 +43,25 @@ public class CbScience {
 			return pressure;
 		}
 	}
+	
+    /**
+     * Calculate distance in km between two points on the surface of the Earth
+     * @param lat1
+     * @param lon1
+     * @param lat2
+     * @param lon2
+     * @return
+     */
+    public static double haversine(double lat1, double lon1, double lat2, double lon2) {
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        lat1 = Math.toRadians(lat1);
+        lat2 = Math.toRadians(lat2);
+ 
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+        double c = 2 * Math.asin(Math.sqrt(a));
+        return EARTH_RADIUS * c;
+    }
 	
 	/**
 	 * Look for a recent change in trend

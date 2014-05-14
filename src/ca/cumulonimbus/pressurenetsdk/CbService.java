@@ -1749,13 +1749,15 @@ public class CbService extends Service {
 					currentConditionAPI.getStartTime(),
 					currentConditionAPI.getEndTime(), 1000);
 
-		
-			
 			while (ccCursor.moveToNext()) {
 				CbCurrentCondition cur = new CbCurrentCondition();
 				Location location = new Location("network");
-				location.setLatitude(ccCursor.getDouble(1));
-				location.setLongitude(ccCursor.getDouble(2));
+				double latitude = ccCursor.getDouble(1);
+				double longitude = ccCursor.getDouble(2);
+				location.setLatitude(latitude);
+				location.setLongitude(longitude);
+				cur.setLat(latitude);
+				cur.setLon(longitude);
 				location.setAltitude(ccCursor.getDouble(3));
 				location.setAccuracy(ccCursor.getInt(4));
 				location.setProvider(ccCursor.getString(5));

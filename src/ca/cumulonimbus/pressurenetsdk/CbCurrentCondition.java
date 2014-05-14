@@ -28,7 +28,27 @@ public class CbCurrentCondition extends CbWeather implements Serializable {
 	private String user_id = "-";
 	private String sharing_policy = "-";
 	private String user_comment = "-";
+	private double lat = 0;
+	private double lon = 0;
 	
+	
+	// We double-up on some location parameters because keeping them
+	// inside Location prevents Serialization, which is required for Notifications.
+	public double getLat() {
+		return lat;
+	}
+	
+	public void setLat(double lat) {
+		this.lat = lat;
+	}
+
+	public double getLon() {
+		return lon;
+	}
+
+	public void setLon(double lon) {
+		this.lon = lon;
+	}
 
 	public String[] getCurrentConditionAsParams() {
 		String[] params = {"daterecorded," + time, 
