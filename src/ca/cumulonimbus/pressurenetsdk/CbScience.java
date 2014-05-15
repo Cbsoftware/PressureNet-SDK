@@ -62,7 +62,43 @@ public class CbScience {
         double c = 2 * Math.asin(Math.sqrt(a));
         return EARTH_RADIUS * c;
     }
+    
+    public static double angleEstimate(double lat1, double lon1, double lat2, double lon2) {
+    	double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double tangent = dLat / dLon; 
+        return Math.toDegrees(Math.atan(tangent));
+    }
 	
+    /**
+     * 
+     * @param angle
+     * @return
+     */
+    public static String englishDirection(double angle ) {
+		if ( (angle > 0) && (angle <= 22.5) ) {
+			return "North";
+		} else if ((angle > 22.5) && (angle <= 67.5) ){
+			return "Northeast";
+		} else if ((angle > 67.5) && (angle <= 112.5) ){
+			return "East";
+		} else if ((angle > 112.5) && (angle <= 157.5) ){
+			return "Southeast";
+		} else if ((angle > 175.5) && (angle <= 202.5) ){
+			return "South";
+		} else if ((angle > 202.5) && (angle <= 247.5) ){
+			return "Southwest";
+		} else if ((angle > 247.5) && (angle <= 292.5) ){
+			return "West";
+		} else if ((angle > 292.5) && (angle <= 337.5) ){
+			return "Northwest";
+		} else if ((angle > 337.5) && (angle <= 360) ){
+			return "North";
+		} else {
+			return "";
+		}
+	}
+    
 	/**
 	 * Look for a recent change in trend
 	 */
