@@ -1674,16 +1674,6 @@ public class CbService extends Service {
 				CbApi statsApi = new CbApi(getApplicationContext());
 				statsApi.makeStatsAPICall(statsCall, service, msg.replyTo);
 				break;
-			case MSG_GET_EXTERNAL_LOCAL_EXPANDED:
-				log("cbservice getting external, local expanded conditions");
-				CbExternalWeatherData external = new CbExternalWeatherData();
-				if(locationManager != null) {
-					double latitude = locationManager.getCurrentBestLocation().getLatitude();
-					double longitude = locationManager.getCurrentBestLocation().getLongitude();
-					
-					external.getCurrentTemperatureForLocation(latitude, longitude, msg.replyTo);
-				}
-				break;
 			case MSG_GET_CONTRIBUTIONS:
 				CbContributions contrib = new CbContributions();
 				db.open();
