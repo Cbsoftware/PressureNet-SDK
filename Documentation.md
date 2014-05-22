@@ -53,6 +53,13 @@ If you prefer to manage the timing yourself and not have PressureNet service run
     intent.setAction(CbService.ACTION_SEND_MEASUREMENT);
     startService(intent);
 
+For normal operation, the SDK also requires the following permissions to be placed in your AndroidManifest.xml file:
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
 Features of the SDK include the ability to view and change settings, start and stop the service, access saved data, access the live data set and other useful methods. Simple examples are shown here, with sample source code in the [SDK Example app](github.com/CbSoftware/PressureNet-SDK-Example).
 
 Starting and Stopping
