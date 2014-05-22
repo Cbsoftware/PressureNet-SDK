@@ -39,7 +39,6 @@ import android.os.RemoteException;
 public class CbDataSender  extends AsyncTask<String, Integer, String> {
 
 	private String responseText = "";
-	private static final String PREFS_NAME = "pressureNETPrefs";
 	private CbLocationManager locationManager;
 	
 	private CbSettingsHandler settings;

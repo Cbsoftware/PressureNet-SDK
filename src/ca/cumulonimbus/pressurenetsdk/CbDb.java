@@ -384,7 +384,7 @@ public class CbDb {
 	}
 	
 	/**
-	 * This service caches data from the pressureNET API to improve app performance.
+	 * This service caches data from the PressureNet API to improve app performance.
 	 * Return the number of cached measurements. 
 	 * @return
 	 */

@@ -83,14 +83,14 @@ public class CbService extends Service {
 	public static final int MSG_DATA_STREAM = 12;
 	public static final int MSG_STOP_STREAM = 13;
 	
-	// pressureNET Live API
+	// PressureNet Live API
 	public static final int MSG_GET_LOCAL_RECENTS = 14;
 	public static final int MSG_LOCAL_RECENTS = 15;
 	public static final int MSG_GET_API_RECENTS = 16;
 	public static final int MSG_API_RECENTS = 17;
 	public static final int MSG_MAKE_API_CALL = 18;
 	public static final int MSG_API_RESULT_COUNT = 19;
-	// pressureNET API Cache
+	// PressureNet API Cache
 	public static final int MSG_CLEAR_LOCAL_CACHE = 20;
 	public static final int MSG_REMOVE_FROM_PRESSURENET = 21;
 	public static final int MSG_CLEAR_API_CACHE = 22;

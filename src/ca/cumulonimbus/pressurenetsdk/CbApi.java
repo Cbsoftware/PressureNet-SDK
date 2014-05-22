@@ -28,7 +28,7 @@ import android.os.Handler;
 import android.os.Messenger;
 
 /**
- * Make pressureNET Live API calls and manage the results locally
+ * Make PressureNet Live API calls and manage the results locally
  * 
  * @author jacob
  * 

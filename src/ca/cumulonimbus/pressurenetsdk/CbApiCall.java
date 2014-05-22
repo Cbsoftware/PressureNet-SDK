@@ -3,7 +3,7 @@ package ca.cumulonimbus.pressurenetsdk;
 import java.util.ArrayList;
 
 /**
- * Describe a call to the pressureNET Live API
+ * Describe a call to the PressureNet Live API
  * @author jacob
  *
  */
