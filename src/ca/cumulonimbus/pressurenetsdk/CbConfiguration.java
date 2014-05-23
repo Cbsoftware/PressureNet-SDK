@@ -1,7 +1,7 @@
 package ca.cumulonimbus.pressurenetsdk;
 
 /**
- * Store configurations for the pressureNET SDK
+ * Store configurations for the PressureNet SDK
  * @author jacob
  *
  */
@@ -14,7 +14,7 @@ public class CbConfiguration {
 	public static final String API_SIGNUP_URL 	= "https://pressurenet.io/developers/";
 	public static final String API_KEY 			= "YOUR_API_KEY_HERE";
 	public static final boolean DEBUG_MODE 		= true;
-	public static final String SDK_VERSION 		= "1.2";
+	public static final String SDK_VERSION 		= "1.3.1";
 	
 	// External API keys
 	public static final String EXTERNAL_URL = ""; 
