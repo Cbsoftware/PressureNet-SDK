@@ -25,9 +25,11 @@ import android.os.Handler;
 
 public class CbLocationManager {
 	private static final int TEN_MINUTES = 1000 * 60 * 10;
+	private static final int TWO_MINUTES = 1000 * 60 * 2;
 	
 	private int minDistance = 0;
 	private int minTime = TEN_MINUTES;
+	private int minTimeGPS = 1000;
 	private Context context;
 
     private LocationManager networkLocationManager;
@@ -127,14 +129,13 @@ public class CbLocationManager {
     	    public void onLocationChanged(Location location) {
     	        // Called when a new location is found by the network location provider.
 	    	    if (isBetterLocation(location)) {
-	    	    	log("found a better location " + location.getProvider());
+	    	    	log("found a better location " + location.getProvider() + " " + location.getAltitude());
 	    	    	currentBestLocation = location;
-	    	    	stopGettingLocations();
 	    	    } else {
-	    	    	log("new location, it's not any better");
-	    	    	LocationStopper stopLater = new LocationStopper();
-	    	    	mHandler.postDelayed(stopLater, 1000 * 5);
+	    	    	log("new location, it's not any better " + location.getProvider() + ", best altitude is " + currentBestLocation.getAltitude());
 	    	    }
+    	    	LocationStopper stopLater = new LocationStopper();
+    	    	mHandler.postDelayed(stopLater, 1000 * 10);
     	    }
 
     	    public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -148,7 +149,10 @@ public class CbLocationManager {
     	try {
     		networkLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, minTime, minDistance, locationListener);
     		if(settings.isUseGPS()) {
-    			gpsLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, locationListener);
+    			log("cblocationmanager starting gps location updates");
+    			gpsLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTimeGPS, minDistance, locationListener);
+    		} else {
+    			log("cblocationmanager NOT starting gps location updates");
     		}
     	} catch(Exception e) {
     		//e.printStackTrace();
@@ -165,24 +169,36 @@ public class CbLocationManager {
 	protected boolean isBetterLocation(Location location) {
 	    if (currentBestLocation == null) {
 	        // A new location is always better than no location
+	    	log("new location is always better than no location");
 	        return true;
 	    }
 
 	    // Check whether the new location fix is newer or older
 	    long timeDelta = location.getTime() - currentBestLocation.getTime();
-	    boolean isSignificantlyNewer = timeDelta > TEN_MINUTES;
-	    boolean isSignificantlyOlder = timeDelta < -TEN_MINUTES;
+	    boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
+	    boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
 	    boolean isNewer = timeDelta > 0;
-
+	    
+	    boolean hasAltitudeAdvantage = ((location.getAltitude()!=0) && (!currentBestLocation.hasAltitude()));
+	    
+	    if(hasAltitudeAdvantage) {
+	    	log("new location has altitude advantage " + location.getAltitude() + " vs " + currentBestLocation.getAltitude());
+	    	return true;
+	    }
+	   
+	    /*
 	    // If it's been more than two minutes since the current location, use the new location
 	    // because the user has likely moved
 	    if (isSignificantlyNewer) {
+	    	log("new location is significantly newer");
 	        return true;
 	    // If the new location is more than two minutes older, it must be worse
 	    } else if (isSignificantlyOlder) {
+	    	log("new location is significantly older");
 	        return false;
 	    }
-
+	    */
+	    
 	    // Check whether the new location fix is more or less accurate
 	    int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
 	    boolean isLessAccurate = accuracyDelta > 0;
@@ -192,10 +208,14 @@ public class CbLocationManager {
 	    // Check if the old and new location are from the same provider
 	    boolean isFromSameProvider = isSameProvider(location.getProvider(),
 	            currentBestLocation.getProvider());
-
-	    // Determine location quality using a combination of timeliness and accuracy
-	    if (isMoreAccurate) {
+	    
+	   
+	    
+	    // Determine location quality using a combination of timeliness, accuracy, and completeness (altitude)
+	    if (hasAltitudeAdvantage) {
 	        return true;
+	    } else if (isMoreAccurate) {
+	    	return true;
 	    } else if (isNewer && !isLessAccurate) {
 	        return true;
 	    } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {

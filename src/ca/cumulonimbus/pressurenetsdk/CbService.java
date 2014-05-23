@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -62,6 +63,7 @@ public class CbService extends Service {
 	String serverURL = CbConfiguration.SERVER_URL;
 
 	public static String ACTION_SEND_MEASUREMENT = "ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT";
+	public static String ACTION_REGISTER = "ca.cumulonimbus.pressurenetsdk.ACTION_REGISTER";
 
 	// Service Interaction API Messages
 	public static final int MSG_OKAY = 0;
@@ -81,14 +83,14 @@ public class CbService extends Service {
 	public static final int MSG_DATA_STREAM = 12;
 	public static final int MSG_STOP_STREAM = 13;
 	
-	// pressureNET Live API
+	// PressureNet Live API
 	public static final int MSG_GET_LOCAL_RECENTS = 14;
 	public static final int MSG_LOCAL_RECENTS = 15;
 	public static final int MSG_GET_API_RECENTS = 16;
 	public static final int MSG_API_RECENTS = 17;
 	public static final int MSG_MAKE_API_CALL = 18;
 	public static final int MSG_API_RESULT_COUNT = 19;
-	// pressureNET API Cache
+	// PressureNet API Cache
 	public static final int MSG_CLEAR_LOCAL_CACHE = 20;
 	public static final int MSG_REMOVE_FROM_PRESSURENET = 21;
 	public static final int MSG_CLEAR_API_CACHE = 22;
@@ -122,6 +124,11 @@ public class CbService extends Service {
 	// User contributions summary
 	public static final int MSG_GET_CONTRIBUTIONS = 43;
 	public static final int MSG_CONTRIBUTIONS = 44;	
+	// Database info, test suites/debugging
+	public static final int MSG_GET_DATABASE_INFO = 45;
+	// Multitenancy Support
+	public static final int MSG_GET_PRIMARY_APP = 46;
+	public static final int MSG_IS_PRIMARY = 47;
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -247,7 +254,7 @@ public class CbService extends Service {
 					if (pressureSensor != null) {
 						log("cbservice sensor SDK " + android.os.Build.VERSION.SDK_INT + "");
 						if(android.os.Build.VERSION.SDK_INT == 19) {
-							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI, 100000);
+							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI); // , 100000);
 						} else {
 							collecting = sm.registerListener(this, pressureSensor,SensorManager.SENSOR_DELAY_UI);
 						}
@@ -500,10 +507,6 @@ public class CbService extends Service {
 			pressureObservation = buildPressureObservation();
 			pressureObservation.setLocation(locationManager
 					.getCurrentBestLocation());
-
-			// stop listening for locations
-			LocationStopper stop = new LocationStopper();
-			mHandler.postDelayed(stop, 1000 * 3);
 
 			log("returning pressure obs: "
 					+ pressureObservation.getObservationValue());
@@ -1034,6 +1037,7 @@ public class CbService extends Service {
 	public void onDestroy() {
 		log("cbservice on destroy");
 		stopAutoSubmit();
+		unregisterReceiver(receiver);
 		super.onDestroy();
 	}
 
@@ -1045,9 +1049,21 @@ public class CbService extends Service {
 		settingsHandler.getSettings();
 		db = new CbDb(getApplicationContext());
 		fromUser = false;
+		
+		prepForRegistration();
+		
 		super.onCreate();
 	}
-
+	
+	/**
+	 * SDK registration
+	 */
+	private void prepForRegistration() {
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(CbService.ACTION_REGISTER);
+		registerReceiver(receiver, filter);
+	}
+	
 	/**
 	 * Check charge state for preferences.
 	 * 
@@ -1064,7 +1080,45 @@ public class CbService extends Service {
 				|| status == BatteryManager.BATTERY_STATUS_FULL;
 		return isCharging;
 	}
+	
+	/**
+	 * Each app registers with the SDK. Send the package name
+	 * to 
+	 */
+	private void sendRegistrationInfo() {
+		log("SDKTESTS: sending registration info");
+		Intent intent = new Intent(ACTION_REGISTER);
+		intent.putExtra("packagename", getApplicationContext().getPackageName());
+		intent.putExtra("time", System.currentTimeMillis());
+		sendBroadcast(intent);
+	}
 
+	private final BroadcastReceiver receiver = new BroadcastReceiver() {
+	   @Override
+	   public void onReceive(Context context, Intent intent) {
+		   String action = intent.getAction();
+		   if (action.equals(ACTION_REGISTER)) {
+			   String registeredName = intent.getStringExtra("packagename");
+			   Long registeredTime = intent.getLongExtra("time", 0);
+			   log("SDKTESTS: registering " + registeredName + " registered at " + registeredTime);
+			   
+			   // addRegistration
+			   db.open();
+			   db.addRegistration(registeredName, registeredTime);
+
+			   
+			   // check status
+			   if(db.isPrimaryApp()) {
+				   log("SDKTESTS: " + getApplicationContext().getPackageName() + " is primary");
+			   } else {
+				   log("SDKTESTS: " + getApplicationContext().getPackageName() + " is not primary");
+			   }
+			   
+			   db.close();			   
+		   }
+	   }
+	};
+	
 	/**
 	 * Start running background data collection methods.
 	 * 
@@ -1100,13 +1154,16 @@ public class CbService extends Service {
 						log("sending single observation, request from intent");
 						sendSingleObs();
 						return START_NOT_STICKY;
-					}
+					} 
 				} else if (intent.getBooleanExtra("alarm", false)) {
 					// This runs when the service is started from the alarm.
 					// Submit a data point
 					log("cbservice alarm firing, sending data");
 					settingsHandler = new CbSettingsHandler(getApplicationContext());
 					settingsHandler = settingsHandler.getSettings();
+					
+					removeOldSDKApps();
+					sendRegistrationInfo();
 					
 					
 					if(settingsHandler.isSharingData()) {
@@ -1120,6 +1177,7 @@ public class CbService extends Service {
 					mHandler.postDelayed(stop, 1000 * 3);
 					return START_NOT_STICKY;
 				} else {
+				
 					// Check the database
 					
 					log("starting service with db");
@@ -1134,7 +1192,19 @@ public class CbService extends Service {
 		super.onStartCommand(intent, flags, startId);
 		return START_NOT_STICKY;
 	}
-
+	
+	public void removeAllUninstalledApps() {
+		db.open();
+		
+		db.close();
+	}
+	
+	private void removeOldSDKApps() {
+		db.open();
+		db.removeOldSDKApps(1);
+		db.close();
+	}
+	
 	/**
 	 * Convert time ago text to ms. TODO: not this. values in xml.
 	 * 
@@ -1272,7 +1342,7 @@ public class CbService extends Service {
 				}
 				break;
 			case MSG_GET_BEST_LOCATION:
-				log("message. bound service requesting location");
+				log("cbservice message. bound service requesting location");
 				if (locationManager != null) {
 					Location best = locationManager.getCurrentBestLocation();
 					try {
@@ -1390,9 +1460,10 @@ public class CbService extends Service {
 						Location location = new Location("network");
 						location.setLatitude(cacheCursor.getDouble(1));
 						location.setLongitude(cacheCursor.getDouble(2));
+						location.setAltitude(cacheCursor.getDouble(3));
 						obs.setLocation(location);
-						obs.setObservationValue(cacheCursor.getDouble(3));
-						obs.setTime(cacheCursor.getLong(4));
+						obs.setObservationValue(cacheCursor.getDouble(4));
+						obs.setTime(cacheCursor.getLong(5));
 						cacheResults.add(obs);
 					}
 					
@@ -1603,16 +1674,6 @@ public class CbService extends Service {
 				CbApi statsApi = new CbApi(getApplicationContext());
 				statsApi.makeStatsAPICall(statsCall, service, msg.replyTo);
 				break;
-			case MSG_GET_EXTERNAL_LOCAL_EXPANDED:
-				log("cbservice getting external, local expanded conditions");
-				CbExternalWeatherData external = new CbExternalWeatherData();
-				if(locationManager != null) {
-					double latitude = locationManager.getCurrentBestLocation().getLatitude();
-					double longitude = locationManager.getCurrentBestLocation().getLongitude();
-					
-					external.getCurrentTemperatureForLocation(latitude, longitude, msg.replyTo);
-				}
-				break;
 			case MSG_GET_CONTRIBUTIONS:
 				CbContributions contrib = new CbContributions();
 				db.open();
@@ -1627,9 +1688,38 @@ public class CbService extends Service {
 					msg.replyTo.send(Message
 							.obtain(null, MSG_CONTRIBUTIONS, contrib));
 				} catch (RemoteException re) {
-					re.printStackTrace();
+					// re.printStackTrace();
 				}
 				
+				break;
+			case MSG_GET_DATABASE_INFO:
+				db.open();
+				long localObsCount = db.getUserDataCount();
+				db.close();
+				log("SDKTESTS: CbService says localObsCount is " + localObsCount);
+			    /*
+				try {
+					
+					msg.replyTo.send(Message.obtain(null,
+							MSG_COUNT_LOCAL_OBS_TOTALS,
+							(int) countLocalObsOnly2, 0));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+				*/
+				break;
+			case MSG_GET_PRIMARY_APP:
+				db.open();
+				boolean primary = db.isPrimaryApp();
+				int p = (primary==true) ? 1 : 0;
+				db.close();
+				try {
+					
+					msg.replyTo.send(Message.obtain(null,
+							MSG_IS_PRIMARY, p, 0));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
 				break;
 			default:
 				super.handleMessage(msg);
@@ -1649,13 +1739,15 @@ public class CbService extends Service {
 					currentConditionAPI.getStartTime(),
 					currentConditionAPI.getEndTime(), 1000);
 
-		
-			
 			while (ccCursor.moveToNext()) {
 				CbCurrentCondition cur = new CbCurrentCondition();
 				Location location = new Location("network");
-				location.setLatitude(ccCursor.getDouble(1));
-				location.setLongitude(ccCursor.getDouble(2));
+				double latitude = ccCursor.getDouble(1);
+				double longitude = ccCursor.getDouble(2);
+				location.setLatitude(latitude);
+				location.setLongitude(longitude);
+				cur.setLat(latitude);
+				cur.setLon(longitude);
 				location.setAltitude(ccCursor.getDouble(3));
 				location.setAccuracy(ccCursor.getInt(4));
 				location.setProvider(ccCursor.getString(5));
@@ -1696,26 +1788,30 @@ public class CbService extends Service {
 		double maxLat = 0;
 		double minLon = 0;
 		double maxLon = 0;
-
-		Location lastKnown = locationManager.getCurrentBestLocation();
-		if(lastKnown.getLatitude() != 0) {
-			minLat = lastKnown.getLatitude() - .1;
-			maxLat = lastKnown.getLatitude() + .1;
-			minLon = lastKnown.getLongitude() - .1;
-			maxLon = lastKnown.getLongitude() + .1;
-		} else {
-			log("no location, bailing on csll");
-			return null;
+		
+		try {
+			Location lastKnown = locationManager.getCurrentBestLocation();
+			if(lastKnown.getLatitude() != 0) {
+				minLat = lastKnown.getLatitude() - .1;
+				maxLat = lastKnown.getLatitude() + .1;
+				minLon = lastKnown.getLongitude() - .1;
+				maxLon = lastKnown.getLongitude() + .1;
+			} else {
+				log("no location, bailing on csll");
+				return null;
+			}
+				
+			api.setMinLat(minLat);
+			api.setMaxLat(maxLat);
+			api.setMinLon(minLon);
+			api.setMaxLon(maxLon);
+			api.setStartTime(startTime);
+			api.setEndTime(endTime);
+			api.setLimit(500);
+			api.setCallType("Conditions");
+		} catch(NullPointerException npe) {
+			// 
 		}
-			
-		api.setMinLat(minLat);
-		api.setMaxLat(maxLat);
-		api.setMinLon(minLon);
-		api.setMaxLon(maxLon);
-		api.setStartTime(startTime);
-		api.setEndTime(endTime);
-		api.setLimit(500);
-		api.setCallType("Conditions");
 		return api;
 	}
 

@@ -4,7 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 
 /**
- * Use Preferences to hold core pressureNET settings
+ * Use Preferences to hold core PressureNet settings
  * Wrap and be compatible with Android Preferences
  * Collection and Submission Frequency, Privacy controls
  * 

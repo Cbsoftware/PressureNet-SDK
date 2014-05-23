@@ -1,11 +1,12 @@
 package ca.cumulonimbus.pressurenetsdk;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Random;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
@@ -13,7 +14,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.provider.Settings.Secure;
+import android.location.Location;
 
 /**
  * Keep track of app settings, as this SDK may be used by more than one app on a
@@ -31,6 +32,7 @@ public class CbDb {
 	public static final String OBSERVATIONS_TABLE = "cb_observations";
 	public static final String CURRENT_CONDITIONS_TABLE = "cb_current_conditions";
 	public static final String API_LIST_TABLE = "cb_api_list";
+	public static final String APP_REGISTRATION_TABLE = "cb_registration";
 	
 	// Settings Fields
 	public static final String KEY_ROW_ID = "_id";
@@ -84,6 +86,10 @@ public class CbDb {
 	
 	public static final String KEY_USE_GPS = "use_gps";
 	
+	// APP_REGISTRATION_TABLE 
+	public static final String KEY_REGISTRATION_TIME = "registration_time";
+	public static final String KEY_PACKAGE_NAME = "package_name";
+	
 	private Context mContext;
 
 	private DatabaseHelper mDbHelper;
@@ -123,8 +129,9 @@ public class CbDb {
 	private static final String API_LIST_TABLE_CREATE = "create table "
 			+ API_LIST_TABLE + " (_id integer primary key autoincrement, "
 			+ KEY_LATITUDE + " real not null, " 
-			+ KEY_LONGITUDE + " real not null, " + KEY_TIME
-			+ " real not null, " + KEY_OBSERVATION_VALUE
+			+ KEY_LONGITUDE + " real not null, " 
+			+ KEY_ALTITUDE + " real not null, " 			
+			+ KEY_TIME + " real not null, " + KEY_OBSERVATION_VALUE
 			+ " real not null, UNIQUE (" + KEY_OBSERVATION_VALUE +", " + KEY_TIME + ") ON CONFLICT REPLACE)";
 
 	private static final String CURRENT_CONDITIONS_TABLE_CREATE = "create table "
@@ -168,10 +175,15 @@ public class CbDb {
 			+ ", " + KEY_LONGITUDE + "," + KEY_TIME + ","
 			+ KEY_GENERAL_CONDITION + ") ON CONFLICT IGNORE)";
 
+	private static final String APP_REGISTRATION_TABLE_CREATE = "create table "
+			+ APP_REGISTRATION_TABLE + " (_id integer primary key autoincrement, "
+			+ KEY_PACKAGE_NAME + " text not null, " + KEY_REGISTRATION_TIME + " real not null, UNIQUE ( " + KEY_PACKAGE_NAME  + ") ON CONFLICT IGNORE)";
+	
 	private static final String DATABASE_NAME = "CbDb";
-	private static final int DATABASE_VERSION = 48; 
+	private static final int DATABASE_VERSION = 50; 
 	// 40 = 4.2.7 
 	// 41+ = 4.3.0
+	// 49-50 = 4.4
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -185,13 +197,20 @@ public class CbDb {
 			db.execSQL(OBSERVATIONS_TABLE_CREATE);
 			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
 			db.execSQL(API_LIST_TABLE_CREATE);
+			db.execSQL(APP_REGISTRATION_TABLE_CREATE);
 			
+			createIndex(db);
+		}
+		
+		private void createIndex(SQLiteDatabase db) {
 			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
 			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
 			String indexConditions = "Create Index IF NOT EXISTS " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
+			String indexApiAltitude = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_ALTITUDE + ")";
 			db.execSQL(indexObs);
 			db.execSQL(indexApi);
 			db.execSQL(indexConditions);
+			db.execSQL(indexApiAltitude);
 		}
 
 		@Override
@@ -205,18 +224,97 @@ public class CbDb {
 			onCreate(db);
 			*/
 			
-			// Update the current conditions table to track user contributions
-			db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
-			db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
+			// TODO: Only add this after checking oldVersion and newVersion
+			db.execSQL("DROP TABLE IF EXISTS " + APP_REGISTRATION_TABLE);
+			db.execSQL(APP_REGISTRATION_TABLE_CREATE);
+			
+			// Add support for API List Altitudes
+			if (oldVersion < 50 ) {
+				db.execSQL("DROP TABLE IF EXISTS " + API_LIST_TABLE);
+				db.execSQL(API_LIST_TABLE_CREATE);
+			}
+			
+			// Add support for API List Altitudes
+			if (oldVersion < 41 ) {
+				db.execSQL("DROP TABLE IF EXISTS " + CURRENT_CONDITIONS_TABLE);
+				db.execSQL(CURRENT_CONDITIONS_TABLE_CREATE);
+			}
+			
+			
 			// Add indexes
-			String indexObs = "Create Index IF NOT EXISTS " + OBSERVATIONS_TABLE_IDX + " ON " + OBSERVATIONS_TABLE + "(" + KEY_TIME + ")";
-			String indexApi = "Create Index IF NOT EXISTS " + API_LIST_IDX + " ON " + API_LIST_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
-			String indexConditions = "Create Index IF NOT EXISTS " + CONDITIONS_IDX + " ON " + CURRENT_CONDITIONS_TABLE + "(" + KEY_TIME + ", " + KEY_LATITUDE + ", " + KEY_LONGITUDE + ")";
-			db.execSQL(indexObs);
-			db.execSQL(indexApi);
-			db.execSQL(indexConditions);
-		
+			createIndex(db);
 		}
+	}
+	
+	/**
+	 * Check the oldest registered package name
+	 * and compare to our package name.
+	 * @return
+	 */
+	public boolean isPrimaryApp() {
+		String localPackageName = mContext.getPackageName();
+		Cursor cursor = mDB.query(APP_REGISTRATION_TABLE, new String[] {KEY_PACKAGE_NAME}, null, null, null, null, KEY_REGISTRATION_TIME + " ASC");
+		String packageName = "";
+		if(cursor.moveToFirst()) {
+			 packageName = cursor.getString(0);
+		}
+		log("SDKTESTS: checking primary app " + packageName.equals(localPackageName));
+		return packageName.equals(localPackageName);
+	}
+
+	private Cursor getAppsList() {
+		return mDB.query(APP_REGISTRATION_TABLE, new String[] {KEY_PACKAGE_NAME, KEY_REGISTRATION_TIME}, null, null, null, null, KEY_REGISTRATION_TIME + " ASC");
+	}
+	
+
+	private boolean isPackageInstalled(String packagename, Context context) {
+	    PackageManager pm = context.getPackageManager();
+	    try {
+	        pm.getPackageInfo(packagename, PackageManager.GET_ACTIVITIES);
+	        return true;
+	    } catch (NameNotFoundException e) {
+	        return false;
+	    }
+	}
+	
+	private void log(String message) {
+		if(CbConfiguration.DEBUG_MODE) {
+			System.out.println(message);
+		}
+	}
+	
+	/**
+	 * If an SDK App has not been active for the last 
+	 * X days, remove it from the list and allow other 
+	 * apps to take precedence
+	 */
+	public void removeOldSDKApps(int days) {
+		// remove old apps
+		long timeAgo = System.currentTimeMillis() - (days * 24 * 60 * 60 * 1000);
+		mDB.execSQL("delete from " + APP_REGISTRATION_TABLE + " WHERE " + KEY_REGISTRATION_TIME + " < " + timeAgo);
+		
+		// Remove uninstalled apps
+		Cursor c = getAppsList();
+		ArrayList<CbRegisteredApp> apps = new ArrayList<CbRegisteredApp>();
+		while(c.moveToNext()) {
+			CbRegisteredApp app = new CbRegisteredApp();
+			// TODO: fix these constants
+			app.setPackageName(c.getString(0));
+			app.setRegistrationTime(c.getLong(1));
+			apps.add(app);
+		}
+		
+		for(CbRegisteredApp app : apps) {
+			boolean installed = isPackageInstalled(app.getPackageName(), mContext);
+			log("SDKTESTS: " + app.getPackageName() + " installed? " + installed);
+			if(!installed) {
+				// TODO: fix poor SQL practices
+				mDB.execSQL("delete from " + APP_REGISTRATION_TABLE + " WHERE " + KEY_PACKAGE_NAME + " = '" + app.getPackageName() + "'");
+				log("SDKTESTS: removed uninstalled app " + app.getPackageName());
+			}
+		}
+		
+		
 	}
 	
 	/**
@@ -269,7 +367,7 @@ public class CbDb {
 	 * @return
 	 */
 	public long getAllTimeConditionCount(String id) {
-		System.out.println("all time conditions id " + id);
+		log("all time conditions id " + id);
 		return DatabaseUtils.queryNumEntries(mDB,  CURRENT_CONDITIONS_TABLE,
                KEY_USERID + " = ?", new String[] {id});
 	}
@@ -286,7 +384,7 @@ public class CbDb {
 	}
 	
 	/**
-	 * This service caches data from the pressureNET API to improve app performance.
+	 * This service caches data from the PressureNet API to improve app performance.
 	 * Return the number of cached measurements. 
 	 * @return
 	 */
@@ -339,7 +437,7 @@ public class CbDb {
 			double min_lon, double max_lon, long start_time, long end_time,
 			double limit) {
 		Cursor cursor = mDB.query(false, API_LIST_TABLE, new String[] {
-				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE,
+				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE,
 				KEY_OBSERVATION_VALUE, 
 				KEY_TIME }, KEY_LATITUDE
 				+ " > ? and " + KEY_LATITUDE + " < ? and " + KEY_LONGITUDE
@@ -349,25 +447,27 @@ public class CbDb {
 				start_time + "", end_time + "" }, null, null, null, null);
 		return cursor;
 	}
-
 	
 	/**
-	 * Run an API call against the API /list/ cache
+	 * Run an API call against the API cache
 	 * 
 	 * @return
 	 */
-	public Cursor runListCacheCall(double min_lat, double max_lat,
+	public Cursor runAPICacheCallAltitudes(double min_lat, double max_lat,
 			double min_lon, double max_lon, long start_time, long end_time,
 			double limit) {
 		Cursor cursor = mDB.query(false, API_LIST_TABLE, new String[] {
-				KEY_ROW_ID, KEY_OBSERVATION_VALUE, KEY_TIME}, KEY_LATITUDE
+				KEY_ROW_ID, KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE,
+				KEY_OBSERVATION_VALUE, 
+				KEY_TIME, KEY_ALTITUDE }, KEY_LATITUDE
 				+ " > ? and " + KEY_LATITUDE + " < ? and " + KEY_LONGITUDE
 				+ " > ? and " + KEY_LONGITUDE + " < ? and " + KEY_TIME
-				+ " > ? and " + KEY_TIME + " < ? ", new String[] {
+				+ " > ? and " + KEY_TIME + " < ? and " + KEY_ALTITUDE + " > 0", new String[] {
 				min_lat + "", max_lat + "", min_lon + "", max_lon + "",
 				start_time + "", end_time + "" }, null, null, null, null);
 		return cursor;
 	}
+
 
 	/**
 	 * Run an "API call" against the local database
@@ -526,22 +626,7 @@ public class CbDb {
 				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION,
 				KEY_OBSERVATION_TREND }, null, null, null, null, null);
 	}
-
-	/**
-	 * Fetch every stored API observation
-	 * 
-	 * @return
-	 */
-	public Cursor fetchAllAPICacheObservations() {
-		return mDB.query(API_LIST_TABLE, new String[] { KEY_ROW_ID,
-				KEY_LATITUDE, KEY_LONGITUDE, KEY_ALTITUDE, KEY_ACCURACY,
-				KEY_PROVIDER, KEY_OBSERVATION_TYPE, KEY_OBSERVATION_UNIT,
-				KEY_OBSERVATION_VALUE, KEY_SHARING, KEY_TIME, KEY_TIMEZONE,
-				KEY_USERID, KEY_SENSOR_NAME, KEY_SENSOR_TYPE,
-				KEY_SENSOR_VENDOR, KEY_SENSOR_RESOLUTION, KEY_SENSOR_VERSION,
-				KEY_OBSERVATION_TREND }, null, null, null, null, null);
-	}
-
+	
 	/**
 	 * Get a single application's settings by app id
 	 * 
@@ -612,13 +697,13 @@ public class CbDb {
 			addObservationArrayList(results, api);
 		} else {
 			// TODO: fudge current conditions locations too
-			addCurrentConditionArrayList(results, api);
+			addCurrentConditionArrayList(results);
 		}
 
 		return true;
 	}
 
-	public boolean addCurrentConditionArrayList(ArrayList<CbWeather> weather, CbApiCall api) {
+	public boolean addCurrentConditionArrayList(ArrayList<CbWeather> weather) {
 
 		
 		try {
@@ -718,12 +803,14 @@ public class CbDb {
 				+ KEY_LATITUDE
 				+ ", "
 				+ KEY_LONGITUDE
-				+ ", "		
+				+ ", "
+				+ KEY_ALTITUDE
+				+ ", "
 				+ KEY_TIME
 				+ ", " 
 				+ KEY_OBSERVATION_VALUE
 				+ " "
-				+ ") values (?, ?, ?, ?)";
+				+ ") values (?, ?, ?, ?, ?)";
 		try {
 			SQLiteStatement insert = mDB.compileStatement(insertSQL);
 			
@@ -732,10 +819,12 @@ public class CbDb {
 				CbObservation ob = (CbObservation) weatherItem;
 				double latitude = ob.getLocation().getLatitude(); 
 				double longitude = ob.getLocation().getLongitude();
+				double altitude = ob.getLocation().getAltitude();
 				insert.bindDouble(1, latitude);
 				insert.bindDouble(2, longitude); 
-				insert.bindLong(3, ob.getTime());
-				insert.bindDouble(4, ob.getObservationValue());
+				insert.bindDouble(3, altitude);
+				insert.bindLong(4, ob.getTime());
+				insert.bindDouble(5, ob.getObservationValue());
 				insert.executeInsert();
 			}
 
@@ -823,7 +912,27 @@ public class CbDb {
 		}
 		return -1;
 	}
+	
+	
 
+	/**
+	 * Add new registration for an application
+	 * 
+	 * @param packageName
+	 * @param registrationTime
+	 * @return
+	 */
+	public long addRegistration(String packageName, long registrationTime) {
+
+		ContentValues initialValues = new ContentValues();
+		initialValues.put(KEY_PACKAGE_NAME, packageName);
+		
+		initialValues.put(KEY_REGISTRATION_TIME, registrationTime);
+		long row =  mDB.insert(APP_REGISTRATION_TABLE, null, initialValues);
+		log("SDKTESTS: CbDb adding app " + packageName);
+		return row;
+	}
+	
 	/**
 	 * Add new settings for an application
 	 * 
