@@ -60,7 +60,9 @@ public class CbScience {
  
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
         double c = 2 * Math.asin(Math.sqrt(a));
-        return EARTH_RADIUS * c;
+        double kmReturn = EARTH_RADIUS * c;
+        double mReturn = kmReturn * 1000;
+        return mReturn;
     }
     
     public static double angleEstimate(double lat1, double lon1, double lat2, double lon2) {
