@@ -72,12 +72,22 @@ public class CbScience {
         return Math.toDegrees(Math.atan(tangent));
     }
 	
+    private static void log(String message) {
+    	if(CbConfiguration.DEBUG_MODE) {
+    		System.out.println(message);
+    	}
+    }
+    
     /**
      * 
      * @param angle
      * @return
      */
     public static String englishDirection(double angle ) {
+    	if(angle < 0) {
+    		angle = 360 - Math.abs(angle);
+    	}
+    	log("english direction input " + angle);
 		if ( (angle > 0) && (angle <= 22.5) ) {
 			return "North";
 		} else if ((angle > 22.5) && (angle <= 67.5) ){
@@ -86,7 +96,7 @@ public class CbScience {
 			return "East";
 		} else if ((angle > 112.5) && (angle <= 157.5) ){
 			return "Southeast";
-		} else if ((angle > 175.5) && (angle <= 202.5) ){
+		} else if ((angle > 157.5) && (angle <= 202.5) ){
 			return "South";
 		} else if ((angle > 202.5) && (angle <= 247.5) ){
 			return "Southwest";
