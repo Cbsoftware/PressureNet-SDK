@@ -630,8 +630,16 @@ public class CbService extends Service {
 				log("cbservice readingsender too soon, bailing");
 				return;
 			}
-			
-			
+	
+			// limit the Nexus 5
+			// Hack to minimize sensor issues
+			if(Build.MODEL.equals("Nexus 5")) {
+				long n5Limit = 1000 * 60 * 60 * 1;
+				if(now - lastSubmit < (n5Limit)) {
+					log("Nexus 5 submitting too frequently, bailing");
+					return;
+				}			
+			}
 			
 			// retrieve updated settings
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
