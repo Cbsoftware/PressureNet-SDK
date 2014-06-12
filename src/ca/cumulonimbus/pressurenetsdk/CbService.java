@@ -630,15 +630,15 @@ public class CbService extends Service {
 				log("cbservice readingsender too soon, bailing");
 				return;
 			}
-			
+	
 			// limit the Nexus 5
 			// Hack to minimize sensor issues
 			if(Build.MODEL.equals("Nexus 5")) {
-				long n5Limit = 1000 * 60 * 60 * 2;
+				long n5Limit = 1000 * 60 * 60 * 1;
 				if(now - lastSubmit < (n5Limit)) {
 					log("Nexus 5 submitting too frequently, bailing");
 					return;
-				}
+				}			
 			}
 			
 			// retrieve updated settings
@@ -1222,6 +1222,8 @@ public class CbService extends Service {
 			return 1000 * 60 * 30;
 		} else if (timeAgo.equals("1 hour")) {
 			return 1000 * 60 * 60;
+		} else if (timeAgo.equals("3 hours")) {
+			return 1000 * 60 * 60 * 3;
 		} else if(timeAgo.equals("6 hours")) {
 			return 1000 * 60 * 60 * 6;
 		} else if(timeAgo.equals("12 hours")) {
