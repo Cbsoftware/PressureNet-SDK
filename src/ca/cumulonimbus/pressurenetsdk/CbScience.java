@@ -65,13 +65,24 @@ public class CbScience {
         return mReturn;
     }
     
-    public static double angleEstimate(double lat1, double lon1, double lat2, double lon2) {
-    	double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double tangent = dLat / dLon; 
-        return Math.toDegrees(Math.atan(tangent));
+    public static double angle(double lat1, double long1, double lat2,
+            double long2) {
+
+        double dLon = Math.toRadians(long2 - long1);
+
+        double y = Math.sin(dLon) * Math.cos(lat2);
+        double x = (Math.cos(lat1) * Math.sin(lat2)) - (Math.sin(lat1)
+                * Math.cos(lat2) * Math.cos(dLon));
+
+        double brng = Math.atan2(y, x);
+
+        brng = Math.toDegrees(brng);
+        brng = (brng + 360) % 360;
+        brng = 360 - brng;
+
+        return brng;
     }
-	
+    
     private static void log(String message) {
     	if(CbConfiguration.DEBUG_MODE) {
     		System.out.println(message);
@@ -84,9 +95,6 @@ public class CbScience {
      * @return
      */
     public static String englishDirection(double angle ) {
-    	if(angle < 0) {
-    		angle = 360 - Math.abs(angle);
-    	}
     	log("english direction input " + angle);
 		if ( (angle > 0) && (angle <= 22.5) ) {
 			return "North";
