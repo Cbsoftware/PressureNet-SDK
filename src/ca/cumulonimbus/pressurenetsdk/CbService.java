@@ -129,6 +129,10 @@ public class CbService extends Service {
 	// Multitenancy Support
 	public static final int MSG_GET_PRIMARY_APP = 46;
 	public static final int MSG_IS_PRIMARY = 47;
+	// Localized Current conditions
+	public static final int MSG_GET_LOCAL_CONDITIONS = 48;
+	public static final int MSG_LOCAL_CONDITIONS = 49;
+	
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -631,15 +635,6 @@ public class CbService extends Service {
 				return;
 			}
 	
-			// limit the Nexus 5
-			// Hack to minimize sensor issues
-			if(Build.MODEL.equals("Nexus 5")) {
-				long n5Limit = 1000 * 60 * 60 * 1;
-				if(now - lastSubmit < (n5Limit)) {
-					log("Nexus 5 submitting too frequently, bailing");
-					return;
-				}			
-			}
 			
 			// retrieve updated settings
 			settingsHandler = new CbSettingsHandler(getApplicationContext());
@@ -1719,6 +1714,17 @@ public class CbService extends Service {
 					
 					msg.replyTo.send(Message.obtain(null,
 							MSG_IS_PRIMARY, p, 0));
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+				break;
+			case MSG_GET_LOCAL_CONDITIONS:
+				recentMsg = msg;
+				CbApiCall localConditionsAPI = buildLocalCurrentConditionsCall(2);
+				ArrayList<CbCurrentCondition> localCurrentConditions = getCurrentConditionsFromLocalAPI(localConditionsAPI);
+				try {
+					msg.replyTo.send(Message.obtain(null,
+							MSG_LOCAL_CONDITIONS, localCurrentConditions));
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}

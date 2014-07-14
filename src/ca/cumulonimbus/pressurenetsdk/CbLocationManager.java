@@ -179,13 +179,7 @@ public class CbLocationManager {
 	    boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
 	    boolean isNewer = timeDelta > 0;
 	    
-	    boolean hasAltitudeAdvantage = ((location.getAltitude()!=0) && (!currentBestLocation.hasAltitude()));
-	    
-	    if(hasAltitudeAdvantage) {
-	    	log("new location has altitude advantage " + location.getAltitude() + " vs " + currentBestLocation.getAltitude());
-	    	return true;
-	    }
-	   
+	
 	    /*
 	    // If it's been more than two minutes since the current location, use the new location
 	    // because the user has likely moved
@@ -212,9 +206,7 @@ public class CbLocationManager {
 	   
 	    
 	    // Determine location quality using a combination of timeliness, accuracy, and completeness (altitude)
-	    if (hasAltitudeAdvantage) {
-	        return true;
-	    } else if (isMoreAccurate) {
+	    if (isMoreAccurate) {
 	    	return true;
 	    } else if (isNewer && !isLessAccurate) {
 	        return true;
