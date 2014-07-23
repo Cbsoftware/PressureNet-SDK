@@ -898,7 +898,6 @@ public class CbDb {
 			initialValues.put(KEY_TIME, observation.getTime());
 			initialValues.put(KEY_TIMEZONE, observation.getTimeZoneOffset());
 			initialValues.put(KEY_USERID, observation.getUser_id());
-			initialValues.put(KEY_OBSERVATION_TREND, observation.getTrend());
 			/*
 			listValues.put(KEY_LATITUDE, observation.getLocation().getLatitude());
 			listValues.put(KEY_LONGITUDE, observation.getLocation().getLongitude());

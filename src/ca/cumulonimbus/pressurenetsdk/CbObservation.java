@@ -27,10 +27,9 @@ public class CbObservation extends CbWeather {
 	private long timeZoneOffset = 0;
 	private String clientKey = "";
 
-	private Date jDate;
-	private String trend = "";
-
 	private String versionNumber = "";
+	private String packageName = "";
+	
 	
 	@Override
 	public String toString() {
@@ -42,9 +41,11 @@ public class CbObservation extends CbWeather {
 				+ observationType + "\n" + "observation_unit,"
 				+ observationUnit + "\n" + "observation_value,"
 				+ observationValue + "\n" + "sharing," + sharing + "\n"
-				+ "time," + time + "\n" + "timezone," + timeZoneOffset + "\n"
+				+ "time," + time + "\n" 
+				+ "timezone," + timeZoneOffset + "\n"
 				+ "user_id," + user_id + "\n" 
-				+ "version_number," + versionNumber + "\n";
+				+ "version_number," + versionNumber + "\n"
+				+ "package_name," + packageName + "\n";
 	}
 
 	public String[] getObservationAsParams() {
@@ -59,11 +60,22 @@ public class CbObservation extends CbWeather {
 				"daterecorded," + time, "tzoffset," + timeZoneOffset,
 				"user_id," + user_id, "client_key," + clientKey,
 				"reading_accuracy," + 0.0,
-				"version_number," + versionNumber
+				"version_number," + versionNumber,
+				"package_name" + packageName
 		};
 		return params;
 	}
 	
+	
+	
+	public String getPackageName() {
+		return packageName;
+	}
+
+	public void setPackageName(String packageName) {
+		this.packageName = packageName;
+	}
+
 	public String getVersionNumber() {
 		return versionNumber;
 	}
@@ -78,22 +90,6 @@ public class CbObservation extends CbWeather {
 
 	public void setClientKey(String clientKey) {
 		this.clientKey = clientKey;
-	}
-
-	public Date getjDate() {
-		return jDate;
-	}
-
-	public void setjDate(Date jDate) {
-		this.jDate = jDate;
-	}
-
-	public String getTrend() {
-		return trend;
-	}
-
-	public void setTrend(String trend) {
-		this.trend = trend;
 	}
 
 	public Sensor getSensor() {

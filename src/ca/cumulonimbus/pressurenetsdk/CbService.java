@@ -823,7 +823,7 @@ public class CbService extends Service {
 		pressureObservation.setSharing(settingsHandler.getShareLevel());
 		
 		pressureObservation.setVersionNumber(getSDKVersion());
-		
+		pressureObservation.setPackageName(getApplication().getPackageName());
 		log("cbservice buildobs, share level "
 				+ settingsHandler.getShareLevel() + " " + getID());
 		return pressureObservation;
@@ -834,16 +834,7 @@ public class CbService extends Service {
 	 * @return
 	 */
 	public String getSDKVersion() {
-		String version = "-1.0";
-		try {
-			version = getPackageManager()
-					.getPackageInfo("ca.cumulonimbus.pressurenetsdk", 0).versionName;
-		} catch (NameNotFoundException nnfe) {
-			// TODO: this is not an okay return value
-			// (Don't send error messages as version numbers)
-			version = nnfe.getMessage(); 
-		}
-		return version;
+		return CbConfiguration.SDK_VERSION;
 	}
 	
 	/**
@@ -1427,7 +1418,6 @@ public class CbService extends Service {
 					obs.setTime(cursor.getLong(10));
 					obs.setTimeZoneOffset(cursor.getInt(11));
 					obs.setUser_id(cursor.getString(12));
-					obs.setTrend(cursor.getString(18));
 					results.add(obs);
 				}
 				db.close();
