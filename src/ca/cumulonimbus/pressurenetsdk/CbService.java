@@ -572,31 +572,36 @@ public class CbService extends Service {
 
 					try {
 						if (settingsHandler.isSharingData()) {
-							// Send if we're online
-							if (isNetworkAvailable()) {
-								log("online and sending single");
-								singleObservation
-										.setClientKey(CbConfiguration.API_KEY);
-								fromUser = true;
-								sendCbObservation(singleObservation);
-								fromUser = false;
+							if(! settingsHandler.getShareLevel().equals("Nobody")) {
+								// Send if we're online
+								if (isNetworkAvailable()) {
+									log("cbservice online and sending single");
+									singleObservation
+											.setClientKey(CbConfiguration.API_KEY);
+									fromUser = true;
+									sendCbObservation(singleObservation);
+									fromUser = false;
 
-								// also check and send the offline buffer
-								if (offlineBuffer.size() > 0) {
-									log("sending " + offlineBuffer.size()
-											+ " offline buffered obs");
-									for (CbObservation singleOffline : offlineBuffer) {
-										sendCbObservation(singleObservation);
+									// also check and send the offline buffer
+									if (offlineBuffer.size() > 0) {
+										log("sending " + offlineBuffer.size()
+												+ " offline buffered obs");
+										for (CbObservation singleOffline : offlineBuffer) {
+											sendCbObservation(singleObservation);
+										}
+										offlineBuffer.clear();
 									}
-									offlineBuffer.clear();
+								} else {
+									log("didn't send, not sharing data; i.e., offline");
+									// / offline buffer variable
+									// TODO: put this in the DB to survive longer
+									offlineBuffer.add(singleObservation);
+
 								}
 							} else {
-								log("didn't send, not sharing data; i.e., offline");
-								// / offline buffer variable
-								// TODO: put this in the DB to survive longer
-								offlineBuffer.add(singleObservation);
-
+								log("cbservice didn't send, sharing=Nobody");
 							}
+							
 						}
 					} catch (Exception e) {
 						//e.printStackTrace();
@@ -674,30 +679,34 @@ public class CbService extends Service {
 
 						try {
 							if (settingsHandler.isSharingData()) {
-								// Send if we're online
-								if (isNetworkAvailable()) {
-									lastSubmit = System.currentTimeMillis();
-									log("online and sending");
-									singleObservation
-											.setClientKey(CbConfiguration.API_KEY);
-									sendCbObservation(singleObservation);
-
-									// also check and send the offline buffer
-									if (offlineBuffer.size() > 0) {
-										log("sending " + offlineBuffer.size()
-												+ " offline buffered obs");
-										for (CbObservation singleOffline : offlineBuffer) {
-											sendCbObservation(singleObservation);
+								if(! settingsHandler.getShareLevel().equals("Nobody")) {
+									// Send if we're online
+									if (isNetworkAvailable()) {
+										lastSubmit = System.currentTimeMillis();
+										log("cbservice online and sending");
+										singleObservation
+												.setClientKey(CbConfiguration.API_KEY);
+										sendCbObservation(singleObservation);
+	
+										// also check and send the offline buffer
+										if (offlineBuffer.size() > 0) {
+											log("sending " + offlineBuffer.size()
+													+ " offline buffered obs");
+											for (CbObservation singleOffline : offlineBuffer) {
+												sendCbObservation(singleObservation);
+											}
+											offlineBuffer.clear();
 										}
-										offlineBuffer.clear();
+									} else {
+										log("didn't send");
+										// / offline buffer variable
+										// TODO: put this in the DB to survive
+										// longer
+										offlineBuffer.add(singleObservation);
+	
 									}
 								} else {
-									log("didn't send");
-									// / offline buffer variable
-									// TODO: put this in the DB to survive
-									// longer
-									offlineBuffer.add(singleObservation);
-
+									log("cbservice not sending, sharing=Nobody");
 								}
 							} else {
 								log("cbservice not sharing data, didn't send");
