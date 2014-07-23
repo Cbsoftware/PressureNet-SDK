@@ -61,7 +61,7 @@ public class CbObservation extends CbWeather {
 				"user_id," + user_id, "client_key," + clientKey,
 				"reading_accuracy," + 0.0,
 				"version_number," + versionNumber,
-				"package_name" + packageName
+				"package_name," + packageName
 		};
 		return params;
 	}
