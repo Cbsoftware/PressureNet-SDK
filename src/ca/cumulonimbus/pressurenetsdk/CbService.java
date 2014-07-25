@@ -852,28 +852,30 @@ public class CbService extends Service {
 	 * appropriate, send a notification
 	 */
 	private void checkForLocalConditionReports() {
-		long now = System.currentTimeMillis();
-		long minWaitTime = 1000 * 60 * 60;
-		if(now - minWaitTime > lastConditionNotification) {
-			if(locationManager == null) {
-				locationManager = new CbLocationManager(getApplicationContext());
-			}
-			log("cbservice checking for local conditions reports");
-			// it has been long enough; make a conditions API call 
-			// for the local area
-			CbApi conditionApi = new CbApi(getApplicationContext());
-			CbApiCall conditionApiCall = buildLocalConditionsApiCall();
-			if(conditionApiCall!=null) {
-				
-				log("cbservice making conditions api call for local reports");
-				conditionApi.makeAPICall(conditionApiCall, service,
-						mMessenger, "Conditions");
-		
-				// TODO: store this more permanently
-				lastConditionNotification = now;
-			}
-		} else {
-			log("cbservice not checking for local conditions, too recent");
+		if (settingsHandler.isSendNotifications()) {
+			long now = System.currentTimeMillis();
+			long minWaitTime = 1000 * 60 * 60;
+			if(now - minWaitTime > lastConditionNotification) {
+				if(locationManager == null) {
+					locationManager = new CbLocationManager(getApplicationContext());
+				}
+				log("cbservice checking for local conditions reports");
+				// it has been long enough; make a conditions API call 
+				// for the local area
+				CbApi conditionApi = new CbApi(getApplicationContext());
+				CbApiCall conditionApiCall = buildLocalConditionsApiCall();
+				if(conditionApiCall!=null) {
+					
+					log("cbservice making conditions api call for local reports");
+					conditionApi.makeAPICall(conditionApiCall, service,
+							mMessenger, "Conditions");
+			
+					// TODO: store this more permanently
+					lastConditionNotification = now;
+				}
+			} else {
+				log("cbservice not checking for local conditions, too recent");
+			}	
 		}
 	}
 	
