@@ -450,7 +450,7 @@ public class CbService extends Service {
 	 */
 	
 	private boolean isSensorStreaming(int sensorId) {
-		for(CbSensorStreamer s : activeStreams) {
+		for(CbSensorStreamer s : getActiveStreams()) {
 			if (s.sensorId == sensorId) {
 				return true;
 			}
@@ -466,7 +466,7 @@ public class CbService extends Service {
 		if(!isSensorStreaming(sensorId)) {
 			log("CbService starting live sensor streaming " + sensorId);
 			CbSensorStreamer streamer = new CbSensorStreamer(sensorId, reply);
-			activeStreams.add(streamer);
+			getActiveStreams().add(streamer);
 			streamer.startSendingData();
 		} else {
 			log("CbService not starting live sensor streaming " + sensorId + ", already streaming");
@@ -479,10 +479,10 @@ public class CbService extends Service {
 	public void stopSensorStream(int sensorId) {
 		if(isSensorStreaming(sensorId)) {
 			log("CbService stopping live sensor streaming " + sensorId);
-			for(CbSensorStreamer s : activeStreams) {
+			for(CbSensorStreamer s : getActiveStreams()) {
 				if (s.sensorId == sensorId) {
 					s.stopSendingData();
-					activeStreams.remove(s);
+					getActiveStreams().remove(s);
 					break;
 				}
 			}
@@ -619,6 +619,20 @@ public class CbService extends Service {
 	}
 
 	
+	/**
+	 * @return the activeStreams
+	 */
+	public ArrayList<CbSensorStreamer> getActiveStreams() {
+		return activeStreams;
+	}
+
+	/**
+	 * @param activeStreams the activeStreams to set
+	 */
+	public void setActiveStreams(ArrayList<CbSensorStreamer> activeStreams) {
+		this.activeStreams = activeStreams;
+	}
+
 	/**
 	 * Collect and send data in a different thread. This runs itself every
 	 * "settingsHandler.getDataCollectionFrequency()" milliseconds
@@ -1038,6 +1052,7 @@ public class CbService extends Service {
 
 	@Override
 	public void onCreate() {
+		System.out.println("in on create");
 		setUpFiles();
 		log("cb on create");
 		settingsHandler = new CbSettingsHandler(getApplicationContext());
