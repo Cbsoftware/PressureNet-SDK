@@ -132,7 +132,9 @@ public class CbService extends Service {
 	// Localized Current conditions
 	public static final int MSG_GET_LOCAL_CONDITIONS = 48;
 	public static final int MSG_LOCAL_CONDITIONS = 49;
-	
+	// Receive local condition data? 
+	public static final int MSG_LOCAL_CONDITION_OPT_IN = 50;
+	public static final int MSG_LOCAL_CONDITION_OPT_OUT = 51;	
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -174,6 +176,9 @@ public class CbService extends Service {
 	private boolean hasBarometer = true;
 
 	ArrayList<CbSensorStreamer> activeStreams = new ArrayList<CbSensorStreamer>();
+	
+	private boolean shouldCheckLocalConditions = false;
+	
 	
 	/**
 	 * Collect data from onboard sensors and store locally
@@ -358,6 +363,28 @@ public class CbService extends Service {
 			mHandler.postDelayed(stop, 100);
 		}
 		
+	}
+	
+	/**
+	 * Set a preference and value to check for local conditions
+	 * in order for notification delivery
+	 * @param optIn
+	 */
+	private void setConditionsNotificationsPref(boolean optIn) {
+		shouldCheckLocalConditions = optIn;
+		SharedPreferences sharedPreferences = PreferenceManager
+				.getDefaultSharedPreferences(getApplicationContext());
+	
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+		editor.putBoolean("shouldCheckLocalConditions", shouldCheckLocalConditions);
+		editor.commit();
+	}
+	
+	private void loadConditionsNotificationPref() {
+
+		SharedPreferences sharedPreferences = PreferenceManager
+				.getDefaultSharedPreferences(getApplicationContext());
+		shouldCheckLocalConditions = sharedPreferences.getBoolean("shouldCheckLocalConditions", false);
 	}
 	
 	/**
@@ -852,7 +879,7 @@ public class CbService extends Service {
 	 * appropriate, send a notification
 	 */
 	private void checkForLocalConditionReports() {
-		if (settingsHandler.isSendNotifications()) {
+		if (shouldCheckLocalConditions) {
 			long now = System.currentTimeMillis();
 			long minWaitTime = 1000 * 60 * 60;
 			if(now - minWaitTime > lastConditionNotification) {
@@ -1126,6 +1153,8 @@ public class CbService extends Service {
 		
 		checkBarometer();
 	
+		loadConditionsNotificationPref();
+		
 		// wakelock management
 		if(wl!=null) {
 			log("cbservice wakelock not null:");
@@ -1729,6 +1758,12 @@ public class CbService extends Service {
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
+				break;
+			case MSG_LOCAL_CONDITION_OPT_IN:
+				setConditionsNotificationsPref(true);
+				break;
+			case MSG_LOCAL_CONDITION_OPT_OUT:
+				setConditionsNotificationsPref(false);	
 				break;
 			default:
 				super.handleMessage(msg);
