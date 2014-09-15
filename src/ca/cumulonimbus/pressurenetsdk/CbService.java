@@ -1750,8 +1750,8 @@ public class CbService extends Service {
 				break;
 			case MSG_GET_LOCAL_CONDITIONS:
 				recentMsg = msg;
-				CbApiCall localConditionsAPI = buildLocalCurrentConditionsCall(2);
-				ArrayList<CbCurrentCondition> localCurrentConditions = getCurrentConditionsFromLocalAPI(localConditionsAPI);
+				CbApiCall mapDisplayLocalAPICall = (CbApiCall) msg.obj;
+				ArrayList<CbCurrentCondition> localCurrentConditions = getCurrentConditionsFromLocalAPI(mapDisplayLocalAPICall);
 				try {
 					msg.replyTo.send(Message.obtain(null,
 							MSG_LOCAL_CONDITIONS, localCurrentConditions));
