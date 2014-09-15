@@ -465,7 +465,7 @@ public class CbService extends Service {
 	public void startSensorStream(int sensorId, Messenger reply) {
 		if(!isSensorStreaming(sensorId)) {
 			log("CbService starting live sensor streaming " + sensorId);
-			CbSensorStreamer streamer = new CbSensorStreamer(sensorId, reply);
+			CbSensorStreamer streamer = createCbSensorStreamer(sensorId, reply);
 			getActiveStreams().add(streamer);
 			streamer.startSendingData();
 		} else {
@@ -473,6 +473,13 @@ public class CbService extends Service {
 		}
 	}
 	
+	public CbSensorStreamer createCbSensorStreamer(int sensorId,
+			Messenger reply) {
+		CbSensorStreamer streamer = new CbSensorStreamer(sensorId, reply);
+		return streamer;
+
+	}
+
 	/**
 	 * Stop live sensor streaming. MSG_STOP_STREAM
 	 */
