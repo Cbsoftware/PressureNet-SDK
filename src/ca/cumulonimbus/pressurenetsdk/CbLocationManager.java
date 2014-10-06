@@ -135,7 +135,7 @@ public class CbLocationManager {
 	    	    	log("new location, it's not any better " + location.getProvider() + ", best altitude is " + currentBestLocation.getAltitude());
 	    	    }
     	    	LocationStopper stopLater = new LocationStopper();
-    	    	mHandler.postDelayed(stopLater, 1000 * 10);
+    	    	mHandler.postDelayed(stopLater, 1000 * 5);
     	    }
 
     	    public void onStatusChanged(String provider, int status, Bundle extras) {}
