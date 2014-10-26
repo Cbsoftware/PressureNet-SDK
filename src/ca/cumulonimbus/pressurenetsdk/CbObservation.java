@@ -25,11 +25,13 @@ public class CbObservation extends CbWeather {
 	private String user_id = "-";
 	private long time = 0;
 	private long timeZoneOffset = 0;
-	private String clientKey = "";
+	private String clientKey = "-";
 
-	private String versionNumber = "";
-	private String packageName = "";
+	private String versionNumber = "-";
+	private String packageName = "-";
 	
+	private String modelType = "-";
+	private String isCharging = "-";
 	
 	@Override
 	public String toString() {
@@ -45,7 +47,9 @@ public class CbObservation extends CbWeather {
 				+ "timezone," + timeZoneOffset + "\n"
 				+ "user_id," + user_id + "\n" 
 				+ "version_number," + versionNumber + "\n"
-				+ "package_name," + packageName + "\n";
+				+ "package_name," + packageName + "\n"
+				+ "model_type," + modelType + "\n"
+				+ "is_charging," + isCharging + "\n";
 	}
 
 	public String[] getObservationAsParams() {
@@ -61,13 +65,31 @@ public class CbObservation extends CbWeather {
 				"user_id," + user_id, "client_key," + clientKey,
 				"reading_accuracy," + 0.0,
 				"version_number," + versionNumber,
-				"package_name," + packageName
+				"package_name," + packageName,
+				"model_type," + versionNumber,
+				"is_charging," + isCharging
 		};
 		return params;
 	}
 	
 	
 	
+	public String getModelType() {
+		return modelType;
+	}
+
+	public void setModelType(String modelType) {
+		this.modelType = modelType;
+	}
+
+	public String getIsCharging() {
+		return isCharging;
+	}
+
+	public void setIsCharging(String isCharging) {
+		this.isCharging = isCharging;
+	}
+
 	public String getPackageName() {
 		return packageName;
 	}

@@ -860,11 +860,31 @@ public class CbService extends Service {
 		
 		pressureObservation.setVersionNumber(getSDKVersion());
 		pressureObservation.setPackageName(getApplication().getPackageName());
+		
+		pressureObservation.setIsCharging(isDeviceChargingEnglish());
+		pressureObservation.setModelType(android.os.Build.MODEL);
 		log("cbservice buildobs, share level "
 				+ settingsHandler.getShareLevel() + " " + getID());
 		return pressureObservation;
 	}
 
+	/**
+	 * Return english-language description if the device is charging or not
+	 * @return
+	 */
+	private String isDeviceChargingEnglish() {
+		IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+		Intent batteryStatus = registerReceiver(null, ifilter);
+		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+		boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+		                     status == BatteryManager.BATTERY_STATUS_FULL;
+		if(isCharging) {
+			return "yes";
+		} else {
+			return "no";
+		}
+	}
+	
 	/**
 	 * Return the version number of the SDK sending this reading
 	 * @return
