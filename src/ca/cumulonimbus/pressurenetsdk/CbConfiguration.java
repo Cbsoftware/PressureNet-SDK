@@ -14,7 +14,7 @@ public class CbConfiguration {
 	public static final String API_SIGNUP_URL 	= "https://pressurenet.io/developers/";
 	public static final String API_KEY 			= "YOUR_API_KEY_HERE";
 	public static final boolean DEBUG_MODE 		= true;
-	public static final String SDK_VERSION 		= "1.3.8BETA";
+	public static final String SDK_VERSION 		= "1.3.8RC";
 	
 	// External API keys
 	public static final String EXTERNAL_URL = ""; 
