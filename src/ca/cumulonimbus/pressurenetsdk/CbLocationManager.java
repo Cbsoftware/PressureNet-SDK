@@ -206,7 +206,7 @@ public class CbLocationManager {
 	   
 	    
 	    // Determine location quality using a combination of timeliness, accuracy, and completeness (altitude)
-	    if (isMoreAccurate) {
+	    if (isMoreAccurate && isNewer) {
 	    	return true;
 	    } else if (isNewer && !isLessAccurate) {
 	        return true;
