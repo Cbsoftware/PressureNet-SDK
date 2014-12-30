@@ -66,7 +66,7 @@ public class CbObservation extends CbWeather {
 				"reading_accuracy," + 0.0,
 				"version_number," + versionNumber,
 				"package_name," + packageName,
-				"model_type," + versionNumber,
+				"model_type," + modelType,
 				"is_charging," + isCharging
 		};
 		return params;
