@@ -1299,7 +1299,7 @@ public class CbService extends Service {
 
 		settingsHandler.setSendNotifications(preferenceSendNotifications);
 
-		boolean useGPS = sharedPreferences.getBoolean("use_gps", true);
+		boolean useGPS = sharedPreferences.getBoolean("use_gps", false);
 		boolean onlyWhenCharging = sharedPreferences.getBoolean(
 				"only_when_charging", false);
 		settingsHandler.setUseGPS(useGPS);
