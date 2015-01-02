@@ -65,22 +65,30 @@ public class CbScience {
         return mReturn;
     }
     
+    private static float normalizeDegree(float value){
+        if(value >= 0.0f && value <= 180.0f){
+            return value;
+        }else{
+            return 180 + (180 + value);
+        }
+    }
+    
     public static double angle(double lat1, double long1, double lat2,
             double long2) {
 
-        double dLon = Math.toRadians(long2 - long1);
+    	Location loc1 = new Location("network");
+    	loc1.setLatitude(lat1);
+    	loc1.setLongitude(long1);
+    	Location loc2 = new Location("network");
+    	loc2.setLatitude(lat2);
+    	loc2.setLongitude(long2);
 
-        double y = Math.sin(dLon) * Math.cos(lat2);
-        double x = (Math.cos(lat1) * Math.sin(lat2)) - (Math.sin(lat1)
-                * Math.cos(lat2) * Math.cos(dLon));
-
-        double brng = Math.atan2(y, x);
-
-        brng = Math.toDegrees(brng);
-        brng = (brng + 360) % 360;
-        brng = 360 - brng;
-
-        return brng;
+        float brng = loc1.bearingTo(loc2);
+        
+        float readyForEnglish  = normalizeDegree(brng);
+        
+        log("cbscience bearingTo " + brng + ", eng " + readyForEnglish + " " + englishDirection(readyForEnglish));
+        return readyForEnglish;
     }
     
     private static void log(String message) {
