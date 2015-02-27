@@ -17,7 +17,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.hardware.Sensor;
@@ -27,7 +26,6 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.os.BatteryManager;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -63,6 +61,7 @@ public class CbService extends Service {
 	String serverURL = CbConfiguration.SERVER_URL;
 
 	public static String ACTION_SEND_MEASUREMENT = "ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT";
+	public static String ACTION_SEND_MEASUREMENT_WITH_LOCATION = "ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT_WITH_LOCATION";
 	public static String ACTION_REGISTER = "ca.cumulonimbus.pressurenetsdk.ACTION_REGISTER";
 
 	// Service Interaction API Messages
@@ -525,27 +524,33 @@ public class CbService extends Service {
 	 * 
 	 * @return
 	 */
-	public CbObservation collectNewObservation() {
+	public CbObservation collectNewObservation(Location givenLocation) {
 		try {
 			CbObservation pressureObservation = new CbObservation();
 			log("cb collecting new observation");
-
-			// Location values
-			locationManager = new CbLocationManager(getApplicationContext());
-			locationManager.startGettingLocations();
-
+ 
+			if(givenLocation == null) {
+				// Location values
+				log("cb collecting new observation; no location passed, starting listeners");
+				locationManager = new CbLocationManager(getApplicationContext());
+				locationManager.startGettingLocations();
+				pressureObservation.setLocation(locationManager
+						.getCurrentBestLocation());
+			} else {
+				log("cb collecting new observation; location given at " + givenLocation.getLatitude() + ", " + givenLocation.getLongitude());
+				pressureObservation.setLocation(givenLocation);
+			}
+			
 			// Measurement values
 			pressureObservation = buildPressureObservation();
-			pressureObservation.setLocation(locationManager
-					.getCurrentBestLocation());
-
+			
 			log("returning pressure obs: "
 					+ pressureObservation.getObservationValue());
 
 			return pressureObservation;
 
 		} catch (Exception e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -570,6 +575,16 @@ public class CbService extends Service {
 	 */
 	public class SingleReadingSender implements Runnable {
 
+		private Location thisLocation = null;
+		
+		public Location getThisLocation() {
+			return thisLocation;
+		}
+		public void setThisLocation(Location thisLocation) {
+			this.thisLocation = thisLocation;
+		}
+
+
 		@Override
 		public void run() {
 			
@@ -589,7 +604,7 @@ public class CbService extends Service {
 				dataCollector = new CbDataCollector();
 				dataCollector.startCollectingData();
 				
-				singleObservation = collectNewObservation();
+				singleObservation = collectNewObservation(thisLocation);
 				if (singleObservation.getObservationValue() != 0.0) {
 					// Store in database
 					db.open();
@@ -694,7 +709,7 @@ public class CbService extends Service {
 				dataCollector.startCollectingData();
 				
 				CbObservation singleObservation = new CbObservation();
-				singleObservation = collectNewObservation();
+				singleObservation = collectNewObservation(null);
 				if (singleObservation != null) {
 
 					if (singleObservation.getObservationValue() != 0.0) {
@@ -1200,7 +1215,21 @@ public class CbService extends Service {
 						log("sending single observation, request from intent");
 						sendSingleObs();
 						return START_NOT_STICKY;
-					} 
+					} else if (intent.getAction().equals(ACTION_SEND_MEASUREMENT_WITH_LOCATION)) {
+						if(intent.hasExtra("latitude")) {
+							fromUser = false;
+							log("sending single observation, request from intent");
+							Location thisLocation = new Location("network");
+							double latitude = intent.getDoubleExtra("latitude", 0.0);
+							double longitude = intent.getDoubleExtra("longitude", 0.0);
+							thisLocation.setLatitude(latitude);
+							thisLocation.setLongitude(longitude);
+							sendSingleObs(thisLocation);							
+						}
+						
+
+						return START_NOT_STICKY;
+					}
 				} else if (intent.getBooleanExtra("alarm", false)) {
 					// This runs when the service is started from the alarm.
 					// Submit a data point
@@ -1886,6 +1915,17 @@ public class CbService extends Service {
 			}
 		}
 		SingleReadingSender singleSender = new SingleReadingSender();
+		mHandler.post(singleSender);
+	}
+	
+	public void sendSingleObs(Location thisLocation) {
+		if (settingsHandler != null) {
+			if (settingsHandler.getServerURL() == null) {
+				settingsHandler.getSettings();
+			}
+		}
+		SingleReadingSender singleSender = new SingleReadingSender();
+		singleSender.setThisLocation(thisLocation);
 		mHandler.post(singleSender);
 	}
 
