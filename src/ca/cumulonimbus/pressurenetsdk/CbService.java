@@ -534,22 +534,31 @@ public class CbService extends Service {
 				log("cb collecting new observation; no location passed, starting listeners");
 				locationManager = new CbLocationManager(getApplicationContext());
 				locationManager.startGettingLocations();
+				
+				// Measurement values
+				pressureObservation = buildPressureObservation();
+				
 				pressureObservation.setLocation(locationManager
 						.getCurrentBestLocation());
+				log("cb setting location to current best: " + locationManager.getCurrentBestLocation().getLatitude() + ", " + locationManager.getCurrentBestLocation().getLongitude());
 			} else {
 				log("cb collecting new observation; location given at " + givenLocation.getLatitude() + ", " + givenLocation.getLongitude());
+				
+				// Measurement values
+				pressureObservation = buildPressureObservation();
+				
 				pressureObservation.setLocation(givenLocation);
 			}
 			
-			// Measurement values
-			pressureObservation = buildPressureObservation();
+		
 			
 			log("returning pressure obs: "
-					+ pressureObservation.getObservationValue());
+					+ pressureObservation.getObservationValue() + " w/ loc " + pressureObservation.getLocation().getLatitude() );
 
 			return pressureObservation;
 
 		} catch (Exception e) {
+			log("cbservice collect new observation error: " + e.getMessage());
 			e.printStackTrace();
 			return null;
 		}
@@ -1224,7 +1233,7 @@ public class CbService extends Service {
 							double longitude = intent.getDoubleExtra("longitude", 0.0);
 							thisLocation.setLatitude(latitude);
 							thisLocation.setLongitude(longitude);
-							sendSingleObs(thisLocation);							
+							sendSingleObs(thisLocation);		
 						}
 						
 
