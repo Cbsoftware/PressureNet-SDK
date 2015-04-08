@@ -134,6 +134,9 @@ public class CbService extends Service {
 	// Receive local condition data? 
 	public static final int MSG_LOCAL_CONDITION_OPT_IN = 50;
 	public static final int MSG_LOCAL_CONDITION_OPT_OUT = 51;	
+	// Toggle background data collector 
+	public static final int MSG_ENABLE_BG_DATA_COLLECT = 52;
+	public static final int MSG_DISABLE_BG_DATA_COLLECT = 53;	
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -141,6 +144,7 @@ public class CbService extends Service {
 	public static final String PRESSURE_SENT_TOAST = "ca.cumulonimbus.pressurenetsdk.PRESSURE_SENT_TOAST";
 	public static final String CONDITION_SENT_TOAST = "ca.cumulonimbus.pressurenetsdk.CONDITION_SENT_TOAST";
 		
+	
 	// Support for new sensor type constants
 	private final int TYPE_AMBIENT_TEMPERATURE = 13;
 	private final int TYPE_RELATIVE_HUMIDITY = 12;
@@ -163,7 +167,8 @@ public class CbService extends Service {
 	private boolean fromUser = false;
 
 	CbAlarm alarm = new CbAlarm();
-
+	CbBgAlarm bgAlarm = new CbBgAlarm();
+	
 	double recentPressureReading = 0.0;
 	int recentPressureAccuracy = 0;
 	int batchReadingCount = 0;
@@ -177,6 +182,8 @@ public class CbService extends Service {
 	ArrayList<CbSensorStreamer> activeStreams = new ArrayList<CbSensorStreamer>();
 	
 	private boolean shouldCheckLocalConditions = false;
+	
+	private boolean runBackgroundSmartDataCollector = false;
 	
 	
 	/**
@@ -550,10 +557,44 @@ public class CbService extends Service {
 				pressureObservation.setLocation(givenLocation);
 			}
 			
-		
+
 			
 			log("returning pressure obs: "
 					+ pressureObservation.getObservationValue() + " w/ loc " + pressureObservation.getLocation().getLatitude() );
+
+			return pressureObservation;
+
+		} catch (Exception e) {
+			log("cbservice collect new observation error: " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * Find all the data for an offline observation.
+	 * 
+	 * Location, Measurement values, etc.
+	 * 
+	 * @return
+	 */
+	public CbObservation collectAndBufferNewOfflineObservation() {
+		try {
+			CbObservation pressureObservation = new CbObservation();
+			log("cb collecting new offline, background observation");
+ 
+			// Measurement values
+			pressureObservation = buildPressureObservation();
+			
+			Location emptyLocation = new Location("network");
+			emptyLocation.setLatitude(0.0);
+			emptyLocation.setLongitude(0.0);
+			pressureObservation.setLocation(emptyLocation);
+		
+			log("returning pressure obs: "
+					+ pressureObservation.getObservationValue() + " without location");
+			
+			offlineBuffer.add(pressureObservation);
 
 			return pressureObservation;
 
@@ -1094,10 +1135,15 @@ public class CbService extends Service {
 			log("cbservice alarm not repeating, starting alarm at " + settingsHandler.getDataCollectionFrequency());
 			alarm.setAlarm(getApplicationContext(),
 					settingsHandler.getDataCollectionFrequency());
+			
+			log("cbservice setting background alarm for buffered data");
+			bgAlarm.setAlarm(getApplicationContext(), 1000 * 60);
 		} else {
 			log("cbservice startsubmit, alarm is already repeating. restarting at " + settingsHandler.getDataCollectionFrequency());
 			alarm.restartAlarm(getApplicationContext(),
 					settingsHandler.getDataCollectionFrequency());
+			
+			bgAlarm.restartAlarm(getApplicationContext(), 1000 * 60);
 		}
 	}
 	
@@ -1260,6 +1306,8 @@ public class CbService extends Service {
 					LocationStopper stop = new LocationStopper();
 					mHandler.postDelayed(stop, 1000 * 3);
 					return START_NOT_STICKY;
+				} else if (intent.getBooleanExtra("bg_alarm", false)) {
+					collectAndBufferNewOfflineObservation();
 				} else {
 				
 					// Check the database
@@ -1822,6 +1870,12 @@ public class CbService extends Service {
 				break;
 			case MSG_LOCAL_CONDITION_OPT_OUT:
 				setConditionsNotificationsPref(false);	
+				break;
+			case MSG_ENABLE_BG_DATA_COLLECT:
+				runBackgroundSmartDataCollector = true;
+				break;
+			case MSG_DISABLE_BG_DATA_COLLECT:
+				runBackgroundSmartDataCollector = false;
 				break;
 			default:
 				super.handleMessage(msg);
