@@ -947,6 +947,8 @@ public class CbService extends Service {
 			} else {
 				log("cbservice not checking for local conditions, too recent");
 			}	
+		} else {
+			log("cbservice not checking for local conditions, preference is off");
 		}
 	}
 	
