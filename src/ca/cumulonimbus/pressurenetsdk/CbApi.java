@@ -178,6 +178,7 @@ public class CbApi {
 						+ ""));
 				nvps.add(new BasicNameValuePair("since_last_call", apiCall
 						.isSinceLastCall() + ""));
+				nvps.add(new BasicNameValuePair("sdk_version", CbConfiguration.SDK_VERSION));
 
 				String paramString = URLEncodedUtils.format(nvps, "utf-8");
 
