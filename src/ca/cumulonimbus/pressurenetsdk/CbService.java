@@ -614,49 +614,51 @@ public class CbService extends Service {
 				dataCollector.startCollectingData();
 				
 				singleObservation = collectNewObservation(thisLocation);
-				if (singleObservation.getObservationValue() != 0.0) {
-					// Store in database
-					db.open();
-					long count = db.addObservation(singleObservation);
-
-					db.close();
-
-					try {
-						if (settingsHandler.isSharingData()) {
-							if(! settingsHandler.getShareLevel().equals("Nobody")) {
-								// Send if we're online
-								if (isNetworkAvailable()) {
-									log("cbservice online and sending single");
-									singleObservation
-											.setClientKey(CbConfiguration.API_KEY);
-									fromUser = true;
-									sendCbObservation(singleObservation);
-									fromUser = false;
-
-									// also check and send the offline buffer
-									if (offlineBuffer.size() > 0) {
-										log("sending " + offlineBuffer.size()
-												+ " offline buffered obs");
-										for (CbObservation singleOffline : offlineBuffer) {
-											sendCbObservation(singleObservation);
+				if(singleObservation != null) {
+					if (singleObservation.getObservationValue() != 0.0) {
+						// Store in database
+						db.open();
+						long count = db.addObservation(singleObservation);
+	
+						db.close();
+	
+						try {
+							if (settingsHandler.isSharingData()) {
+								if(! settingsHandler.getShareLevel().equals("Nobody")) {
+									// Send if we're online
+									if (isNetworkAvailable()) {
+										log("cbservice online and sending single");
+										singleObservation
+												.setClientKey(CbConfiguration.API_KEY);
+										fromUser = true;
+										sendCbObservation(singleObservation);
+										fromUser = false;
+	
+										// also check and send the offline buffer
+										if (offlineBuffer.size() > 0) {
+											log("sending " + offlineBuffer.size()
+													+ " offline buffered obs");
+											for (CbObservation singleOffline : offlineBuffer) {
+												sendCbObservation(singleObservation);
+											}
+											offlineBuffer.clear();
 										}
-										offlineBuffer.clear();
+									} else {
+										log("didn't send, not sharing data; i.e., offline");
+										// / offline buffer variable
+										// TODO: put this in the DB to survive longer
+										offlineBuffer.add(singleObservation);
+	
 									}
 								} else {
-									log("didn't send, not sharing data; i.e., offline");
-									// / offline buffer variable
-									// TODO: put this in the DB to survive longer
-									offlineBuffer.add(singleObservation);
-
+									log("cbservice didn't send, sharing=Nobody");
 								}
-							} else {
-								log("cbservice didn't send, sharing=Nobody");
+								
 							}
-							
+						} catch (Exception e) {
+							//e.printStackTrace();
+	
 						}
-					} catch (Exception e) {
-						//e.printStackTrace();
-
 					}
 				}
 			}
