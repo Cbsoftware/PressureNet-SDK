@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -16,17 +17,19 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Message;
 import android.os.Messenger;
-import android.os.RemoteException;
+import android.provider.Settings.Secure;
 
 
 /**
@@ -75,6 +78,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
     		if(jsonResult.has("errors")) {
     			if(jsonResult.getString("errors").length()> 1) {
     				errorMessage = "error" + jsonResult.getString("errors");
+    				log("add errormessage " + errorMessage);
     			}
     		}
     		// notify
@@ -107,7 +111,8 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			
     		
     	} catch(JSONException jsone) {
-    		
+    		log("error " + result);
+    		jsone.printStackTrace();
     	}
 	}
 	
@@ -121,7 +126,12 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
 			boolean isCbOb = true; // TODO: fix hack to determine the data type sent
 			long time = System.currentTimeMillis();
-			for(String singleParam : params) {
+			 JSONObject object = new JSONObject();
+			 JSONObject data = new JSONObject();
+			 JSONArray jsonArray = new JSONArray();
+		
+			 
+			 for(String singleParam : params) {
 				String[] fromCSV = singleParam.split(",");
 				String key = fromCSV[0];
 				String value = fromCSV[1];
@@ -131,7 +141,18 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 						value += "," + fromCSV[i];
 					}
 				}
-				nvps.add(new BasicNameValuePair(key, value));
+			 	nvps.add(new BasicNameValuePair(key, value));
+				
+				  try {
+					  	
+					  object.put(key, value);
+					  log("POST adding " + key + ", " + value + " to json");
+					  
+			        } catch (Exception ex) {
+
+			        }
+				
+				
 				if(key.equals("general_condition")) {
 					isCbOb = false;
 					condition = value;
@@ -148,18 +169,73 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 					time = Long.parseLong(value);
 				}
 			} 
-			String serverURL = settings.getServerURL();
+			
+			String serverURL = CbConfiguration.SERVER_URL_SECONDARY; //settings.getServerURL();
 			log("settings url " + serverURL);
+			
+			String serverURLPressureNet = CbConfiguration.SERVER_URL_PRESSURENET; //settings.getServerURL();
+			
 			if(isCbOb) {
 				// cb observation
-				serverURL += "add/";
+				
+				// PressureNet
+				serverURLPressureNet += "add/";
+				
+				
+				// Secondary
+				try {
+					jsonArray.put(object);
+					data.put("data", jsonArray);
+					data.put("source", "pressurenet");
+					data.put("user_id", getID());
+				}catch(JSONException jsone) {
+					log("json error " + jsone.getMessage());
+				}
+			
 			} else {
 				// current condition
-				serverURL += "conditions/add/";
+				
+				// PressureNet
+				serverURLPressureNet += "conditions/add/";
+				
+				
+				
+				// Secondary
+				serverURL = CbConfiguration.SERVER_URL_CONDITIONS_SECONDARY;
+				log("serverURL " + serverURL);
+				log("POST sending current condition " + object.toString());
+				
+				try {
+					
+					jsonArray.put(object);
+					data.put("data", jsonArray);
+					data.put("source", "pressurenet");
+					data.put("user_id", getID());
+				}catch(JSONException jsone) {
+					log("json error " + jsone.getMessage());
+				}
 			}
 			
+			
+			// Secondary
+			
+			
 			HttpPost httppost = new HttpPost(serverURL);
-			httppost.setEntity(new UrlEncodedFormEntity(nvps));
+			//httppost.setEntity(new UrlEncodedFormEntity(nvps));
+			String message;
+			 
+			try {
+		        message = data.toString();
+			  
+			  httppost.setEntity(new StringEntity(message, "UTF8"));
+			  httppost.setHeader("Content-type", "application/json");
+			  httppost.addHeader("Accept","application/json");
+			} catch(Exception e) {
+				
+			}
+			
+			log("POST Secondary: " + EntityUtils.toString(httppost.getEntity()));
+
 			
 			HttpResponse resp = client.execute(httppost);
 			HttpEntity responseEntity = resp.getEntity();
@@ -178,18 +254,73 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			///	dataCollector.stopCollectingData();
 				
 			}
-			log("addresp " + addResp);
+			log("addresp Secondary " + addResp);
 			
-			returnResult(addResp, condition, time, pressure);
+			// PressureNet
+			
+			
+			HttpPost httppostPressureNet = new HttpPost(serverURLPressureNet);
+			httppostPressureNet.setEntity(new UrlEncodedFormEntity(nvps));
+			
+	
+			
+			log("POST PN: " + EntityUtils.toString(httppostPressureNet.getEntity()));
+
+			
+			HttpResponse respPN = client.execute(httppostPressureNet);
+			HttpEntity responseEntityPN = respPN.getEntity();
+
+			String addRespPN = "";
+			BufferedReader rPN = new BufferedReader(new InputStreamReader(
+					responseEntityPN.getContent()));
+
+			StringBuilder totalPN = new StringBuilder();
+			String linePN;
+			if (rPN != null) {
+				while ((linePN = rPN.readLine()) != null) {
+					totalPN.append(linePN);
+				}
+				addRespPN = totalPN.toString();
+			///	dataCollector.stopCollectingData();
+				
+			}
+			log("addresp PressureNet " + addRespPN);
+	
+			
+			returnResult(addRespPN, condition, time, pressure);
 			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();
 		} catch(IOException ioe) {
-			//ioe.printStackTrace();
+			ioe.printStackTrace();
 		} catch(ArrayIndexOutOfBoundsException aioobe) {
 			aioobe.printStackTrace();
 		}
+		log("responsetext" + responseText);
 		return responseText;
+	}
+	
+	/**
+	 * Get a hash'd device ID
+	 * 
+	 * @return
+	 */
+	public String getID() {
+		try {
+			MessageDigest md = MessageDigest.getInstance("MD5");
+
+			String actual_id = Secure.getString(context
+					.getContentResolver(), Secure.ANDROID_ID);
+			byte[] bytes = actual_id.getBytes();
+			byte[] digest = md.digest(bytes);
+			StringBuffer hexString = new StringBuffer();
+			for (int i = 0; i < digest.length; i++) {
+				hexString.append(Integer.toHexString(0xFF & digest[i]));
+			}
+			return hexString.toString();
+		} catch (Exception e) {
+			return "--";
+		}
 	}
 	
 	public void log(String message) {

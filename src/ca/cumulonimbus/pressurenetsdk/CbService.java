@@ -58,7 +58,7 @@ public class CbService extends Service {
 
 	Message recentMsg;
 
-	String serverURL = CbConfiguration.SERVER_URL;
+	String serverURL = CbConfiguration.SERVER_URL_PRESSURENET;
 
 	public static String ACTION_SEND_MEASUREMENT = "ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT";
 	public static String ACTION_SEND_MEASUREMENT_WITH_LOCATION = "ca.cumulonimbus.pressurenetsdk.ACTION_SEND_MEASUREMENT_WITH_LOCATION";
@@ -597,7 +597,7 @@ public class CbService extends Service {
 		@Override
 		public void run() {
 			
-			checkForLocalConditionReports();
+			//checkForLocalConditionReports();
 			
 			if(settingsHandler == null) {
 				log("single reading sender, loading settings from prefs");
@@ -685,7 +685,7 @@ public class CbService extends Service {
 
 		public void run() {
 			
-			checkForLocalConditionReports();
+			//checkForLocalConditionReports();
 			
 			long now = System.currentTimeMillis();
 			if(now - lastSubmit < 2000) {
@@ -1594,32 +1594,40 @@ public class CbService extends Service {
 				// run API call
 				db.open();
 
-				Cursor cacheCursorGraph = db.runAPICacheCall(
-						apiCacheCallGraph.getMinLat(),
-						apiCacheCallGraph.getMaxLat(),
-						apiCacheCallGraph.getMinLon(),
-						apiCacheCallGraph.getMaxLon(),
-						apiCacheCallGraph.getStartTime(),
-						apiCacheCallGraph.getEndTime(),
-						apiCacheCallGraph.getLimit());
-				ArrayList<CbObservation> cacheResultsGraph = new ArrayList<CbObservation>();
-				while (cacheCursorGraph.moveToNext()) {
-					CbObservation obs = new CbObservation();
-					Location location = new Location("network");
-					location.setLatitude(cacheCursorGraph.getDouble(1));
-					location.setLongitude(cacheCursorGraph.getDouble(2));
-					obs.setLocation(location);
-					obs.setObservationValue(cacheCursorGraph.getDouble(3));
-					obs.setTime(cacheCursorGraph.getLong(4));
-					cacheResultsGraph.add(obs);
-				}
-				db.close();
 				try {
-					msg.replyTo.send(Message.obtain(null,
-							MSG_API_RECENTS_FOR_GRAPH, cacheResultsGraph));
-				} catch (RemoteException re) {
-					re.printStackTrace();
+					Cursor cacheCursorGraph = db.runAPICacheCall(
+							apiCacheCallGraph.getMinLat(),
+							apiCacheCallGraph.getMaxLat(),
+							apiCacheCallGraph.getMinLon(),
+							apiCacheCallGraph.getMaxLon(),
+							apiCacheCallGraph.getStartTime(),
+							apiCacheCallGraph.getEndTime(),
+							apiCacheCallGraph.getLimit());
+					ArrayList<CbObservation> cacheResultsGraph = new ArrayList<CbObservation>();
+					while (cacheCursorGraph.moveToNext()) {
+						CbObservation obs = new CbObservation();
+						Location location = new Location("network");
+						location.setLatitude(cacheCursorGraph.getDouble(1));
+						location.setLongitude(cacheCursorGraph.getDouble(2));
+						obs.setLocation(location);
+						obs.setObservationValue(cacheCursorGraph.getDouble(3));
+						obs.setTime(cacheCursorGraph.getLong(4));
+						cacheResultsGraph.add(obs);
+					}
+					db.close();
+					
+					try {
+						msg.replyTo.send(Message.obtain(null,
+								MSG_API_RECENTS_FOR_GRAPH, cacheResultsGraph));
+					} catch (RemoteException re) {
+						re.printStackTrace();
+					}
+					
+				} catch (Exception e) {
+					
 				}
+				
+			
 				break;
 			case MSG_MAKE_API_CALL:
 				CbApi api = new CbApi(getApplicationContext());

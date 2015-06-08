@@ -75,7 +75,7 @@ public class CbSettingsHandler {
 			if(settings.moveToFirst()) {
 				this.appID = settings.getString(1);
 				this.dataCollectionFrequency = settings.getLong(2);
-				this.serverURL = CbConfiguration.SERVER_URL;
+				this.serverURL = CbConfiguration.SERVER_URL_PRESSURENET;
 				this.sendNotifications = settings.getInt(4) > 0;
 				this.useGPS = settings.getInt(5) > 0 ;
 				this.onlyWhenCharging = settings.getInt(6) > 0;
@@ -95,7 +95,7 @@ public class CbSettingsHandler {
 	
 	public CbSettingsHandler(Context ctx) {
 		this.appID = ctx.getPackageName();
-		this.serverURL = CbConfiguration.SERVER_URL;
+		this.serverURL = CbConfiguration.SERVER_URL_PRESSURENET;
 		this.context = ctx;
 	}
 	

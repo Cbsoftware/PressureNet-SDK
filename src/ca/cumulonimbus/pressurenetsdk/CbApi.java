@@ -36,9 +36,9 @@ import android.os.Messenger;
 public class CbApi {
 
 	Context context;
-	String apiServerURL 			= CbConfiguration.SERVER_URL + "list/?";
-	String apiConditionsServerURL 	= CbConfiguration.SERVER_URL + "conditions/list/?";
-	String apiStatsServerURL	 	= CbConfiguration.SERVER_URL + "stats/?";
+	String apiServerURL 			= CbConfiguration.SERVER_URL_PRESSURENET + "list/?";
+	String apiConditionsServerURL 	= CbConfiguration.SERVER_URL_PRESSURENET + "conditions/list/?";
+	String apiStatsServerURL	 	= CbConfiguration.SERVER_URL_PRESSURENET + "stats/?";
 	private CbDb db;
 	private ArrayList<CbWeather> callResults = new ArrayList<CbWeather>();
 	private ArrayList<CbStats> statsResults = new ArrayList<CbStats>();
