@@ -39,7 +39,7 @@ import android.provider.Settings.Secure;
  *
  */
 
-public class CbDataSender  extends AsyncTask<String, Integer, String> {
+public class CbBatchSender  extends AsyncTask<CbObservation, Integer, String> {
 
 	private String responseText = "";
 	private CbLocationManager locationManager;
@@ -52,7 +52,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	private String mAppDir;
 	private boolean userSent;
 	
-	public CbDataSender(Context ctx) {
+	public CbBatchSender(Context ctx) {
 		this.context = ctx;
 		setUpFiles();
 	}
@@ -117,172 +117,103 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 	}
 	
 	@Override
-	protected String doInBackground(String... params) {
-		log("cb send do in bg");
+	protected String doInBackground(CbObservation... allObs) {
+		log("cb batch send do in bg");
 		DefaultHttpClient client = new DefaultHttpClient();
 		try {
-			String condition = "";
-			double pressure = 0.0;
-			ArrayList<NameValuePair> nvps = new ArrayList<NameValuePair>();
-			boolean isCbOb = true; // TODO: fix hack to determine the data type sent
-			long time = System.currentTimeMillis();
-			 JSONObject object = new JSONObject();
+			
 			 JSONObject data = new JSONObject();
 			 JSONArray jsonArray = new JSONArray();
 		
-			 
-			 for(String singleParam : params) {
-				String[] fromCSV = singleParam.split(",");
-				String key = fromCSV[0];
-				String value = fromCSV[1];
-				// TODO: fix hack. put any lost commas back.
-				if(fromCSV.length > 2) {
-					for(int i = 2; i < fromCSV.length; i++) {
-						value += "," + fromCSV[i];
+
+			 log("cb batchdata looping through obs");
+			 JSONObject object = new JSONObject();
+			 for(CbObservation ob : allObs) {
+				 
+				 if(ob == null) {
+					 log("cb batch data encountered null observation, bailing");
+					 continue;
+				 }
+				 
+				 String[] params = ob.getObservationAsParams();
+				 log("cbbatch object param size " + params.length);
+				 
+				 for(String singleParam : params) {
+					String[] fromCSV = singleParam.split(",");
+					String key = fromCSV[0];
+					String value = fromCSV[1];
+					// TODO: fix hack. put any lost commas back.
+					if(fromCSV.length > 2) {
+						for(int i = 2; i < fromCSV.length; i++) {
+							value += "," + fromCSV[i];
+						}
 					}
-				}
-			 	nvps.add(new BasicNameValuePair(key, value));
 				
-				  try {
-					  	
+				    try {
 					  object.put(key, value);
-					  log("POST adding " + key + ", " + value + " to json");
+					  log("POST batch adding " + key + ", " + value + " to json");
 					  
 			        } catch (Exception ex) {
-
+			        	log("cb batch sender exception " + ex.getMessage());
 			        }
-				
-				
-				if(key.equals("general_condition")) {
-					isCbOb = false;
-					condition = value;
+		
 				} 
-				if(key.equals("reading")) {
-					try {
-						pressure = Double.parseDouble(value);
-					} catch (Exception e) {
-						log("cbdatasender: reading should be double but isn't");
-					}
-				} 
-				//log("singleparam " + key + " " + value);
-				if(key.equals("daterecorded")) {
-					time = Long.parseLong(value);
-				}
-			} 
+				 
+				jsonArray.put(object);
+				 
+			 }
 			
 			String serverURL = CbConfiguration.SERVER_URL_SECONDARY; //settings.getServerURL();
 			log("settings url " + serverURL);
 			
-			String serverURLPressureNet = CbConfiguration.SERVER_URL_PRESSURENET; //settings.getServerURL();
+	
+			try {
+				
+				data.put("data", jsonArray);
+				data.put("source", "pressurenet");
+				data.put("user_id", getID());
+			}catch(JSONException jsone) {
+				log("json error " + jsone.getMessage());
+			}
+		
+		
 			
-			if(isCbOb) {
-				// cb observation
+			HttpPost httppost = new HttpPost(serverURL);
+			//httppost.setEntity(new UrlEncodedFormEntity(nvps));
+			String message;
+			 
+			try {
+		        message = data.toString();
+			  
+			  httppost.setEntity(new StringEntity(message, "UTF8"));
+			  httppost.setHeader("Content-type", "application/json");
+			  httppost.addHeader("Accept","application/json");
+			} catch(Exception e) {
 				
-				// PressureNet
-				serverURLPressureNet += "add/";
-				
-				
-				// Secondary
-				object = null;
-			
-			} else {
-				// current condition
-				
-				// PressureNet
-				serverURLPressureNet += "conditions/add/";
-				
-				
-				
-				// Secondary
-				serverURL = CbConfiguration.SERVER_URL_CONDITIONS_SECONDARY;
-				log("serverURL " + serverURL);
-				log("POST sending current condition " + object.toString());
-				
-				try {
-					
-					jsonArray.put(object);
-					data.put("data", jsonArray);
-					data.put("source", "pressurenet");
-					data.put("user_id", getID());
-				}catch(JSONException jsone) {
-					log("json error " + jsone.getMessage());
-				}
 			}
 			
-			
-			// Secondary
-			
-			if(object!=null) {
-			
-				HttpPost httppost = new HttpPost(serverURL);
-				//httppost.setEntity(new UrlEncodedFormEntity(nvps));
-				String message;
-				 
-				try {
-			        message = data.toString();
-				  
-				  httppost.setEntity(new StringEntity(message, "UTF8"));
-				  httppost.setHeader("Content-type", "application/json");
-				  httppost.addHeader("Accept","application/json");
-				} catch(Exception e) {
-					
-				}
-				
-				log("POST Secondary: " + EntityUtils.toString(httppost.getEntity()));
-	
-				
-				HttpResponse resp = client.execute(httppost);
-				HttpEntity responseEntity = resp.getEntity();
-	
-				String addResp = "";
-				BufferedReader r = new BufferedReader(new InputStreamReader(
-						responseEntity.getContent()));
-	
-				StringBuilder total = new StringBuilder();
-				String line;
-				if (r != null) {
-					while ((line = r.readLine()) != null) {
-						total.append(line);
-					}
-					addResp = total.toString();
-				///	dataCollector.stopCollectingData();
-					
-				}
-				log("addresp Secondary " + addResp);
-			}
-			
-			// PressureNet
-			
-			
-			HttpPost httppostPressureNet = new HttpPost(serverURLPressureNet);
-			httppostPressureNet.setEntity(new UrlEncodedFormEntity(nvps));
-			
-	
-			
-			log("POST PN: " + EntityUtils.toString(httppostPressureNet.getEntity()));
+			log("POST Secondary: " + EntityUtils.toString(httppost.getEntity()));
 
 			
-			HttpResponse respPN = client.execute(httppostPressureNet);
-			HttpEntity responseEntityPN = respPN.getEntity();
+			HttpResponse resp = client.execute(httppost);
+			HttpEntity responseEntity = resp.getEntity();
 
-			String addRespPN = "";
-			BufferedReader rPN = new BufferedReader(new InputStreamReader(
-					responseEntityPN.getContent()));
+			String addResp = "";
+			BufferedReader r = new BufferedReader(new InputStreamReader(
+					responseEntity.getContent()));
 
-			StringBuilder totalPN = new StringBuilder();
-			String linePN;
-			if (rPN != null) {
-				while ((linePN = rPN.readLine()) != null) {
-					totalPN.append(linePN);
+			StringBuilder total = new StringBuilder();
+			String line;
+			if (r != null) {
+				while ((line = r.readLine()) != null) {
+					total.append(line);
 				}
-				addRespPN = totalPN.toString();
+				addResp = total.toString();
 			///	dataCollector.stopCollectingData();
 				
 			}
-			log("addresp PressureNet " + addRespPN);
-	
+			log("addresp Secondary " + addResp);
 			
-			returnResult(addRespPN, condition, time, pressure);
 			
 		} catch(ClientProtocolException cpe) {
 			cpe.printStackTrace();
