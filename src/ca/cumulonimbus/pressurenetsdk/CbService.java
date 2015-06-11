@@ -1,14 +1,24 @@
 package ca.cumulonimbus.pressurenetsdk;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -25,6 +35,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
+import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.IBinder;
@@ -34,6 +45,9 @@ import android.os.PowerManager;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
+import android.util.Log;
+
+import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 /**
  * Represent developer-facing pressureNET API Background task; manage and run
@@ -133,7 +147,9 @@ public class CbService extends Service {
 	public static final int MSG_LOCAL_CONDITIONS = 49;
 	// Receive local condition data? 
 	public static final int MSG_LOCAL_CONDITION_OPT_IN = 50;
-	public static final int MSG_LOCAL_CONDITION_OPT_OUT = 51;	
+	public static final int MSG_LOCAL_CONDITION_OPT_OUT = 51;
+	// Registration for weather notifications
+	public static final int MSG_REGISTER_NOTIFICATIONS = 52;
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
@@ -182,6 +198,7 @@ public class CbService extends Service {
 	
 	private boolean shouldCheckLocalConditions = false;
 	
+	private GoogleCloudMessaging gcm;
 	
 	/**
 	 * Collect data from onboard sensors and store locally
@@ -1902,10 +1919,111 @@ public class CbService extends Service {
 			case MSG_LOCAL_CONDITION_OPT_OUT:
 				setConditionsNotificationsPref(false);	
 				break;
+			case MSG_REGISTER_NOTIFICATIONS:
+				registerForNotifications();
+				break;
 			default:
 				super.handleMessage(msg);
 			}
 		}
+	}
+	
+	
+	/**
+	 * 
+	 */
+	private void sendRegistrationToServer(final String deviceToken) {
+		
+		log("cbservice sending token to server : " + deviceToken);
+		
+		 new AsyncTask(){
+	            protected Object doInBackground(final Object... params) {
+	            
+	                String token;
+	                try {
+	                	String serverURL = CbConfiguration.SERVER_URL_DEVICE_REGISTRATION;
+	                	String userID = getID();
+	                	DefaultHttpClient client = new DefaultHttpClient();
+	                	
+	                	 JSONObject object = new JSONObject();
+	        			 object.put("userId", getID());
+	        			 object.put("deviceToken", deviceToken);
+	        			 object.put("source", "pressurenet");
+	        			 object.put("deviceType", "android");
+	        			 
+	        			 // also add location
+	        			 try {
+		        			 Location bestLocation = locationManager.getCurrentBestLocation();
+		        			 object.put("latitude", bestLocation.getLatitude());
+		        			 object.put("longitude", bestLocation.getLongitude());
+	        			 } catch (Exception e) {
+	        				 log("location error: " + e.getMessage());
+	        			 }
+	        			 
+	        			 HttpPost httppost = new HttpPost(serverURL);
+	                	
+	        			 String message;
+	    				 
+	     				try {
+	     			        message = object.toString();
+	     				  
+	     				  httppost.setEntity(new StringEntity(message, "UTF8"));
+	     				  httppost.setHeader("Content-type", "application/json");
+	     				  httppost.addHeader("Accept","application/json");
+	     				} catch(Exception e) {
+	     					
+	     				}
+	     				log("POST Secondary: " + EntityUtils.toString(httppost.getEntity()));
+	     				
+	    				
+	    				HttpResponse resp = client.execute(httppost);
+	    				HttpEntity responseEntity = resp.getEntity();
+	    	
+	    				String addResp = "";
+	    				BufferedReader r = new BufferedReader(new InputStreamReader(
+	    						responseEntity.getContent()));
+	    	
+	    				StringBuilder total = new StringBuilder();
+	    				String line;
+	    				if (r != null) {
+	    					while ((line = r.readLine()) != null) {
+	    						total.append(line);
+	    					}
+	    					addResp = total.toString();
+	    				///	dataCollector.stopCollectingData();
+	    					
+	    				}
+	    				log("device token registration sent to server " + addResp);
+	                } 
+	                catch (Exception e) {
+	                    log("cbservice device registration error " + e.getMessage());
+	                }
+	                return true;
+	            }
+	        }.execute(null, null, null);
+	}
+	
+	/** 
+	 * Send registration info to GCM for notifications
+	 */
+	private void registerForNotifications() {
+		log("cbservice registering for notifications");
+		gcm = GoogleCloudMessaging.getInstance(getBaseContext());
+		 new AsyncTask(){
+	            protected Object doInBackground(final Object... params) {
+	            	log("cbservice running asynctask to register for notifications");
+	                String token;
+	                try {
+	                    token = gcm.register(CbConfiguration.API_PROJECT_NUMBER);
+	                    log("registrationId " + token);
+	                    sendRegistrationToServer(token);
+	                } 
+	                catch (IOException e) {
+	                    log("registration rrror " + e.getMessage());
+	                }
+	                return true;
+	            }
+	        }.execute(null, null, null);
 	}
 	
 	private ArrayList<CbCurrentCondition> getCurrentConditionsFromLocalAPI(CbApiCall currentConditionAPI) {
