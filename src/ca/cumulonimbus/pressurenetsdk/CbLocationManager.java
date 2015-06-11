@@ -180,7 +180,7 @@ public class CbLocationManager {
 	    boolean isNewer = timeDelta > 0;
 	    
 	
-	    /*
+	    
 	    // If it's been more than two minutes since the current location, use the new location
 	    // because the user has likely moved
 	    if (isSignificantlyNewer) {
@@ -191,7 +191,7 @@ public class CbLocationManager {
 	    	log("new location is significantly older");
 	        return false;
 	    }
-	    */
+	    
 	    
 	    // Check whether the new location fix is more or less accurate
 	    int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());

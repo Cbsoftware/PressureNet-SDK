@@ -955,40 +955,6 @@ public class CbService extends Service {
 		return CbConfiguration.SDK_VERSION;
 	}
 	
-	/**
-	 * Periodically check to see if someone has
-	 * reported a current condition nearby. If it's 
-	 * appropriate, send a notification
-	 */
-	private void checkForLocalConditionReports() {
-		if (shouldCheckLocalConditions) {
-			long now = System.currentTimeMillis();
-			long minWaitTime = 1000 * 60 * 60;
-			if(now - minWaitTime > lastConditionNotification) {
-				if(locationManager == null) {
-					locationManager = new CbLocationManager(getApplicationContext());
-				}
-				log("cbservice checking for local conditions reports");
-				// it has been long enough; make a conditions API call 
-				// for the local area
-				CbApi conditionApi = new CbApi(getApplicationContext());
-				CbApiCall conditionApiCall = buildLocalConditionsApiCall();
-				if(conditionApiCall!=null) {
-					
-					log("cbservice making conditions api call for local reports");
-					conditionApi.makeAPICall(conditionApiCall, service,
-							mMessenger, "Conditions");
-			
-					// TODO: store this more permanently
-					lastConditionNotification = now;
-				}
-			} else {
-				log("cbservice not checking for local conditions, too recent");
-			}	
-		} else {
-			log("cbservice not checking for local conditions, preference is off");
-		}
-	}
 	
 	/**
 	 * Make a CbApiCall object for local conditions
