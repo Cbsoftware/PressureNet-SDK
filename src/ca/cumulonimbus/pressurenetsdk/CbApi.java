@@ -37,7 +37,7 @@ public class CbApi {
 
 	Context context;
 	String apiServerURL 			= CbConfiguration.SERVER_URL_PRESSURENET + "list/?";
-	String apiConditionsServerURL 	= CbConfiguration.SERVER_URL_PRESSURENET + "conditions/list/?";
+	String apiConditionsServerURL 	= CbConfiguration.SERVER_URL_CONDITIONS_QUERY; // CbConfiguration.SERVER_URL_PRESSURENET + "conditions/list/?";
 	String apiStatsServerURL	 	= CbConfiguration.SERVER_URL_PRESSURENET + "stats/?";
 	private CbDb db;
 	private ArrayList<CbWeather> callResults = new ArrayList<CbWeather>();
@@ -179,6 +179,7 @@ public class CbApi {
 				nvps.add(new BasicNameValuePair("since_last_call", apiCall
 						.isSinceLastCall() + ""));
 				nvps.add(new BasicNameValuePair("sdk_version", CbConfiguration.SDK_VERSION));
+				nvps.add(new BasicNameValuePair("source", "pressurenet"));
 
 				String paramString = URLEncodedUtils.format(nvps, "utf-8");
 
@@ -214,6 +215,7 @@ public class CbApi {
 				// System.out.println("api error");
 				//e.printStackTrace();
 			}
+			log(responseText);
 			return responseText;
 		}
 

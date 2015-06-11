@@ -169,12 +169,15 @@ public class CbService extends Service {
 	private final Handler mHandler = new Handler();
 
 	Messenger mMessenger = new Messenger(new IncomingHandler());
-
 	
-	private int maxBatchSize = 6;
-	private int currentBatchCount = 0;
-	CbObservation[] batchOfReadings = new CbObservation[maxBatchSize];
+	//private int maxBatchSize = 6;
+	//private int currentBatchCount = 0;
+	// CbObservation[] batchOfReadings = new CbObservation[maxBatchSize];
 	
+	private long currentBatchStartTime = System.currentTimeMillis();
+	private long maxBatchTime = 1000 * 60 * 60; // 1 hour
+	
+	ArrayList<CbObservation> allBatchObs = new ArrayList<CbObservation>();
 	
 	private long lastPressureChangeAlert = 0;
 
@@ -652,32 +655,18 @@ public class CbService extends Service {
 										singleObservation
 												.setClientKey(CbConfiguration.API_KEY);
 										fromUser = true;
+										
 										sendCbObservation(singleObservation);
 										
+										batchAdder(singleObservation);
 										
-										batchOfReadings[currentBatchCount] = singleObservation;
-										currentBatchCount++;
-										if(currentBatchCount >= maxBatchSize) {
-											log("singlereading sender, sending batch data");
-											sendBatchData();
-										} else {
-											log("single reading sender added batch obs, not sending");
-										}
 										
 										fromUser = false;
 	
 										
 									} else {
 										log("didn't send, not sharing data; i.e., offline");
-										
-										batchOfReadings[currentBatchCount] = singleObservation;
-										currentBatchCount++;
-										if(currentBatchCount >= maxBatchSize) {
-											log("singlereading sender, sending batch data");
-											sendBatchData();
-										} else {
-											log("single reading sender added batch obs, not sending");
-										}
+										batchAdder(singleObservation);
 									}
 								} else {
 									log("cbservice didn't send, sharing=Nobody");
@@ -693,6 +682,22 @@ public class CbService extends Service {
 			}
 		}
 	}
+	
+	
+	/**
+	 * Add data to the batch and send if appropriate
+	 */
+	private void batchAdder(CbObservation obs) {
+		allBatchObs.add(obs);
+		long now = System.currentTimeMillis();
+		if(now - currentBatchStartTime > maxBatchTime) {
+			log("singlereading sender, sending batch data");
+			sendBatchData();
+		} else {
+			log("single reading sender added batch obs, not sending");
+		}
+	}
+	
 	
 	/**
 	 * Check if we have a barometer. Use info to disable menu items, choose to
@@ -769,14 +774,8 @@ public class CbService extends Service {
 										singleObservation
 												.setClientKey(CbConfiguration.API_KEY);
 										
-										batchOfReadings[currentBatchCount] = singleObservation;
-										currentBatchCount++;
-										if(currentBatchCount >= maxBatchSize) {
-											log("reading sender, sending batch data");
-											sendBatchData();
-										} else {
-											log("reading sender added batch obs, not sending");
-										}
+										batchAdder(singleObservation);
+										
 
 										
 										sendCbObservation(singleObservation);
@@ -784,14 +783,8 @@ public class CbService extends Service {
 									} else {
 										log("didn't send; offline");
 										// / offline buffer variable
-										batchOfReadings[currentBatchCount] = singleObservation;
-										currentBatchCount++;
-										if(currentBatchCount >= maxBatchSize) {
-											log("reading sender, sending batch data");
-											sendBatchData();
-										} else {
-											log("reading sender added batch obs, not sending");
-										}
+										
+										batchAdder(singleObservation);
 
 									}
 								} else {
@@ -1031,14 +1024,19 @@ public class CbService extends Service {
 	public boolean sendBatchData() {
 		// send batch data
 		try {
-			log("Sending batch data, buffer size " + batchOfReadings.length);
+			log("Sending batch data, buffer size " + allBatchObs.size());
 			CbBatchSender batchSender = new CbBatchSender(getApplicationContext());
 			batchSender.setSettings(settingsHandler, locationManager, lastMessenger, fromUser);
+			
+			CbObservation[] batchOfReadings = new CbObservation[60];
+			
+			batchOfReadings = allBatchObs.toArray(batchOfReadings);
+			
 			batchSender.execute(batchOfReadings);
 
 			// clear the buffer
 			clearBatch();
-			
+			currentBatchStartTime = System.currentTimeMillis();
 			
 			return true;	
 		} catch (Exception e) {
@@ -1066,9 +1064,7 @@ public class CbService extends Service {
 	}
 	
 	public void clearBatchBuffer() {
-		batchOfReadings = null;
-		batchOfReadings = new CbObservation[maxBatchSize];
-		currentBatchCount = 0;
+		allBatchObs.clear();
 	}
 	
 	/**
