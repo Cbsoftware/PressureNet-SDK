@@ -37,7 +37,7 @@ public class CbApi {
 
 	Context context;
 	String apiServerURL 			= CbConfiguration.SERVER_URL_PRESSURENET + "list/?";
-	String apiConditionsServerURL 	= CbConfiguration.SERVER_URL_CONDITIONS_QUERY; // CbConfiguration.SERVER_URL_PRESSURENET + "conditions/list/?";
+	String apiConditionsServerURL 	= CbConfiguration.SERVER_URL_CONDITIONS_QUERY + "?"; // CbConfiguration.SERVER_URL_PRESSURENET + "conditions/list/?";
 	String apiStatsServerURL	 	= CbConfiguration.SERVER_URL_PRESSURENET + "stats/?";
 	private CbDb db;
 	private ArrayList<CbWeather> callResults = new ArrayList<CbWeather>();
@@ -166,10 +166,7 @@ public class CbApi {
 						.getMinLon() + "" + ""));
 				nvps.add(new BasicNameValuePair("max_longitude", apiCall
 						.getMaxLon() + "" + ""));
-				nvps.add(new BasicNameValuePair("start_time", apiCall
-						.getStartTime() + ""));
-				nvps.add(new BasicNameValuePair("end_time", apiCall
-						.getEndTime() + ""));
+				
 				nvps.add(new BasicNameValuePair("api_key", apiCall.getApiKey()));
 				nvps.add(new BasicNameValuePair("format", apiCall.getFormat()));
 				nvps.add(new BasicNameValuePair("limit", apiCall.getLimit()
@@ -181,15 +178,25 @@ public class CbApi {
 				nvps.add(new BasicNameValuePair("sdk_version", CbConfiguration.SDK_VERSION));
 				nvps.add(new BasicNameValuePair("source", "pressurenet"));
 
-				String paramString = URLEncodedUtils.format(nvps, "utf-8");
+				
 
 				String serverURL = apiServerURL;
 
 				if (params[0].equals("Readings")) {
 					serverURL = apiServerURL;
+					nvps.add(new BasicNameValuePair("start_time", apiCall
+							.getStartTime() + ""));
+					nvps.add(new BasicNameValuePair("end_time", apiCall
+							.getEndTime() + ""));
 				} else {
 					serverURL = apiConditionsServerURL;
+					nvps.add(new BasicNameValuePair("start_time", (apiCall
+							.getStartTime() / 1000 )+ ""));
+					nvps.add(new BasicNameValuePair("end_time",(apiCall
+							.getEndTime() / 1000 )+ ""));
 				}
+				
+				String paramString = URLEncodedUtils.format(nvps, "utf-8");
 
 				serverURL = serverURL + paramString;
 				apiCall.setCallURL(serverURL);
