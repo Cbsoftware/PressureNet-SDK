@@ -150,13 +150,16 @@ public class CbService extends Service {
 	public static final int MSG_LOCAL_CONDITION_OPT_OUT = 51;
 	// Registration for weather notifications
 	public static final int MSG_REGISTER_NOTIFICATIONS = 52;
+	// Weather alerts
+	public static final int MSG_SEND_WEATHER_ALERT = 53;
 	
 	// Intents
 	public static final String PRESSURE_CHANGE_ALERT = "ca.cumulonimbus.pressurenetsdk.PRESSURE_CHANGE_ALERT";
 	public static final String LOCAL_CONDITIONS_ALERT = "ca.cumulonimbus.pressurenetsdk.LOCAL_CONDITIONS_ALERT";
 	public static final String PRESSURE_SENT_TOAST = "ca.cumulonimbus.pressurenetsdk.PRESSURE_SENT_TOAST";
 	public static final String CONDITION_SENT_TOAST = "ca.cumulonimbus.pressurenetsdk.CONDITION_SENT_TOAST";
-		
+	public static final String WEATHER_FORECAST_ALERT = "ca.cumulonimbus.pressurenetsdk.WEATHER_FORECAST_ALERT";
+	
 	// Support for new sensor type constants
 	private final int TYPE_AMBIENT_TEMPERATURE = 13;
 	private final int TYPE_RELATIVE_HUMIDITY = 12;
@@ -202,6 +205,7 @@ public class CbService extends Service {
 	private boolean shouldCheckLocalConditions = false;
 	
 	private GoogleCloudMessaging gcm;
+	
 	
 	/**
 	 * Collect data from onboard sensors and store locally
@@ -1892,7 +1896,7 @@ public class CbService extends Service {
 	
 	
 	/**
-	 * 
+	 * Register with the server for push notifications
 	 */
 	private void sendRegistrationToServer(final String deviceToken) {
 		
