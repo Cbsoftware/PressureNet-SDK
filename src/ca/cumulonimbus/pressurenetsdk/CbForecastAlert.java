@@ -84,9 +84,9 @@ public class CbForecastAlert implements Serializable {
 		String weatherEvent = condition.getGeneral_condition();
 		String precipitationType = condition.getPrecipitation_type();
 		
-		long now = System.currentTimeMillis() / 1000;
+		long now = System.currentTimeMillis();
 		long timeDiff = alertTime - now;
-		int minutesFuture = (int) (timeDiff / 60);
+		int minutesFuture = (int) (timeDiff / (60*60));
 		timingText = "in " + minutesFuture + " minutes.";
 		
 		
