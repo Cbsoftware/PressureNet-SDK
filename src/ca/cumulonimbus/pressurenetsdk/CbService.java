@@ -1317,6 +1317,8 @@ public class CbService extends Service {
 				} else {
 				
 					// Check the database
+					log("cbservice on boot registering for notifications");
+					registerForNotifications();
 					
 					log("starting service with db");
 					startWithDatabase();

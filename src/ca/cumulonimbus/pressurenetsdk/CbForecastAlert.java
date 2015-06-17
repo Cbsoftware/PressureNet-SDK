@@ -93,6 +93,8 @@ public class CbForecastAlert implements Serializable {
 		int minutesFuture = (int) (timeDiff / (60*1000));
 		timingText = "in " + minutesFuture + " minutes.";
 		
+		String tapForForecast = " Tap for forecast.";
+		
 		String preTime = " in " + minutesFuture + " minutes. ";
 		
 		if(weatherEvent.matches("Precipitation")) {
@@ -102,7 +104,7 @@ public class CbForecastAlert implements Serializable {
 				String timing = timingText;
 
 				notificationTitle = prob;
-				notificationContent = human + preTime;
+				notificationContent = timingText + tapForForecast;
 				
 				
 				finalNotificationText = human + " " + prob + " " + timing;
@@ -112,7 +114,7 @@ public class CbForecastAlert implements Serializable {
 				String timing = timingText;
 				
 				notificationTitle = prob;
-				notificationContent = human + preTime;
+				notificationContent = timingText + tapForForecast;
 				
 				finalNotificationText = human + " " + prob + " " + timing;
 			} else if (precipitationType.matches("Snow")) {
@@ -121,7 +123,7 @@ public class CbForecastAlert implements Serializable {
 				String timing = timingText;
 				
 				notificationTitle = prob;
-				notificationContent = human + preTime;
+				notificationContent = timingText + tapForForecast;
 				
 				finalNotificationText = human + " " + prob + " " + timing;
 			}
@@ -131,7 +133,7 @@ public class CbForecastAlert implements Serializable {
 			String timing = timingText;
 			
 			notificationTitle = prob;
-			notificationContent = human + preTime;
+			notificationContent = timingText + tapForForecast;
 			
 			finalNotificationText = human + " " + prob + " " + timing;
 		} else {
