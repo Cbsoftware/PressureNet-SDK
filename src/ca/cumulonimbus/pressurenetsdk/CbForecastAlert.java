@@ -29,14 +29,23 @@ public class CbForecastAlert implements Serializable {
 	// Rain
 	private String[] rainProbabilityText = {
 			"Rain likely to splash", 
-			"Droplets expected to sprinkle",
 			"You might be singing in the rain",
-			"Rain predicted to pour",
 			"Rain slated to splash down",
-			"Rain anticipated",
-			"Rain expected to sprinkle",
 			"Showers anticipated overhead"
+			
 	};
+	
+	private String[] lightRainProbabilityText = {
+			"Droplets should sprinkle", 
+			"Rain expected to sprinkle"
+	};
+	
+	private String[] heavyRainProbabilityText = {
+			"Rain predicted to pour", 
+			"Rain anticipated to pour"
+	};
+	
+	
 	private String[] rainHumanText = {
 			"Heads up!", 
 			"Drip drop!", 
@@ -46,14 +55,13 @@ public class CbForecastAlert implements Serializable {
 	// Hail
 	private String[] hailProbabilityText = {
 			"Hail might head your way",
+			"You might get pelted by hail",
+			"Hail likely to fall",
 			"Hail estimated",
 			"Hard hitting hail estimated",
 			"Hail likely to touch down"
 	};	
-	private String[] hailHumanText = {
-			"Take cover!",
-			"Look out below!",	
-	};
+	
 	
 	// Snow
 	private String[] snowProbabilityText = {
@@ -61,22 +69,18 @@ public class CbForecastAlert implements Serializable {
 			"Snowfall predicted",
 			"Snow expected to glide down",
 			"Snowflakes likely to visit you",
-			"Snow likely to breeze through",
+			"Snow could breeze through",
 			"Snowfall suspected",
 	};
-	private String[] snowHumanText = {
-			"Brrr!",
-			"Let it snow!"
-	};
+	
 	
 	// Thunderstorm
 	private String[] thunderstormProbabilityText = {
-			"Thunderstorms likely to occur",
-			"Thunderstorms are expected to brew",
-			"Get ready for probable thunderstorms",
-			"Thunderstorms expected to boom overhead",
-			"Thunderstorms expected to rock your region",
-			"Thunderstorms predicted to cloud the skies"
+			"Thunderstorms likely",
+			"Thunderstorms expected",
+			"Probable thunderstorms",
+			"Thunderstorms anticipated",
+			"Thunderstorms predicted",
 	};
 	private String[] thunderstormHumanText = {
 			"Boom, clap!"
@@ -99,33 +103,43 @@ public class CbForecastAlert implements Serializable {
 		
 		if(weatherEvent.matches("Precipitation")) {
 			if(precipitationType.matches("Rain")) {
-				String human = (rainHumanText[new Random().nextInt(rainHumanText.length)]);
-				String prob = (rainProbabilityText[new Random().nextInt(rainProbabilityText.length)]);
+				String human = "";
+				String prob = "";
 				String timing = timingText;
 
+				if(condition.getPrecipitation_amount()==0) {
+					prob = (lightRainProbabilityText[new Random().nextInt(lightRainProbabilityText.length)]);
+				} else if(condition.getPrecipitation_amount()==1) {
+					prob = (rainProbabilityText[new Random().nextInt(rainProbabilityText.length)]);
+				} else if(condition.getPrecipitation_amount()==2) {
+					prob = (heavyRainProbabilityText[new Random().nextInt(heavyRainProbabilityText.length)]);
+				} else {
+					prob = (rainProbabilityText[new Random().nextInt(rainProbabilityText.length)]);
+				}
+				
 				notificationTitle = prob;
 				notificationContent = timingText + tapForForecast;
 				
 				
 				finalNotificationText = human + " " + prob + " " + timing;
 			} else if (precipitationType.matches("Hail")) {
-				String human = (hailHumanText[new Random().nextInt(hailHumanText.length)]);
+				
 				String prob = (hailProbabilityText[new Random().nextInt(hailProbabilityText.length)]);
 				String timing = timingText;
 				
 				notificationTitle = prob;
 				notificationContent = timingText + tapForForecast;
 				
-				finalNotificationText = human + " " + prob + " " + timing;
+				finalNotificationText = prob + " " + timing;
 			} else if (precipitationType.matches("Snow")) {
-				String human = (snowHumanText[new Random().nextInt(snowHumanText.length)]);
+				
 				String prob = (snowProbabilityText[new Random().nextInt(snowProbabilityText.length)]);
 				String timing = timingText;
 				
 				notificationTitle = prob;
 				notificationContent = timingText + tapForForecast;
 				
-				finalNotificationText = human + " " + prob + " " + timing;
+				finalNotificationText = prob + " " + timing;
 			}
 		} else if (weatherEvent.matches("Thunderstorm")) {
 			String human = (thunderstormHumanText[new Random().nextInt(thunderstormHumanText.length)]);
