@@ -91,15 +91,27 @@ public class CbForecastAlert implements Serializable {
 		String finalNotificationText = "";
 		String weatherEvent = condition.getGeneral_condition();
 		String precipitationType = condition.getPrecipitation_type();
+		String preTime = "";
 		
 		long now = System.currentTimeMillis();
 		long timeDiff = alertTime - now;
 		int minutesFuture = (int) (timeDiff / (60*1000));
-		timingText = "in " + minutesFuture + " minutes.";
+		
+		if( minutesFuture < 50) {
+			timingText = "in " + minutesFuture + " minutes.";
+			preTime = " in " + minutesFuture + " minutes. ";	
+		} else if ((minutesFuture >=50) && (minutesFuture < 100) ) {
+			timingText = "in about an hour.";
+			preTime = " in about two hours.";
+		} else {
+			timingText = "soon.";
+			preTime = " soon.";
+		}
+		
 		
 		String tapForForecast = " Tap for forecast.";
 		
-		String preTime = " in " + minutesFuture + " minutes. ";
+		
 		
 		if(weatherEvent.matches("Precipitation")) {
 			if(precipitationType.matches("Rain")) {
