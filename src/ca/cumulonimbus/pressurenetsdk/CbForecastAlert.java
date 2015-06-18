@@ -133,7 +133,7 @@ public class CbForecastAlert implements Serializable {
 				notificationContent = timingText + tapForForecast;
 				
 				
-				finalNotificationText = human + " " + prob + " " + timing;
+				finalNotificationText = prob + " " + timing;
 			} else if (precipitationType.matches("Hail")) {
 				
 				String prob = (hailProbabilityText[new Random().nextInt(hailProbabilityText.length)]);
@@ -161,7 +161,7 @@ public class CbForecastAlert implements Serializable {
 			notificationTitle = prob;
 			notificationContent = timingText + tapForForecast;
 			
-			finalNotificationText = human + " " + prob + " " + timing;
+			finalNotificationText = prob + " " + timing;
 		} else {
 			finalNotificationText = "";
 		}
