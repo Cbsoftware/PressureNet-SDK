@@ -146,7 +146,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 				  try {
 					  	
 					  object.put(key, value);
-					  log("POST adding " + key + ", " + value + " to json");
+					  //log("POST adding " + key + ", " + value + " to json");
 					  
 			        } catch (Exception ex) {
 
@@ -259,7 +259,7 @@ public class CbDataSender  extends AsyncTask<String, Integer, String> {
 			
 	
 			
-			log("POST PN: " + EntityUtils.toString(httppostPressureNet.getEntity()));
+			//log("POST PN: " + EntityUtils.toString(httppostPressureNet.getEntity()));
 
 			
 			HttpResponse respPN = client.execute(httppostPressureNet);
