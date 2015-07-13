@@ -223,15 +223,17 @@ public class CbApi {
 				//e.printStackTrace();
 			}
 			log(responseText);
-			return responseText;
-		}
-
-		protected void onPostExecute(String result) {
-			resultText = result;
+			
+			resultText = responseText;
 
 			// handler.postDelayed(jsonProcessor, 0);
 			SaveAPIData save = new SaveAPIData();
 			save.execute("");
+			return responseText;
+		}
+
+		protected void onPostExecute(String result) {
+			
 		}
 
 		private class SaveAPIData extends AsyncTask<String, String, String> {
