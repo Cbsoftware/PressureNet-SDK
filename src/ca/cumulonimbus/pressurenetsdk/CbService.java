@@ -1697,9 +1697,13 @@ public class CbService extends Service {
 
 				CbApi conditionApi = new CbApi(getApplicationContext());
 				CbApiCall conditionApiCall = (CbApiCall) msg.obj;
-				conditionApiCall.setCallType("Conditions");
-				conditionApi.makeAPICall(conditionApiCall, service,
-						msg.replyTo, "Conditions");
+				try {
+					conditionApiCall.setCallType("Conditions");
+					conditionApi.makeAPICall(conditionApiCall, service,
+							msg.replyTo, "Conditions");	
+				} catch(NullPointerException npe) {
+					log("npe " + npe.getMessage());
+				}
 
 				break;
 			case MSG_CLEAR_LOCAL_CACHE:
