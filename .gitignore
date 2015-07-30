@@ -12,6 +12,15 @@
 bin/
 gen/
 
+.idea
+.gradle
+build/
+gradle/
+gradlew
+gradlew.bat
+
+.settings/
+
 # Local configuration file (sdk path, etc)
 local.properties
 

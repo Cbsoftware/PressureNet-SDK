@@ -3,21 +3,22 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.4'
+        classpath 'com.android.tools.build:gradle:1.2.3'
     }
 }
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 
 dependencies {
+    compile 'com.google.android.gms:play-services:7.5.0'
 }
 
 android {
-    compileSdkVersion 17
-    buildToolsVersion "17"
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
 
     defaultConfig {
-        minSdkVersion 8
-        targetSdkVersion 17
+        minSdkVersion 9
+        targetSdkVersion 21
     }
     sourceSets {
         main {
