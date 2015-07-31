@@ -16,39 +16,39 @@ public class CbForecastAlert implements Serializable {
 	private CbCurrentCondition condition;
 	private double temperature;
 	private String temperatureUnit;
-	
+
 	private String tagLine;
 
 	private String notificationTitle;
 	private String notificationContent;
-	
+
 	// General Text
 	private String timingText = "in 1 hour.";
 
-	
+
 	// Rain
 	private String[] rainProbabilityText = {
-			"Rain likely to splash", 
+			"Rain likely to splash",
 			"You might be singing in the rain",
 			"Rain slated to splash down",
 			"Showers anticipated overhead"
-			
+
 	};
-	
+
 	private String[] lightRainProbabilityText = {
-			"Droplets should sprinkle", 
+			"Droplets should sprinkle",
 			"Rain expected to sprinkle"
 	};
-	
+
 	private String[] heavyRainProbabilityText = {
-			"Rain predicted to pour", 
+			"Rain predicted to pour",
 			"Rain anticipated to pour"
 	};
-	
-	
+
+
 	private String[] rainHumanText = {
-			"Heads up!", 
-			"Drip drop!", 
+			"Heads up!",
+			"Drip drop!",
 			"Umbrella handy?"
 	};
 
@@ -60,9 +60,9 @@ public class CbForecastAlert implements Serializable {
 			"Hail estimated",
 			"Hard hitting hail estimated",
 			"Hail likely to touch down"
-	};	
-	
-	
+	};
+
+
 	// Snow
 	private String[] snowProbabilityText = {
 			"Snow might blow your way",
@@ -72,8 +72,8 @@ public class CbForecastAlert implements Serializable {
 			"Snow could breeze through",
 			"Snowfall suspected",
 	};
-	
-	
+
+
 	// Thunderstorm
 	private String[] thunderstormProbabilityText = {
 			"Thunderstorms likely",
@@ -85,21 +85,21 @@ public class CbForecastAlert implements Serializable {
 	private String[] thunderstormHumanText = {
 			"Boom, clap!"
 	};
-	
+
 	public void composeNotificationText() {
 
 		String finalNotificationText = "";
 		String weatherEvent = condition.getGeneral_condition();
 		String precipitationType = condition.getPrecipitation_type();
 		String preTime = "";
-		
+
 		long now = System.currentTimeMillis();
 		long timeDiff = alertTime - now;
 		int minutesFuture = (int) (timeDiff / (60*1000));
-		
+
 		if( minutesFuture < 50) {
 			timingText = "in " + minutesFuture + " minutes.";
-			preTime = " in " + minutesFuture + " minutes. ";	
+			preTime = " in " + minutesFuture + " minutes. ";
 		} else if ((minutesFuture >=50) && (minutesFuture < 100) ) {
 			timingText = "in about an hour.";
 			preTime = " in about two hours.";
@@ -107,12 +107,10 @@ public class CbForecastAlert implements Serializable {
 			timingText = "soon.";
 			preTime = " soon.";
 		}
-		
-		
-		String tapForForecast = " Tap for forecast.";
-		
-		
-		
+
+
+		String tapForForecast = " What's it like outside?"; //" Tap for forecast.";
+
 		if(weatherEvent.matches("Precipitation")) {
 			if(precipitationType.matches("Rain")) {
 				String human = "";
@@ -128,46 +126,46 @@ public class CbForecastAlert implements Serializable {
 				} else {
 					prob = (rainProbabilityText[new Random().nextInt(rainProbabilityText.length)]);
 				}
-				
+
 				notificationTitle = prob;
 				notificationContent = timingText + tapForForecast;
-				
-				
+
+
 				finalNotificationText = prob + " " + timing;
 			} else if (precipitationType.matches("Hail")) {
-				
+
 				String prob = (hailProbabilityText[new Random().nextInt(hailProbabilityText.length)]);
 				String timing = timingText;
-				
+
 				notificationTitle = prob;
 				notificationContent = timingText + tapForForecast;
-				
+
 				finalNotificationText = prob + " " + timing;
 			} else if (precipitationType.matches("Snow")) {
-				
+
 				String prob = (snowProbabilityText[new Random().nextInt(snowProbabilityText.length)]);
 				String timing = timingText;
-				
+
 				notificationTitle = prob;
 				notificationContent = timingText + tapForForecast;
-				
+
 				finalNotificationText = prob + " " + timing;
 			}
 		} else if (weatherEvent.matches("Thunderstorm")) {
 			String human = (thunderstormHumanText[new Random().nextInt(thunderstormHumanText.length)]);
 			String prob = (thunderstormProbabilityText[new Random().nextInt(thunderstormProbabilityText.length)]);
 			String timing = timingText;
-			
+
 			notificationTitle = prob;
 			notificationContent = timingText + tapForForecast;
-			
+
 			finalNotificationText = prob + " " + timing;
 		} else {
 			finalNotificationText = "";
 		}
-		
-		
-		
+
+
+
 		tagLine = finalNotificationText;
 	}
 
@@ -220,5 +218,5 @@ public class CbForecastAlert implements Serializable {
 	public void setNotificationContent(String notificationContent) {
 		this.notificationContent = notificationContent;
 	}
-	
+
 }
