@@ -1922,15 +1922,12 @@ public class CbService extends Service {
 	        			 object.put("deviceToken", deviceToken);
 	        			 object.put("source", "pressurenet");
 	        			 object.put("deviceType", "android");
-	        			 
-	        			 // also add location
-	        			 try {
-		        			 Location bestLocation = locationManager.getCurrentBestLocation();
-		        			 object.put("latitude", bestLocation.getLatitude());
-		        			 object.put("longitude", bestLocation.getLongitude());
-	        			 } catch (Exception e) {
-	        				 log("location error: " + e.getMessage());
-	        			 }
+
+
+						 Location bestLocation = locationManager.getCurrentBestLocation();
+						 object.put("latitude", bestLocation.getLatitude());
+						 object.put("longitude", bestLocation.getLongitude());
+
 	        			 
 	        			 HttpPost httppost = new HttpPost(serverURL);
 	                	

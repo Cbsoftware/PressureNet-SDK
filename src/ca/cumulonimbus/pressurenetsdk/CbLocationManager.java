@@ -71,7 +71,8 @@ public class CbLocationManager {
 				currentBestLocation = lastKnownNetwork;
 	    	} 
     	} catch(Exception e) {
-    		//e.printStackTrace();
+			log("cblocation manager error: " + e.getMessage());
+			e.printStackTrace();
     	}
 	}
 	
